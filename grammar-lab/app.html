@@ -139,6 +139,26 @@ td.mono { font-family: var(--f-mono); font-size: 13px; white-space: nowrap; }
 .meter i { display: block; height: 100%; border-radius: 99px; }
 .num { font-variant-numeric: tabular-nums; text-align: right; }
 select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 40px; max-width: 100%; }
+.toc { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 18px; }
+.toc ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
+.toc li button { border: 0; background: none; padding: 6px 0; text-align: left; width: 100%; display: grid; grid-template-columns: 40px 1fr; gap: 6px; font-size: 14px; color: var(--ink); min-height: 32px; }
+.toc li button:hover { color: var(--accent); }
+.tn { font-family: var(--f-mono); font-size: 13px; color: var(--accent); font-weight: 500; }
+.chapter { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 70px); display: grid; gap: 12px; }
+.chapter h2 { display: flex; gap: 10px; align-items: baseline; font-size: 21px; border-top: 2px solid var(--ink); padding-top: 12px; margin: 0; }
+.chapter h2 .tn { font-size: 15px; }
+[id^="set-"] { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 70px); }
+.para { margin: 0; max-width: 68ch; }
+.para .en { font-weight: 600; }
+.subh { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+.tip { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.tip b { color: var(--accent); margin-right: 4px; }
+.poswrap { display: grid; gap: 10px; }
+.posline { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 4px 6px; font-family: var(--f-display); font-size: 16px; }
+.pw { display: inline-grid; justify-items: center; line-height: 1.3; }
+.pw > span { border-bottom: 3px solid var(--c); padding: 0 1px; }
+.pw b { font-family: var(--f-mono); font-size: 10px; font-weight: 500; color: var(--c); }
+.pw.punct { margin-left: -4px; }
 .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
 @media (max-width: 420px) { .seg a { padding: 6px 9px; } h1 { font-size: 24px; } }
 </style>
@@ -170,34 +190,321 @@ const PARTS = [
 
 const L = [
 { id: "word", part: "A", title: "Parts of Speech & Word Form", th: "ชนิดของคำและการเลือกรูปคำ",
-  why: "<b>ออกบ่อยที่สุด</b> ใน TOEIC Part 5 และ CU-TEP ราว 1 ใน 3 ของข้อ grammar คือตัวเลือก 4 ตัวรากเดียวกัน (care / careful / carefully / carefulness) ให้เลือกตามตำแหน่งในประโยค",
-  formula: ["Det/Adj + [NOUN]           the [decision]", "Det + [ADJ] + Noun          an [effective] plan", "be/seem/become + [ADJ]      is [available]", "Verb (+O) + [ADV]           reviewed it [carefully]", "[ADV] + Adj / V3            [highly] qualified", "Prep + [NOUN / V-ing]       for [approval] / by [checking]"],
-  ruleHead: ["หน้าที่", "ลงท้ายที่พบบ่อย", "ตัวอย่าง"],
-  rules: [
-    ["Noun (นาม)", "-tion -sion -ment -ness -ity -ance -ence -er -or -ee -ist", "installation, payment, accuracy, attendance, employee"],
-    ["Adjective (คุณศัพท์)", "-ive -ful -ous -able -ible -al -ic -ent -ant -less", "effective, careful, various, available, financial"],
-    ["Adverb (กริยาวิเศษณ์)", "-ly (adj + ly)", "effectively, carefully, recently, highly"],
-    ["Verb (กริยา)", "-ize -ify -ate -en", "organize, clarify, evaluate, strengthen"],
+  why: "<b>ออกบ่อยที่สุด</b> ใน TOEIC Part 5 และ CU-TEP ราว 1 ใน 3 ของข้อ grammar คือตัวเลือก 4 ตัวรากเดียวกัน (care / careful / carefully / carefulness) ให้เลือกตามตำแหน่งในประโยค บทนี้ฝึกให้ตอบได้แม้ไม่รู้ความหมายของคำ",
+  book: [
+    { h: "ทำไมรูปคำจึงสำคัญ",
+      p: [
+        "ภาษาไทยไม่เปลี่ยนรูปคำ คำว่า <b>ดี</b> ใช้ได้ทั้ง \"คนดี\" และ \"ทำงานดี\" แต่ภาษาอังกฤษเปลี่ยนรูปตามหน้าที่: a <span class=\"en\">good</span> nurse (adj) / she works <span class=\"en\">well</span> (adv) / the <span class=\"en\">goodness</span> (noun)",
+        "ภาษาอังกฤษเรียงคำค่อนข้างตายตัว <b>ตำแหน่งจึงบอกหน้าที่</b> และหน้าที่บอกว่าต้องใช้คำชนิดไหน ข้อสอบรูปคำจึงเป็นข้อที่ทำได้เร็วที่สุด ถ้าจำตำแหน่งได้",
+        "ตัวอย่าง: The ___ of the plan was delayed. ไม่ต้องรู้ว่าตัวเลือกแปลว่าอะไร เห็น <b>The ___ of</b> ก็รู้ว่าต้องเป็นนาม",
+      ],
+      tip: "ฝึกตั้งคำถามทุกข้อ: \"ช่องว่างนี้ทำหน้าที่อะไร\" ก่อนถามว่า \"คำนี้แปลว่าอะไร\"" },
+
+    { h: "ชนิดของคำ 8 ชนิด",
+      p: ["ข้อสอบรูปคำวนอยู่กับ 4 ชนิดหลักคือ <b>Noun, Verb, Adjective, Adverb</b> อีก 4 ชนิดเป็นคำบอกตำแหน่งที่ช่วยให้รู้ว่าช่องว่างต้องเป็นอะไร"],
+      table: { head: ["ชนิด", "หน้าที่", "ตัวอย่าง"], rows: [
+        ["Noun (N) นาม", "ชื่อคน สิ่งของ สถานที่ ความคิด", "nurse, budget, safety, decision"],
+        ["Pronoun (Pro) สรรพนาม", "ใช้แทนนาม", "she, it, they, this, which"],
+        ["Verb (V) กริยา", "การกระทำหรือสภาพ เป็นแกนของประโยค", "approve, is, has reviewed"],
+        ["Adjective (Adj) คุณศัพท์", "ขยายนาม หรือเป็นส่วนเติมเต็มหลัง be", "new, effective, available"],
+        ["Adverb (Adv) กริยาวิเศษณ์", "ขยายกริยา คุณศัพท์ adverb อื่น หรือทั้งประโยค", "carefully, very, recently, however"],
+        ["Preposition (P) บุพบท", "วางหน้านามเพื่อบอกความสัมพันธ์", "in, on, for, during, despite"],
+        ["Conjunction (Conj) สันธาน", "เชื่อมคำหรือประโยค", "and, but, because, although"],
+        ["Determiner (D) คำนำหน้านาม", "บอกว่านามตัวไหน เท่าไร ของใคร", "a, the, this, my, each, some"],
+      ]},
+      pos: [
+        "The/D new/Adj manager/N carefully/Adv reviewed/V the/D annual/Adj budget/N for/P our/D hospital/N ./-",
+        "Unfortunately/Adv ,/- the/D results/N were/V not/Adv available/Adj because/Conj the/D system/N failed/V ./-",
+      ] },
+
+    { h: "Noun: คำนาม",
+      p: [
+        "นามทำหน้าที่ได้ 4 ตำแหน่ง: <b>(1) ประธาน</b> <b>(2) กรรมของกริยา</b> <b>(3) กรรมของบุพบท</b> <b>(4) ส่วนเติมเต็มหลัง be</b>",
+        "สัญญาณว่าช่องว่างเป็นนาม: อยู่หลัง <b>a / an / the / this / my / the company's</b> หรือหลัง adjective, อยู่หน้า <b>of</b>, อยู่หลัง <b>preposition</b>",
+      ],
+      ex: [
+        ["{S:The approval} {X:of the budget} {V:took} {O:two weeks}.", "ประธาน (หลัง The และหน้า of)"],
+        ["{S:We} {V:appreciate} {O:your cooperation}.", "กรรมของกริยา (หลัง your)"],
+        ["{S:The form} {V:is} {C:ready} {A:for signature}.", "กรรมของบุพบท (หลัง for)"],
+        ["{S:Patient safety} {V:is} {C:our top priority}.", "ส่วนเติมเต็มหลัง is"],
+      ],
+      table: { head: ["ลงท้าย", "ตัวอย่าง"], rows: [
+        ["-tion / -sion", "information, decision, expansion, admission"],
+        ["-ment", "payment, treatment, improvement, management"],
+        ["-ance / -ence", "attendance, assistance, reference, compliance"],
+        ["-ity / -ty", "quality, availability, safety, responsibility"],
+        ["-ness", "effectiveness, awareness, readiness"],
+        ["-sis / -ure", "analysis, diagnosis, procedure, failure"],
+        ["-er / -or / -ee / -ant / -ist (คน)", "employer, supervisor, employee, applicant, specialist"],
+      ]} },
+
+    { h: "นามที่เป็นคน vs นามที่เป็นสิ่งของ",
+      p: [
+        "ข้อสอบชอบให้ตัวเลือก 2 ตัวเป็นนามทั้งคู่ เช่น <b>applicant</b> (ผู้สมัคร) กับ <b>application</b> (ใบสมัคร) ต้องดู <b>ความหมาย</b> และ <b>เอกพจน์/พหูพจน์</b> ประกอบ",
+        "นามคนที่เป็นเอกพจน์นับได้ ต้องมีคำนำหน้า (a, the, each, every) เสมอ ส่วนนามนามธรรมหลายคำนับไม่ได้ ใช้ลอย ๆ ได้",
+      ],
+      table: { head: ["คน", "สิ่ง / การกระทำ"], rows: [
+        ["applicant ผู้สมัคร", "application ใบสมัคร การสมัคร"],
+        ["employee ลูกจ้าง / employer นายจ้าง", "employment การจ้างงาน"],
+        ["attendee ผู้เข้าร่วม", "attendance การเข้าร่วม"],
+        ["participant ผู้เข้าร่วม", "participation การมีส่วนร่วม"],
+        ["supervisor หัวหน้างาน", "supervision การกำกับดูแล"],
+        ["consultant ที่ปรึกษา", "consultation การปรึกษา"],
+        ["accountant นักบัญชี", "accounting การบัญชี"],
+        ["analyst นักวิเคราะห์", "analysis การวิเคราะห์"],
+        ["competitor คู่แข่ง", "competition การแข่งขัน"],
+        ["producer ผู้ผลิต", "product สินค้า / production การผลิต"],
+      ]},
+      ex: [
+        ["{S:Each applicant} {V:must submit} {O:a resume}.", "Each + คน เอกพจน์"],
+        ["{S:Applications} {V:must be submitted} {A:by Friday}.", "สิ่งที่ถูกส่ง จึงเป็นใบสมัคร"],
+        ["{S:Attendance} {X:at the workshop} {V:is} {C:mandatory}.", "การเข้าร่วม (นามธรรม) ไม่ต้องมี article"],
+      ] },
+
+    { h: "Compound Noun: นาม + นาม",
+      p: [
+        "ภาษาอังกฤษเอานามมาวางติดกันได้ โดยนามตัวแรกทำหน้าที่คล้าย adjective เช่น <span class=\"en\">safety regulations, application form, customer satisfaction, budget proposal</span>",
+        "นามตัวแรก <b>ไม่เติม s</b> แม้ความหมายเป็นพหูพจน์ และตัวเลขที่ใช้ขยายนามมีขีดกลางและไม่เติม s: <span class=\"en\">a three-day workshop, a 20-minute break</span>",
+        "ถ้าตัวเลือกมีทั้งนามและ adjective แล้วหลังช่องว่างเป็นนาม ให้ดูว่าเป็นคู่ compound noun ที่ใช้กันจริงไหม: <span class=\"en\">safety standards</span> ✓ <span class=\"en\">safe standards</span> ✗ (ความหมายต่าง)",
+      ],
+      ex: [
+        ["{S:The hospital} {V:updated} {O:its safety regulations}.", "safety (N) + regulations (N)"],
+        ["{S:Staff} {V:attended} {O:a two-day training course}.", "two-day ไม่เติม s"],
+      ] },
+
+    { h: "Adjective: คำคุณศัพท์",
+      p: ["Adjective อยู่ได้ 4 ตำแหน่ง ข้อสอบออกครบทุกแบบ:"],
+      table: { head: ["ตำแหน่ง", "รูปแบบ", "ตัวอย่าง"], rows: [
+        ["1. หน้านาม", "Det + (Adv) + Adj + N", "an effective plan / a highly qualified nurse"],
+        ["2. หลัง linking verb", "be, become, seem, remain, look, sound, feel, stay, prove, appear + Adj", "The room is available. / Prices remain stable."],
+        ["3. หลังกรรม", "make / keep / find / consider / leave + O + Adj", "Keep the area clean. / We found the course useful."],
+        ["4. หลัง -thing / -one", "something / anything / someone + Adj", "something important"],
+      ]},
+      ex: [
+        ["{S:Ms. Lee} {V:gave} {O:an impressive presentation}.", "หลัง an หน้านาม"],
+        ["{S:The new procedure} {V:proved} {C:effective}.", "prove ทำหน้าที่ linking verb"],
+        ["{V:Please keep} {O:patient records} {C:confidential}.", "keep + O + adj"],
+        ["{S:The results} {V:seem} {C:reasonable}.", "seem + adj"],
+      ],
+      table2: { head: ["ลงท้าย", "ตัวอย่าง"], rows: [
+        ["-ive", "effective, comprehensive, competitive, innovative"],
+        ["-ful / -less", "successful, useful, careless, wireless"],
+        ["-ous", "various, numerous, previous, cautious"],
+        ["-able / -ible", "available, reliable, responsible, flexible"],
+        ["-al / -ic", "financial, additional, economic, specific"],
+        ["-ent / -ant", "efficient, convenient, significant, relevant"],
+        ["-ary / -ory", "necessary, temporary, mandatory, satisfactory"],
+      ]} },
+
+    { h: "Participial Adjective: -ing / -ed / V3",
+      p: [
+        "<b>-ing</b> บอกลักษณะของสิ่งที่ก่อให้เกิดความรู้สึก: an <span class=\"en\">interesting</span> lecture, a <span class=\"en\">confusing</span> form",
+        "<b>-ed</b> บอกความรู้สึกของคน: <span class=\"en\">interested</span> staff, <span class=\"en\">confused</span> patients",
+        "V3 หลายคำใช้เป็น adjective ประจำในข้อสอบ: <span class=\"en\">attached file, enclosed document, detailed report, limited budget, qualified applicant, experienced staff, revised schedule, preferred method</span>",
+        "V-ing ที่ใช้เป็น adjective ประจำ: <span class=\"en\">existing system, remaining items, upcoming event, leading company, rising cost, missing file, demanding job</span>",
+      ],
+      ex: [
+        ["{S:The staff} {V:were} {C:satisfied} {A:with the results}.", "คนรู้สึกพอใจ → -ed"],
+        ["{S:The results} {V:were} {C:satisfying}.", "ผลน่าพอใจ → -ing"],
+        ["{V:Please see} {O:the attached file}.", "ไฟล์ถูกแนบ → V3"],
+      ],
+      traps: [["an interested lecture", "an interesting lecture", "บรรยายเป็นสิ่งที่ทำให้สนใจ"], ["the existed system", "the existing system", "exist ไม่มีกรรม ใช้ -ing"]] },
+
+    { h: "Adjective ที่ลงท้าย -ly",
+      p: ["คำเหล่านี้ลงท้าย -ly แต่เป็น <b>adjective</b> ถ้าต้องการใช้เป็น adverb ต้องเปลี่ยนเป็นวลี เช่น <span class=\"en\">in a friendly manner</span>"],
+      table: { head: ["คำ", "ความหมาย", "ตัวอย่าง"], rows: [
+        ["friendly", "เป็นมิตร", "friendly staff"],
+        ["costly", "แพง สิ้นเปลือง", "a costly mistake"],
+        ["timely", "ทันเวลา", "a timely response"],
+        ["likely / unlikely", "น่าจะ", "It is likely to rain."],
+        ["orderly", "เป็นระเบียบ", "an orderly process"],
+        ["daily / weekly / monthly", "รายวัน ฯลฯ (เป็น adv ได้ด้วย)", "a monthly report / paid monthly"],
+      ]} },
+
+    { h: "Adverb: กริยาวิเศษณ์",
+      p: [
+        "Adverb ขยายได้ 4 อย่าง: <b>กริยา</b> (work <span class=\"en\">efficiently</span>), <b>adjective</b> (<span class=\"en\">highly</span> qualified), <b>adverb อื่น</b> (<span class=\"en\">very</span> quickly), <b>ทั้งประโยค</b> (<span class=\"en\">Fortunately</span>, ...)",
+        "Adverb เป็น <b>ส่วนที่ตัดออกได้</b> ถ้าตัดคำในช่องว่างออกแล้วประโยคยังครบ (มี S + V + O/C) ช่องว่างนั้นมักเป็น adverb",
+      ],
+      table: { head: ["ตำแหน่ง", "ตัวอย่าง"], rows: [
+        ["ท้ายประโยค หลังกรรม", "She checked the data carefully."],
+        ["ระหว่าง S กับ V", "We regularly update the system."],
+        ["ระหว่างกริยาช่วยกับกริยาหลัก", "The clinic has recently opened. / will soon be"],
+        ["หลัง be", "The staff are always polite."],
+        ["ระหว่าง be กับ V3 / V-ing", "The report was carefully reviewed. / is currently being"],
+        ["หน้า adjective / adverb", "extremely busy / highly recommended"],
+        ["ต้นประโยค + comma", "Unfortunately, the flight was cancelled."],
+      ]},
+      ex: [
+        ["{S:The system} {V:works} {A:efficiently}.", "ขยาย works"],
+        ["{S:The clinic} {V:has} {A:recently} {V:opened} {O:a new branch}.", "อยู่ระหว่าง has กับ V3"],
+        ["{S:The report} {V:was} {A:carefully} {V:reviewed}.", "อยู่ระหว่าง was กับ V3"],
+        ["{A:Fortunately}, {S:the patient} {V:recovered} {A:quickly}.", "ขยายทั้งประโยค และขยาย recovered"],
+      ] },
+
+    { h: "Adverb ที่ไม่มี -ly และคู่ที่ความหมายเปลี่ยน",
+      p: ["บางคำใช้รูปเดียวกันทั้ง adj และ adv (hard, fast, late, early, high, daily) ถ้าเติม -ly จะได้คำใหม่ที่ความหมายต่างไป ข้อสอบชอบหลอกจุดนี้"],
+      table: { head: ["ไม่มี -ly", "มี -ly", "ตัวอย่าง"], rows: [
+        ["hard ขยัน หนัก", "hardly แทบจะไม่", "She works hard. / I hardly slept."],
+        ["late สาย", "lately ช่วงนี้", "He arrived late. / Have you seen her lately?"],
+        ["high สูง", "highly อย่างมาก", "jump high / highly recommended"],
+        ["near ใกล้", "nearly เกือบ", "live near / nearly finished"],
+        ["close ใกล้ชิด", "closely อย่างใกล้ชิด", "stand close / monitor closely"],
+        ["short สั้น", "shortly ในไม่ช้า", "cut short / will arrive shortly"],
+        ["most ที่สุด", "mostly ส่วนใหญ่", "the most useful / mostly nurses"],
+        ["good (adj)", "well (adv)", "a good nurse / works well"],
+      ]},
+      traps: [["She works hardly.", "She works hard.", "hardly = แทบจะไม่"], ["The product is high recommended.", "The product is highly recommended.", "ขยาย V3 ใช้ highly"], ["He did good on the test.", "He did well on the test.", "ขยายกริยาใช้ well"]] },
+
+    { h: "Verb: กริยา",
+      p: [
+        "ถ้าประโยคยัง <b>ไม่มีกริยาแท้</b> ช่องว่างต้องเป็นกริยา แล้วเลือกรูปให้ตรงกับคำข้างหน้า",
+        "คำลงท้ายที่บอกว่าเป็นกริยา: <b>-ize/-ise</b> (organize, prioritize), <b>-ify</b> (clarify, notify), <b>-en</b> (strengthen, widen), <b>-ate</b> (evaluate, operate) และขึ้นต้น <b>en-</b> (enable, ensure, enlarge)",
+      ],
+      table: { head: ["คำข้างหน้า", "รูปกริยา", "ตัวอย่าง"], rows: [
+        ["will / can / must / should", "V1", "will expand"],
+        ["to", "V1", "plan to expand"],
+        ["have / has / had", "V3", "has expanded"],
+        ["be (กำลัง)", "V-ing", "is expanding"],
+        ["be (ถูก)", "V3", "was expanded"],
+        ["ประธานเอกพจน์ + present", "V-s", "The clinic expands"],
+      ]},
+      ex: [
+        ["{S:The committee} {V:will finalize} {O:the plan} {A:next week}.", "will + V1"],
+        ["{V:Please notify} {O:the head nurse} {A:immediately}.", "ประโยคคำสั่ง ใช้ V1"],
+      ] },
+
+    { h: "ตารางตำแหน่ง → ชนิดคำ",
+      p: ["นี่คือหัวใจของบท ดูคำรอบช่องว่างแล้วเทียบตาราง:"],
+      table: { head: ["รูปแบบรอบช่องว่าง", "ต้องการ", "ตัวอย่าง"], rows: [
+        ["a / the / my / this + ___ + of / prep / V", "Noun", "the approval of"],
+        ["Det + Adj + ___", "Noun", "a new policy"],
+        ["Prep + ___", "Noun / V-ing", "for approval / by checking"],
+        ["___ + of", "Noun", "the success of"],
+        ["a / the + ___ + Noun", "Adjective", "an effective plan"],
+        ["be / become / seem / remain + ___", "Adjective", "is available"],
+        ["make / keep / find + O + ___", "Adjective", "keep it clean"],
+        ["Det + ___ + Adj + Noun", "Adverb", "a highly skilled nurse"],
+        ["be + ___ + V3 / V-ing", "Adverb", "was carefully reviewed"],
+        ["have / has + ___ + V3", "Adverb", "has recently opened"],
+        ["S + ___ + V", "Adverb", "We regularly update"],
+        ["S + V + O + ___", "Adverb", "checked the data carefully"],
+        ["___ , S + V", "Adverb", "Unfortunately, ..."],
+        ["will / must / to + ___", "Verb (V1)", "will expand"],
+      ]},
+      tip: "ถ้าลังเลระหว่าง adjective กับ adverb ให้ถามว่า \"คำนี้ขยายอะไร\" ขยายนามใช้ adjective ขยายอย่างอื่นทั้งหมดใช้ adverb" },
+
+    { h: "Word Family: ครอบครัวคำที่ออกบ่อย",
+      p: ["ท่องเป็นแถว จะเห็นรูปแบบคำลงท้าย และเลือกตัวเลือกได้เร็วขึ้น (— = ไม่มีรูปนี้ที่ใช้ทั่วไป)"],
+      table: { head: ["Noun", "Verb", "Adjective", "Adverb"], rows: [
+        ["decision", "decide", "decisive", "decisively"],
+        ["success", "succeed", "successful", "successfully"],
+        ["competition / competitor", "compete", "competitive", "competitively"],
+        ["production / product", "produce", "productive", "productively"],
+        ["creation / creativity", "create", "creative", "creatively"],
+        ["attraction", "attract", "attractive", "attractively"],
+        ["reliability / reliance", "rely", "reliable", "reliably"],
+        ["satisfaction", "satisfy", "satisfactory / satisfied", "satisfactorily"],
+        ["analysis / analyst", "analyze", "analytical", "analytically"],
+        ["consideration", "consider", "considerable", "considerably"],
+        ["significance", "signify", "significant", "significantly"],
+        ["extension", "extend", "extensive", "extensively"],
+        ["comparison", "compare", "comparable", "comparably"],
+        ["strength", "strengthen", "strong", "strongly"],
+        ["simplicity", "simplify", "simple", "simply"],
+        ["efficiency", "—", "efficient", "efficiently"],
+        ["accuracy", "—", "accurate", "accurately"],
+        ["importance", "—", "important", "importantly"],
+        ["responsibility", "—", "responsible", "responsibly"],
+        ["availability", "—", "available", "—"],
+        ["confidence", "confide", "confident", "confidently"],
+        ["confidentiality", "—", "confidential", "confidentially"],
+        ["regulation", "regulate", "regulatory", "—"],
+        ["improvement", "improve", "improved", "—"],
+      ]} },
+
+    { h: "Adjective คู่ที่หน้าตาคล้ายแต่ความหมายต่าง",
+      p: ["ข้อสอบระดับสูงให้ตัวเลือกเป็น adjective ทั้ง 2–3 ตัว ต้องรู้ความหมาย"],
+      table: { head: ["คำ", "ความหมาย", "ตัวอย่าง"], rows: [
+        ["considerable / considerate", "มาก / เกรงใจผู้อื่น", "a considerable amount / a considerate colleague"],
+        ["economic / economical", "เกี่ยวกับเศรษฐกิจ / ประหยัด", "economic growth / an economical car"],
+        ["confident / confidential", "มั่นใจ / เป็นความลับ", "confident speaker / confidential records"],
+        ["respective / respectful / respectable", "ของแต่ละคน / ให้ความเคารพ / น่านับถือ", "their respective roles"],
+        ["sensitive / sensible", "อ่อนไหว ละเอียดอ่อน / มีเหตุผล", "sensitive data / a sensible decision"],
+        ["successive / successful", "ติดต่อกัน / ประสบความสำเร็จ", "three successive years"],
+        ["comprehensive / comprehensible", "ครอบคลุม / เข้าใจได้", "comprehensive coverage"],
+        ["historic / historical", "สำคัญทางประวัติศาสตร์ / เกี่ยวกับประวัติศาสตร์", "a historic decision / historical records"],
+        ["industrial / industrious", "อุตสาหกรรม / ขยัน", "industrial area / an industrious worker"],
+      ]} },
   ],
-  examples: [
-    ["{S:The installation} {V:took} {O:three weeks}.", "การติดตั้งใช้เวลา 3 สัปดาห์ (ตำแหน่งประธานต้องเป็นนาม)"],
-    ["{S:Ms. Lee} {V:gave} {O:an impressive presentation}.", "หลัง an และหน้านาม ต้องเป็นคุณศัพท์"],
-    ["{S:The team} {V:checked} {O:the data} {A:carefully}.", "ขยายกริยา checked ใช้ adverb"],
-    ["{S:The new system} {V:is} {C:highly efficient}.", "highly (adv) ขยาย efficient (adj) ซึ่งเป็นส่วนเติมเต็มหลัง is"],
-  ],
+  formula: ["Det/Adj + [NOUN]           the [decision]", "Det + [ADJ] + Noun          an [effective] plan", "be/seem/become + [ADJ]      is [available]", "Verb (+O) + [ADV]           reviewed it [carefully]", "[ADV] + Adj / V3            [highly] qualified", "Prep + [NOUN / V-ing]       for [approval] / by [checking]", "will/to + [VERB]            will [expand]"],
   traps: [
     ["a success plan", "a successful plan", "หน้านามต้องใช้ adj ไม่ใช่ noun"],
     ["The price is reasonably.", "The price is reasonable.", "หลัง be ใช้ adj ไม่ใช้ adv"],
     ["She works hardly.", "She works hard.", "hard เป็น adv อยู่แล้ว hardly แปลว่า แทบจะไม่"],
-    ["friendly → friendlily", "in a friendly way", "-ly บางคำเป็น adj: friendly, costly, timely, likely, lively"],
+    ["friendly → friendlily", "in a friendly way", "-ly บางคำเป็น adj: friendly, costly, timely, likely"],
+    ["Each application must sign the form.", "Each applicant must sign the form.", "คนเซ็นได้ ใบสมัครเซ็นไม่ได้"],
+    ["a three-days workshop", "a three-day workshop", "ตัวเลขขยายนามไม่เติม s"],
+    ["The training was very interested.", "The training was very interesting.", "สิ่งที่ทำให้สนใจใช้ -ing"],
+    ["the economical situation", "the economic situation", "เกี่ยวกับเศรษฐกิจใช้ economic"],
   ],
-  qs: [
-    ["fill", "Please read the instructions ___ before using the machine.", ["careful", "carefully", "carefulness", "care"], 1, "ประโยคมี S-V-O ครบแล้ว (read the instructions) ช่องว่างขยายกริยา read จึงใช้ adverb"],
-    ["fill", "The ___ of the new software took three months.", ["install", "installed", "installation", "installing"], 2, "หลัง The และหน้า of ต้องเป็นนาม คำนามคือ installation"],
-    ["fill", "Ms. Park gave an ___ presentation at the conference.", ["impress", "impressive", "impressively", "impression"], 1, "an ___ presentation ช่องว่างอยู่ระหว่าง article กับนาม จึงต้องเป็น adj"],
-    ["fill", "The hospital is ___ committed to patient safety.", ["deep", "deeply", "depth", "deepen"], 1, "ขยาย committed (V3 ที่ใช้เหมือน adj) ใช้ adverb"],
-    ["fill", "Most staff members are now ___ with the new procedure.", ["familiar", "familiarity", "familiarize", "familiarly"], 0, "หลัง be ใช้ adj และ familiar with เป็นคู่คำ"],
-    ["err", "The [[annual]] report was [[careful]] [[reviewed]] by [[the]] committee.", 1, "careful ขยาย reviewed (กริยา) ต้องเป็น carefully"],
+  sets: [
+    { t: "แบบฝึกหัด 1A · ช่องว่างต้องการคำชนิดใด", d: "ไม่ต้องแปล ดูตำแหน่งอย่างเดียว", noMock: true, qs: [
+      ["fill", "The ___ of the new wing was delayed.", ["Noun", "Verb", "Adjective", "Adverb"], 0, "The ___ of → Noun"],
+      ["fill", "She is a ___ nurse.", ["Noun", "Verb", "Adjective", "Adverb"], 2, "a ___ nurse → หน้านามใช้ Adjective"],
+      ["fill", "The data was ___ checked by two auditors.", ["Noun", "Verb", "Adjective", "Adverb"], 3, "was ___ checked → ระหว่าง be กับ V3 ใช้ Adverb"],
+      ["fill", "The committee will ___ the proposal next week.", ["Noun", "Verb", "Adjective", "Adverb"], 1, "will ___ the proposal → V1"],
+      ["fill", "We are ___ that the project will succeed.", ["Noun", "Verb", "Adjective", "Adverb"], 2, "are ___ that → หลัง be ใช้ Adjective (confident)"],
+      ["fill", "Thank you for your ___.", ["Noun", "Verb", "Adjective", "Adverb"], 0, "your ___ → หลัง possessive ใช้ Noun"],
+      ["fill", "___, the system was restored within an hour.", ["Noun", "Verb", "Adjective", "Adverb"], 3, "ต้นประโยค + comma → Adverb ขยายทั้งประโยค"],
+      ["fill", "The new policy makes the process ___.", ["Noun", "Verb", "Adjective", "Adverb"], 2, "make + O + ___ → Adjective"],
+      ["fill", "It is a ___ designed program.", ["Noun", "Verb", "Adjective", "Adverb"], 3, "a ___ designed program → ขยาย designed (V3 ที่ทำหน้าที่ adj) ใช้ Adverb"],
+      ["fill", "Our team ___ reviews all claims before submission.", ["Noun", "Verb", "Adjective", "Adverb"], 3, "S + ___ + V → Adverb (เช่น regularly)"],
+    ]},
+    { t: "แบบฝึกหัด 1B · เติมรูปคำให้ถูก", d: "ข้อสอบแบบ TOEIC Part 5", qs: [
+      ["fill", "The ___ of the training program depends on staff participation.", ["succeed", "success", "successful", "successfully"], 1, "The ___ of → นาม success"],
+      ["fill", "Ms. Tan is ___ for the hospital's budget planning.", ["responsibility", "responsible", "responsibly", "respond"], 1, "is ___ for → adj: responsible for"],
+      ["fill", "The new software has ___ reduced paperwork.", ["significant", "significance", "significantly", "signify"], 2, "has ___ reduced → ระหว่าง has กับ V3 ใช้ adverb"],
+      ["fill", "All ___ must register at the front desk.", ["attend", "attendance", "attendees", "attended"], 2, "All + ___ + must register → ต้องเป็นนามคนพหูพจน์ที่ลงทะเบียนได้"],
+      ["fill", "The clinic received ___ feedback from patients.", ["positive", "positively", "positivity", "posit"], 0, "หน้านาม feedback ใช้ adj"],
+      ["fill", "Please ___ that all forms are signed before submission.", ["sure", "ensure", "surely", "assurance"], 1, "Please + V1 → ensure"],
+      ["fill", "The director spoke ___ about the new policy.", ["confident", "confidence", "confidently", "confide"], 2, "ขยายกริยา spoke ใช้ adverb"],
+      ["fill", "We need a more ___ method to track claims.", ["rely", "reliable", "reliably", "reliance"], 1, "a more ___ method → adj ขั้นกว่า"],
+      ["fill", "The audit report was ___ detailed.", ["extreme", "extremely", "extremity", "extremes"], 1, "ขยาย detailed (adj) ใช้ adverb"],
+      ["fill", "The committee made a final ___ on Monday.", ["decide", "decisive", "decision", "decisively"], 2, "a final ___ → Det + Adj + Noun"],
+      ["fill", "Medical costs have risen ___ over the past five years.", ["steady", "steadily", "steadiness", "steadied"], 1, "ขยายกริยา have risen (ไม่มีกรรม) ใช้ adverb"],
+      ["fill", "Our clinic offers ___ services at a low cost.", ["comprehensive", "comprehension", "comprehend", "comprehensively"], 0, "หน้านาม services ใช้ adj"],
+      ["fill", "Customer ___ is our top priority.", ["satisfy", "satisfied", "satisfaction", "satisfactory"], 2, "Customer ___ is → compound noun ใช้นาม satisfaction"],
+      ["fill", "The meeting room is ___ on Tuesday afternoons.", ["available", "availability", "avail", "availably"], 0, "หลัง is ใช้ adj"],
+      ["fill", "Many staff found the new claim form ___.", ["confuse", "confusing", "confusion", "confusedly"], 1, "find + O + adj และฟอร์มเป็นสิ่งที่ทำให้สับสน → -ing"],
+      ["fill", "The staff felt ___ after the twelve-hour shift.", ["tired", "tiring", "tire", "tiredly"], 0, "feel + adj และเป็นความรู้สึกของคน → -ed"],
+      ["fill", "The nurse ___ explained the procedure to the patient.", ["patient", "patience", "patiently", "patients"], 2, "S + ___ + V → adverb"],
+      ["fill", "___ for the scholarship must be submitted by June 30.", ["Applicants", "Applications", "Apply", "Applied"], 1, "สิ่งที่ถูกส่ง (must be submitted) คือใบสมัคร"],
+      ["fill", "The new manager has ___ improved team morale.", ["great", "greatly", "greatness", "greater"], 1, "has ___ improved → adverb"],
+      ["fill", "Because of the ___ budget, the project was postponed.", ["limit", "limited", "limiting", "limitation"], 1, "the ___ budget → adj; limited budget = งบที่ถูกจำกัด"],
+      ["fill", "The hospital plans to ___ its outpatient department next year.", ["expansion", "expand", "expansive", "expanded"], 1, "to + V1"],
+      ["fill", "Please read the ___ document before the meeting.", ["attach", "attaching", "attached", "attachment"], 2, "เอกสารที่ถูกแนบ → V3 ทำหน้าที่ adj"],
+    ]},
+    { t: "แบบฝึกหัด 1C · หาจุดผิด", d: "แบบ Error Identification ของ CU-TEP", qs: [
+      ["err", "The [[new]] system [[works]] [[efficient]] [[and]] saves time.", 2, "ขยายกริยา works ต้องเป็น efficiently"],
+      ["err", "[[Her]] [[explain]] of the [[results]] was [[clear]].", 1, "หลัง Her และหน้า of ต้องเป็นนาม explanation"],
+      ["err", "The hospital [[has]] [[recent]] [[opened]] a new [[clinic]].", 1, "ระหว่าง has กับ V3 ต้องเป็น recently"],
+      ["err", "We [[need]] to [[decision]] [[quickly]] about the [[budget]].", 1, "หลัง to ต้องเป็นกริยา decide"],
+      ["err", "The [[applicants]] were [[high]] [[qualified]] for the [[position]].", 1, "ขยาย qualified ใช้ highly"],
+      ["err", "The training [[was]] very [[interested]] and [[useful]] for [[all]] staff.", 1, "การอบรมเป็นสิ่งที่น่าสนใจ → interesting"],
+      ["err", "[[Fortunate]], the [[patient]] [[recovered]] [[quickly]].", 0, "ต้นประโยค + comma ใช้ adverb Fortunately"],
+      ["err", "The [[economical]] situation [[has]] [[affected]] [[many]] hospitals.", 0, "เกี่ยวกับเศรษฐกิจใช้ economic"],
+      ["err", "All staff must attend a [[three-days]] [[safety]] workshop [[organized]] by the [[provincial]] office.", 0, "ตัวเลขขยายนามไม่เติม s → three-day"],
+      ["err", "The [[new]] manager [[treats]] everyone [[friendly]] and [[fairly]].", 2, "friendly เป็น adj ขยายกริยาไม่ได้ → in a friendly way"],
+    ]},
+    { t: "แบบฝึกหัด 1D · คู่คำที่ความหมายต่าง", d: "ข้อระดับ 800+ ต้องใช้ความหมายช่วย", qs: [
+      ["fill", "The project required a ___ amount of time and money.", ["considerable", "considerate", "considering", "consideration"], 0, "considerable = มาก"],
+      ["fill", "Buying supplies in bulk is more ___ for the hospital.", ["economic", "economical", "economy", "economics"], 1, "economical = ประหยัด"],
+      ["fill", "Patient records must be kept strictly ___.", ["confident", "confidential", "confidence", "confidently"], 1, "keep + O + adj; confidential = ลับ"],
+      ["fill", "The two departments will present their ___ reports on Friday.", ["respectful", "respective", "respectable", "respect"], 1, "respective = ของแต่ละฝ่าย"],
+      ["fill", "Nurses must handle ___ information with care.", ["sensible", "sensitive", "sense", "sensibly"], 1, "sensitive information = ข้อมูลอ่อนไหว"],
+      ["fill", "The hospital won the quality award for three ___ years.", ["successful", "successive", "success", "succeeding"], 1, "successive = ติดต่อกัน"],
+    ]},
   ]},
 { id: "pattern", part: "A", title: "Sentence Patterns & Clauses", th: "5 โครงสร้างประโยค วลีกับอนุประโยค",
   why: "<b>หัวใจของการทำข้อสอบ</b> หา S และ V แท้ (finite verb) ให้เจอก่อน แล้วจะรู้ทันทีว่าช่องว่างขาดอะไร กฎสำคัญคือ 1 clause มี V แท้ 1 ตัว ถ้ามี 2 clause ต้องมีคำเชื่อม",
@@ -635,7 +942,11 @@ const STRATEGY = [
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
-L.forEach(l => l.qs.forEach((q, i) => BANK.push({ id: l.id + "-" + i, lesson: l.id, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] })));
+function mkQ(q, id, lesson, set, noMock) { return { id, lesson, set, noMock: !!noMock, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] }; }
+L.forEach(l => {
+  if (l.sets) l.sets.forEach((st, si) => st.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-s" + si + "-" + i, l.id, si, st.noMock))));
+  else l.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-" + i, l.id, 0, false)));
+});
 function segs(stem) { return [...stem.matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1]); }
 
 /* ===== Storage (per-viewer) ===== */
@@ -704,12 +1015,74 @@ function viewLessons() {
     ${PARTS.map(p => `<div class="part"><span class="eyebrow">${esc(p.name)}</span><div class="lessons">
       ${L.filter(l => l.part === p.id).map(l => { const i = L.indexOf(l); return `<button class="li" data-go="lesson-${l.id}">
         <span class="n">${String(i + 1).padStart(2, "0")}</span>
-        <span style="min-width:0"><span class="t" lang="en">${esc(l.title)}</span><span class="d">${esc(l.th)}</span></span>
+        <span style="min-width:0"><span class="t" lang="en">${esc(l.title)}</span><span class="d">${esc(l.th)}${l.book ? ` · ฉบับตำรา ${l.book.length} หัวข้อ · ${BANK.filter(q => q.lesson === l.id).length} ข้อ` : ""}</span></span>
         ${pillFor(lessonStat(l.id))}</button>`; }).join("")}
     </div></div>`).join("")}`;
 }
 
+const POSC = { N: "S", Pro: "S", V: "V", Adj: "C", Adv: "A", P: "O", D: "X", Conj: "X" };
+function posLine(str) {
+  return `<div class="posline" lang="en">${str.split(" ").map(tok => { const k = tok.lastIndexOf("/"); const w = tok.slice(0, k), t = tok.slice(k + 1);
+    return t === "-" ? `<span class="pw punct">${esc(w)}</span>` : `<span class="pw k-${POSC[t] || "X"}"><span>${esc(w)}</span><b>${esc(t)}</b></span>`; }).join("")}</div>`;
+}
+function tableHTML(t) {
+  return `<div class="tbl-wrap"><table><thead><tr>${t.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, j) => `<td${j === 0 ? ' class="en"' : ""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function trapsHTML(tr) {
+  return `<div class="traps">${tr.map(t => `<div class="trap"><div lang="en"><span class="w">${esc(t[0])}</span> → <span class="r">${esc(t[1])}</span></div><div class="note">${esc(t[2])}</div></div>`).join("")}</div>`;
+}
+function exHTML(ex) {
+  return `<div class="ex">${ex.map(e => `<div class="item"><div class="sent" lang="en">${annotate(e[0])}</div><div class="th">${esc(e[1])}</div></div>`).join("")}</div>`;
+}
+function setsHTML(l) {
+  const sets = l.sets || [{ t: "ทำข้อสอบท้ายบท", d: "", qs: l.qs }];
+  return sets.map((st, si) => {
+    const qs = BANK.filter(q => q.lesson === l.id && q.set === si);
+    const answered = qs.filter(q => practiceState[q.id] != null).length, correct = qs.filter(q => practiceState[q.id] === q.ans).length;
+    return `<section class="block" id="set-${si}"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">${esc(st.t)}</h2>${st.d ? `<div class="note">${esc(st.d)}</div>` : ""}</div>
+      <span class="note" style="font-variant-numeric:tabular-nums">${answered ? `ถูก ${correct}/${answered} จาก ${qs.length}` : `${qs.length} ข้อ`}</span></div>
+      <div class="qs" style="margin-top:12px">${qs.map((q, j) => qCard(q, j, { picked: practiceState[q.id], reveal: practiceState[q.id] != null })).join("")}</div>
+      ${answered ? `<button class="btn" id="redoBtn" data-set="${si}" style="margin-top:12px">ทำชุดนี้ใหม่</button>` : ""}</section>`;
+  }).join("");
+}
+function viewBook(l) {
+  const i = L.indexOf(l), n = i + 1, prev = L[i - 1], next = L[i + 1];
+  const total = BANK.filter(q => q.lesson === l.id).length;
+  return `<div class="${S.plain ? "plain" : ""}">
+    <a class="note" href="#lessons" style="color:var(--muted)">‹ ทุกบท</a>
+    <div class="eyebrow" style="margin-top:10px">บทที่ ${n} · ${esc(PARTS.find(p => p.id === l.part).name)}</div>
+    <h1 lang="en">${esc(l.title)}</h1>
+    <p class="sub">${esc(l.th)} · ${l.book.length} หัวข้อ · แบบฝึกหัด ${total} ข้อ</p>
+    <div class="why">${l.why}</div>
+    <nav class="toc" aria-label="สารบัญบท"><div class="eyebrow">สารบัญ</div><ol>
+      ${l.book.map((s, k) => `<li><button data-jump="sec-${k}"><span class="tn">${n}.${k + 1}</span>${esc(s.h)}</button></li>`).join("")}
+      <li><button data-jump="sum"><span class="tn">${n}.${l.book.length + 1}</span>สรุปท้ายบทและกับดัก</button></li>
+      ${l.sets.map((st, si) => `<li><button data-jump="set-${si}"><span class="tn">✎</span>${esc(st.t)}</button></li>`).join("")}
+    </ol><button class="btn toggle" id="plainBtn" aria-pressed="${!S.plain}" style="margin-top:8px">${S.plain ? "แสดงแผนผังประโยค" : "ซ่อนแผนผังประโยค"}</button></nav>
+    ${l.book.map((s, k) => `<section class="block chapter" id="sec-${k}">
+      <h2><span class="tn">${n}.${k + 1}</span>${esc(s.h)}</h2>
+      ${(s.p || []).map(x => `<p class="para">${x}</p>`).join("")}
+      ${s.pos ? `<div class="poswrap">${s.pos.map(posLine).join("")}</div>` : ""}
+      ${s.table ? tableHTML(s.table) : ""}
+      ${s.ex ? `<div class="subh">ตัวอย่าง</div>${exHTML(s.ex)}` : ""}
+      ${s.table2 ? `<div class="subh">คำลงท้ายที่พบบ่อย</div>${tableHTML(s.table2)}` : ""}
+      ${s.tip ? `<div class="tip"><b>เทคนิค</b> ${esc(s.tip)}</div>` : ""}
+      ${s.traps ? `<div class="subh">ระวัง</div>${trapsHTML(s.traps)}` : ""}
+    </section>`).join("")}
+    <section class="block chapter" id="sum"><h2><span class="tn">${n}.${l.book.length + 1}</span>สรุปท้ายบทและกับดัก</h2>
+      <div class="formula" lang="en">${l.formula.map(f => `<div>${esc(f)}</div>`).join("")}</div>
+      <div class="subh">กับดักที่เจอบ่อยในข้อสอบ</div>${trapsHTML(l.traps)}
+    </section>
+    ${setsHTML(l)}
+    <nav class="pager">
+      ${prev ? `<a class="btn" href="#lesson-${prev.id}">‹ <span lang="en">${esc(prev.title)}</span></a>` : "<span></span>"}
+      ${next ? `<a class="btn primary" href="#lesson-${next.id}"><span lang="en">${esc(next.title)}</span> ›</a>` : `<a class="btn primary" href="#test">ไปทำข้อสอบรวม ›</a>`}
+    </nav>
+  </div>`;
+}
+
 function viewLesson(id) {
+  if (LESSON[id].book) return viewBook(LESSON[id]);
   const l = LESSON[id], i = L.indexOf(l);
   const prev = L[i - 1], next = L[i + 1];
   const qs = BANK.filter(q => q.lesson === id);
@@ -755,11 +1128,11 @@ function viewLesson(id) {
 
 function fmt(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 function newTest(n, scope) {
-  let pool = BANK.slice();
+  let pool = BANK.filter(q => !q.noMock);
   if (scope === "weak") {
     const weakIds = L.filter(l => { const p = lessonStat(l.id).pct; return p == null || p < 80; }).map(l => l.id);
     pool = pool.filter(q => weakIds.includes(q.lesson) && !(S.ans[q.id] && S.ans[q.id].last === 1));
-    if (pool.length < 5) pool = BANK.slice();
+    if (pool.length < 5) pool = BANK.filter(q => !q.noMock);
   } else if (scope !== "all") pool = pool.filter(q => LESSON[q.lesson].part === scope);
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   test = { qs: pool.slice(0, Math.min(n, pool.length)), picks: {}, start: Date.now(), done: false };
@@ -836,6 +1209,7 @@ window.addEventListener("hashchange", () => { route = parse(); resetArmed = fals
 /* ===== Events ===== */
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.jump) { const t = document.getElementById(b.dataset.jump); if (t) t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
   if (b.dataset.go) { location.hash = b.dataset.go; return; }
   if (b.dataset.pick != null) {
     const qid = b.closest(".q").dataset.qid, q = BANK.find(x => x.id === qid), pick = +b.dataset.pick;
@@ -845,7 +1219,7 @@ document.addEventListener("click", e => {
   }
   switch (b.id) {
     case "plainBtn": S.plain = !S.plain; save(); render(true); break;
-    case "redoBtn": BANK.filter(q => q.lesson === route.lesson).forEach(q => delete practiceState[q.id]); render(true); break;
+    case "redoBtn": BANK.filter(q => q.lesson === route.lesson && q.set === +(b.dataset.set || 0)).forEach(q => delete practiceState[q.id]); render(true); break;
     case "startBtn": newTest(+document.getElementById("tN").value, document.getElementById("tScope").value); render(); window.scrollTo(0, 0); break;
     case "submitBtn": {
       test.done = true; test.end = Date.now();
