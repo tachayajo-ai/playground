@@ -2564,34 +2564,315 @@ const L = [
     ]},
   ]},
 { id: "conj", part: "C", title: "Connectors", th: "Conjunction / Preposition / Adverb เชื่อมความ",
-  why: "<b>เลือกตามสิ่งที่ตามหลัง</b> ไม่ใช่ตามความหมายอย่างเดียว: Although กับ Despite ความหมายเหมือนกัน แต่ Although ตามด้วย clause ส่วน Despite ตามด้วยนามหรือ V-ing",
-  formula: ["Conjunction + S + V          although / because / while / since / unless", "Preposition + N / V-ing      despite / because of / due to / during", "S + V. Adverb, S + V.         However, / Therefore, / Moreover,", "so + adj/adv + that  |  such + (a) adj + N + that", "both A and B | either A or B | not only A but (also) B"],
-  ruleHead: ["ความหมาย", "+ clause", "+ noun / V-ing", "+ ระหว่างประโยค"],
-  rules: [
-    ["แม้ว่า", "although, though, even though", "despite, in spite of", "however, nevertheless"],
-    ["เพราะ", "because, since, as", "because of, due to, owing to", "therefore (ผล)"],
-    ["ระหว่าง", "while", "during", "meanwhile"],
-    ["นอกจากนี้", "—", "in addition to, besides", "moreover, furthermore, in addition"],
-    ["ถ้าไม่", "unless", "without", "otherwise"],
+  why: "<b>เลือกตามสิ่งที่ตามหลัง</b> ไม่ใช่ตามความหมายอย่างเดียว: Although กับ Despite ความหมายเหมือนกัน แต่ Although ตามด้วย clause ส่วน Despite ตามด้วยนามหรือ V-ing ข้อสอบมักให้ตัวเลือกความหมายเดียวกันแต่คนละตระกูล และใน TOEIC Part 6 ต้องเลือกคำเชื่อมระหว่างประโยคตามเหตุผลของเนื้อเรื่อง",
+  book: [
+    { h: "คำเชื่อม 4 ตระกูล",
+      p: [
+        "คำเชื่อมที่ความหมายเหมือนกันอาจอยู่คนละตระกูล และแต่ละตระกูล <b>ตามด้วยสิ่งที่ต่างกัน และใช้เครื่องหมายวรรคตอนต่างกัน</b>",
+      ],
+      table: { head: ["ตระกูล", "ตามด้วย", "วรรคตอน", "ตัวอย่าง"], rows: [
+        ["Coordinating conj. (FANBOYS)", "clause / คำ / วลี ชนิดเดียวกัน", "IC, and IC", "for, and, nor, but, or, yet, so"],
+        ["Subordinating conj.", "clause (S + V)", "DC, IC / IC DC", "although, because, when, if, unless, while"],
+        ["Preposition", "นาม / V-ing", "Prep + N, IC", "despite, because of, during, due to, in addition to"],
+        ["Conjunctive adverb", "อยู่ระหว่าง 2 ประโยค", "IC. However, IC / IC; however, IC", "however, therefore, moreover, otherwise"],
+      ]},
+      ex: [
+        ["{S:The budget} {V:was} {C:limited}, {X:but} {S:the team} {V:finished} {A:on time}.", "FANBOYS"],
+        ["{X:Although} {S:the budget} {V:was} {C:limited}, {S:the team} {V:finished} {A:on time}.", "subordinating + clause"],
+        ["{X:Despite} {A:the limited budget}, {S:the team} {V:finished} {A:on time}.", "preposition + นาม"],
+        ["{S:The budget} {V:was} {C:limited}; {X:however}, {S:the team} {V:finished} {A:on time}.", "adverb ระหว่างประโยค"],
+      ] },
+
+    { h: "เลือกด้วยสิ่งที่ตามหลัง",
+      p: [
+        "ข้อสอบ connector ส่วนใหญ่ <b>ตัดตัวเลือกได้ 2 ตัวโดยไม่ต้องแปล</b> ด้วยขั้นตอนนี้:",
+        "<b>ขั้น 1</b> หลังช่องว่างเป็น <b>clause (มี S + V แท้)</b> หรือ <b>นาม/V-ing</b>?",
+        "<b>ขั้น 2</b> ช่องว่างอยู่ <b>ต้นประโยคหลังจุด หรือหลัง ; และตามด้วย comma</b> ไหม? ถ้าใช่ = conjunctive adverb",
+        "<b>ขั้น 3</b> เหลือ 2 ตัวในตระกูลเดียวกัน ค่อยเลือกตามความหมาย (ขัดแย้ง / เหตุ / ผล / เพิ่มเติม)",
+      ],
+      table: { head: ["หลังช่องว่าง", "ตระกูลที่ใช้ได้"], rows: [
+        ["S + V (clause)", "although, because, while, since, unless, so that, even though"],
+        ["นาม / V-ing", "despite, in spite of, because of, due to, during, in addition to, instead of"],
+        ["ต้นประโยค + comma (ประโยคก่อนหน้าจบแล้ว)", "however, therefore, moreover, in addition, as a result, nevertheless"],
+        ["the fact that + clause", "despite / in spite of / due to + the fact that"],
+      ]},
+      tip: "หลอกบ่อย: หลังช่องว่างเป็นนามยาว ๆ ที่มี V-ing หรือ V3 ขยาย เช่น despite the rising costs ซึ่งไม่ใช่ clause เพราะไม่มีกริยาแท้" },
+
+    { h: "ขัดแย้ง: although / despite / however",
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["+ clause", "although, though, even though, while, whereas", "Although it rained, the clinic stayed open."],
+        ["+ นาม / V-ing", "despite, in spite of, notwithstanding", "Despite the rain, the clinic stayed open."],
+        ["ระหว่างประโยค", "however, nevertheless, nonetheless, even so, on the other hand, in contrast", "It rained. However, the clinic stayed open."],
+        ["FANBOYS", "but, yet", "It rained, but the clinic stayed open."],
+      ]},
+      p: [
+        "<b>while / whereas</b> = ในขณะที่ (เทียบความต่าง 2 สิ่ง): <span class=\"en\">Some hospitals use paper forms, whereas others use e-Claim.</span>",
+        "<b>even though</b> (เรื่องจริง) vs <b>even if</b> (สมมติ): <span class=\"en\">Even though it is raining, ...</span> (ฝนตกจริง) / <span class=\"en\">Even if it rains, ...</span> (ถ้าตก)",
+        "<b>despite / in spite of + the fact that + clause</b> ใช้ได้ (ไม่ใช่ despite of)",
+        "ห้ามใช้ although คู่กับ but ในประโยคเดียว",
+      ],
+      ex: [
+        ["{X:Even though} {S:the staff} {V:were} {C:tired}, {S:they} {V:continued} {O:working}.", "+ clause (เรื่องจริง)"],
+        ["{X:In spite of} {A:the heavy workload}, {S:the nurses} {V:met} {O:all deadlines}.", "+ นาม"],
+        ["{X:Despite} {A:being short-staffed}, {S:the clinic} {V:stayed} {C:open}.", "+ V-ing"],
+        ["{S:Hospital A} {V:uses} {O:e-Claim}, {X:whereas} {S:Hospital B} {V:still uses} {O:paper forms}.", "เทียบความต่าง"],
+      ],
+      traps: [["Despite of the rain, ...", "Despite the rain, ... / In spite of the rain, ...", "despite ไม่มี of"], ["Despite it rained, ...", "Although it rained, ...", "despite + นาม"], ["Although it was late, but they stayed.", "Although it was late, they stayed.", "ห้ามใช้คู่กับ but"]] },
+
+    { h: "เหตุ: because / because of / due to",
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["+ clause", "because, since, as, now that", "Because the system failed, we used paper."],
+        ["+ นาม / V-ing", "because of, due to, owing to, on account of, thanks to", "Because of the system failure, we used paper."],
+        ["FANBOYS (ทางการ)", "for", "We used paper, for the system had failed."],
+      ]},
+      p: [
+        "<b>due to</b> ใช้หลัง be ได้ (เป็น adjective phrase): <span class=\"en\">The delay was due to bad weather.</span> ส่วน because of ใช้แบบนี้ได้น้อยกว่าในภาษาทางการ",
+        "<b>thanks to</b> = เพราะ (ผลดี) · <b>now that</b> = เพราะตอนนี้...แล้ว",
+        "<b>since / as</b> ขึ้นต้นประโยคมักแปลว่า \"เพราะ\" ไม่ใช่ \"ตั้งแต่\" ดูบริบท",
+      ],
+      ex: [
+        ["{S:The flight} {V:was delayed} {X:due to} {A:bad weather}.", "+ นาม"],
+        ["{X:Since} {S:the budget} {V:has been cut}, {S:we} {V:must reduce} {O:costs}.", "since = เพราะ"],
+        ["{X:Thanks to} {A:the new system}, {S:claims} {V:are processed} {A:faster}.", "ผลดี"],
+        ["{X:Now that} {S:the wing} {V:is} {C:open}, {S:we} {V:can admit} {O:more patients}.", "เพราะตอนนี้...แล้ว"],
+      ],
+      traps: [["Because of the weather was bad, ...", "Because the weather was bad, ...", "because of + นาม"], ["Due to it rained, ...", "Because it rained, ... / Due to the rain, ...", "due to + นาม"]] },
+
+    { h: "ผล: so / therefore / as a result",
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["FANBOYS", "so", "The system failed, so we used paper."],
+        ["ระหว่างประโยค", "therefore, thus, consequently, as a result, hence, accordingly", "The system failed. Therefore, we used paper."],
+      ]},
+      p: [
+        "<b>ระวัง</b>: <b>as a result</b> (ผลคือ ระหว่างประโยค) ≠ <b>as a result of + นาม</b> (เพราะ...): <span class=\"en\">As a result of the failure, ...</span> = Because of the failure",
+        "<b>so</b> เป็น FANBOYS ใช้ comma หน้า ส่วน therefore เป็น adverb ใช้ ; หรือจุด แล้วตามด้วย comma",
+      ],
+      ex: [
+        ["{S:Several forms} {V:were} {C:incomplete}; {X:therefore}, {S:the claims} {V:were rejected}.", "therefore ระหว่างประโยค"],
+        ["{X:As a result of} {A:the audit}, {S:three claims} {V:were returned}.", "as a result of + นาม = เพราะ"],
+      ] },
+
+    { h: "จุดประสงค์: so that / in order to / for",
+      p: [
+        "<b>so that + clause</b> (มักมี can / could / will / would): <span class=\"en\">We start early so that we can finish by noon.</span>",
+        "<b>to / in order to / so as to + V1</b> (ประธานเดียวกัน): <span class=\"en\">We start early (in order) to finish by noon.</span> · ปฏิเสธ: <b>in order not to / so as not to</b>",
+        "<b>for + นาม</b> = เพื่อ (สิ่งที่ต้องการ): <span class=\"en\">She went to the clinic for a check-up.</span> · <b>for + V-ing</b> = ใช้สำหรับ (หน้าที่ของสิ่งของ): <span class=\"en\">This form is for requesting leave.</span>",
+        "<b>ห้ามใช้ for + to V</b>: for to finish ✗",
+      ],
+      ex: [
+        ["{S:Please arrive} {A:early} {X:so that} {S:we} {V:can start} {A:on time}.", "so that + clause"],
+        ["{S:The hospital} {V:hired} {O:more nurses} {X:in order to reduce waiting times}.", "in order to + V1"],
+        ["{S:She} {V:left} {A:quietly} {X:so as not to wake the patient}.", "ปฏิเสธ"],
+      ],
+      traps: [["I came here for to see the doctor.", "I came here to see the doctor.", "ห้าม for to"], ["in order to finishing", "in order to finish", "to + V1"]] },
+
+    { h: "เพิ่มเติม: moreover / in addition to / besides",
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["+ นาม / V-ing", "in addition to, besides, as well as, along with, apart from", "In addition to the salary, staff receive a bonus."],
+        ["ระหว่างประโยค", "moreover, furthermore, in addition, additionally, also, besides", "The system is fast. Moreover, it is cheap."],
+        ["FANBOYS", "and", "The system is fast and cheap."],
+      ]},
+      p: [
+        "<b>in addition</b> (ระหว่างประโยค) ≠ <b>in addition to + นาม/V-ing</b>: <span class=\"en\">In addition to providing care, nurses ...</span> (to เป็นบุพบท ตามด้วย V-ing)",
+        "<b>besides</b> ใช้ได้ทั้ง 2 แบบ: Besides + นาม / Besides, + ประโยค",
+      ],
+      ex: [
+        ["{X:In addition to providing care}, {S:nurses} {V:keep} {O:detailed records}.", "+ V-ing"],
+        ["{S:The new system} {V:reduces} {O:errors}. {X:Furthermore}, {S:it} {V:saves} {O:time}.", "ระหว่างประโยค"],
+      ],
+      traps: [["In addition to provide care, ...", "In addition to providing care, ...", "to เป็นบุพบท"]] },
+
+    { h: "เวลา: while / during / meanwhile",
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["+ clause", "when, while, as, before, after, until, since, as soon as, once, by the time", "While we were waiting, the doctor arrived."],
+        ["+ นาม", "during, for, throughout, prior to, following, upon, before, after, until, since", "During the meeting, ..."],
+        ["ระหว่างประโยค", "meanwhile, afterwards, subsequently, then, previously", "Submit the form. Afterwards, wait for approval."],
+      ]},
+      p: [
+        "<b>during</b> + นาม (ช่วงไหน) vs <b>for</b> + ระยะเวลา (นานเท่าไร): <span class=\"en\">during the holiday</span> / <span class=\"en\">for two weeks</span>",
+        "<b>prior to</b> = before (ทางการ) · <b>following / upon</b> = after (ทางการ): <span class=\"en\">Upon arrival, please register.</span>",
+        "before / after / since / until ใช้ได้ทั้ง + clause และ + นาม",
+      ],
+      ex: [
+        ["{X:Prior to} {A:surgery}, {S:patients} {V:must fast} {A:for eight hours}.", "prior to + นาม"],
+        ["{X:Upon} {A:receiving the form}, {S:the officer} {V:will check} {O:it}.", "upon + V-ing"],
+        ["{X:While} {S:the system} {V:was} {C:down}, {S:staff} {V:used} {O:paper forms}.", "while + clause"],
+      ],
+      traps: [["During I was waiting, ...", "While I was waiting, ...", "during + นาม"], ["Prior to submit the form, ...", "Prior to submitting the form, ...", "to เป็นบุพบท"]] },
+
+    { h: "เงื่อนไข: in case / in case of / in the event of",
+      p: [
+        "ทบทวนจากบท Conditionals และเพิ่มตระกูลบุพบท:",
+      ],
+      table: { head: ["ตระกูล", "คำ", "ตัวอย่าง"], rows: [
+        ["+ clause", "if, unless, provided (that), as long as, in case, in the event that", "In case the power fails, use the generator."],
+        ["+ นาม", "in case of, in the event of, without, but for", "In case of fire, use the stairs."],
+        ["ระหว่างประโยค", "otherwise", "Save your work; otherwise, you may lose it."],
+      ]},
+      ex: [
+        ["{X:In the event of} {A:a power failure}, {S:the generator} {V:starts} {A:automatically}.", "+ นาม"],
+        ["{X:In case of} {A:emergency}, {V:call} {O:1669}.", "+ นาม"],
+      ] },
+
+    { h: "Correlative Conjunctions: คำเชื่อมคู่",
+      p: [
+        "ใช้เป็นคู่เสมอ จำคู่ให้แม่น ข้อสอบชอบให้เติมตัวที่สอง:",
+        "<b>both A and B</b> · <b>either A or B</b> · <b>neither A nor B</b> · <b>not only A but (also) B</b> · <b>whether A or B</b> · <b>not A but B</b>",
+        "<b>Parallelism</b>: A กับ B ต้องเป็นชนิดเดียวกัน: <span class=\"en\">both <u>fast</u> and <u>accurate</u></span> / <span class=\"en\">not only <u>reduces costs</u> but also <u>saves time</u></span>",
+        "<b>Not only</b> ขึ้นต้นประโยค → กลับ aux + S: <span class=\"en\">Not only does the system save time, but it also reduces errors.</span>",
+      ],
+      ex: [
+        ["{S:The program} {V:is} {C:not only effective but also affordable}.", "not only ... but also"],
+        ["{X:Either} {S:you} {X:or} {S:your supervisor} {V:must sign} {O:the form}.", "either ... or"],
+        ["{S:Neither the manager nor the staff} {V:were} {C:informed}.", "neither ... nor"],
+        ["{S:We} {V:have not decided} {O:whether to expand or (to) relocate}.", "whether ... or"],
+      ],
+      traps: [["both fast and accurately", "both fast and accurate", "parallel: adj + adj"], ["neither ... or", "neither ... nor", "คู่ต้องถูก"], ["not only ... and also", "not only ... but also", "คู่ต้องถูก"]] },
+
+    { h: "so...that / such...that / too...to / enough to",
+      table: { head: ["โครงสร้าง", "ตัวอย่าง"], rows: [
+        ["so + adj/adv + that + clause", "The exam was so difficult that many failed."],
+        ["so + many/much/few/little + N + that", "There were so many patients that we ran out of beds."],
+        ["such + (a/an) + adj + N + that", "It was such a difficult exam that many failed."],
+        ["too + adj/adv + (for O) + to V", "The box is too heavy (for me) to lift. (ทำไม่ได้)"],
+        ["adj/adv + enough + to V", "She is experienced enough to lead the team."],
+        ["enough + N + to V", "We have enough nurses to open the ward."],
+      ]},
+      p: ["<b>too</b> มีความหมายปฏิเสธ (มากเกินจนทำไม่ได้) ต่างจาก very · <b>enough</b> วางหลัง adj/adv แต่วางหน้านาม"],
+      traps: [["It was so a difficult exam that ...", "It was such a difficult exam that ... / The exam was so difficult that ...", "so + adj / such + a + adj + N"], ["She is enough experienced.", "She is experienced enough.", "enough หลัง adj"]] },
+
+    { h: "เทียบความเหมือนและความต่าง: like / as / unlike / instead of",
+      p: [
+        "<b>like + นาม</b> (บุพบท) vs <b>as + clause</b> (สันธาน): <span class=\"en\">Like his father, he is a doctor.</span> / <span class=\"en\">As I said, the meeting is at 3.</span>",
+        "<b>as + นาม</b> = ในฐานะ: <span class=\"en\">She works as a nurse.</span> (เป็นพยาบาลจริง) / <span class=\"en\">She works like a machine.</span> (เปรียบเทียบ)",
+        "<b>unlike + นาม</b> = ไม่เหมือน · <b>similarly / likewise</b> = ในทำนองเดียวกัน (ระหว่างประโยค)",
+        "<b>instead of + นาม/V-ing</b> = แทนที่จะ · <b>rather than</b> + คำชนิดเดียวกัน · <b>instead</b> (ระหว่างประโยค)",
+      ],
+      ex: [
+        ["{X:Unlike} {A:paper forms}, {S:e-Claim} {V:reduces} {O:errors}.", "unlike + นาม"],
+        ["{S:Staff} {V:can submit} {O:forms} {A:online} {X:instead of visiting the office}.", "instead of + V-ing"],
+        ["{S:She} {V:works} {X:as} {C:a claims auditor}.", "as = ในฐานะ"],
+      ] },
+
+    { h: "Parallel Structure",
+      p: [
+        "ของที่เชื่อมด้วย and / or / but / both...and / not only...but also / rather than ต้อง <b>เป็นรูปแบบเดียวกัน</b>: นาม-นาม, V-ing-V-ing, to V-to V, adj-adj, clause-clause",
+        "ข้อสอบ Error Identification ชอบซ่อนจุดผิดในรายการ 3 อย่าง",
+      ],
+      table: { head: ["ผิด", "ถูก"], rows: [
+        ["Her duties include checking claims, approving forms, and to submit reports.", "... checking claims, approving forms, and submitting reports."],
+        ["The new system is fast, accurate, and saves money.", "The new system is fast, accurate, and economical."],
+        ["He likes to read and swimming.", "He likes reading and swimming. / He likes to read and (to) swim."],
+        ["The training was informative and interest.", "The training was informative and interesting."],
+      ]} },
+
+    { h: "Transition Words ใน TOEIC Part 6",
+      p: [
+        "Part 6 ให้เลือก conjunctive adverb ขึ้นต้นประโยค ต้องอ่าน <b>ประโยคก่อนหน้า</b> แล้วถามว่าประโยคนี้สัมพันธ์กับประโยคก่อนอย่างไร:",
+      ],
+      table: { head: ["ความสัมพันธ์", "คำ"], rows: [
+        ["ขัดแย้ง / กลับทิศ", "However, Nevertheless, On the other hand, In contrast, Even so"],
+        ["ผลลัพธ์", "Therefore, As a result, Consequently, Thus, Accordingly"],
+        ["เพิ่มข้อมูลทิศเดียวกัน", "Moreover, Furthermore, In addition, Additionally, Also"],
+        ["ยกตัวอย่าง", "For example, For instance, In particular"],
+        ["เน้น / ที่จริง", "In fact, Indeed, Actually"],
+        ["ลำดับ / เวลา", "First, Then, Next, Afterwards, Finally, Meanwhile, In the meantime"],
+        ["สรุป", "In conclusion, In summary, Overall, In short"],
+        ["ทางเลือก", "Instead, Alternatively, Otherwise"],
+        ["เหมือนกัน", "Similarly, Likewise"],
+      ]},
+      ex: [
+        ["{S:The new system} {V:is} {C:expensive}. {X:However}, {S:it} {V:will save} {O:money} {A:in the long term}.", "ขัดแย้ง"],
+        ["{S:Several claims} {V:were} {C:incomplete}. {X:As a result}, {S:payments} {V:were delayed}.", "ผลลัพธ์"],
+        ["{S:Staff} {V:can register} {A:online}. {X:Alternatively}, {S:they} {V:can visit} {O:the HR office}.", "ทางเลือก"],
+      ] },
   ],
-  examples: [
-    ["{X:Despite} {A:the heavy rain}, {S:the clinic} {V:stayed} {C:open}.", "Despite + นาม"],
-    ["{X:Although} {S:it} {V:was} {C:late}, {S:the nurses} {V:continued} {O:working}.", "Although + clause"],
-    ["{S:The budget} {V:was} {C:limited}; {X:however}, {S:the project} {V:was completed}.", "however อยู่ระหว่าง 2 ประโยค"],
-    ["{S:It} {V:was} {C:such a difficult exam} {X:that} {S:many} {V:failed}.", "such + a + adj + N + that"],
-  ],
+  formula: ["Conjunction + S + V          although / because / while / since / unless / so that", "Preposition + N / V-ing      despite / because of / due to / during / in addition to / prior to", "S + V. Adverb, S + V.         However, / Therefore, / Moreover, / Otherwise,", "S + V; adverb, S + V.", "S + V, FANBOYS S + V          , and / , but / , so / , yet", "so + adj + that | such + (a) adj + N + that | too + adj + to V | adj + enough + to V", "both A and B | either A or B | neither A nor B | not only A but also B", "A, B, and C → รูปแบบเดียวกัน (parallel)"],
   traps: [
-    ["Despite it was raining, ...", "Although it was raining, ... / Despite the rain, ...", "despite ตามด้วยนาม"],
-    ["Because of the weather was bad, ...", "Because the weather was bad, ...", "because of ตามด้วยนาม"],
-    ["Although it was late, but they stayed.", "Although it was late, they stayed.", "ใช้ although คู่กับ but ไม่ได้"],
+    ["Despite it was raining, ...", "Although it was raining, ... / Despite the rain, ...", "despite + นาม"],
+    ["Because of the weather was bad, ...", "Because the weather was bad, ...", "because of + นาม"],
+    ["Although it was late, but they stayed.", "Although it was late, they stayed.", "ห้ามคู่กับ but"],
+    ["Despite of the rain", "Despite the rain / In spite of the rain", "despite ไม่มี of"],
+    ["The budget was limited, however the team finished.", "The budget was limited; however, the team finished.", "however ต้องใช้ ; หรือจุด"],
+    ["During I was waiting, ...", "While I was waiting, ...", "during + นาม"],
+    ["In addition to provide care, ...", "In addition to providing care, ...", "to เป็นบุพบท"],
+    ["checking, approving, and to submit", "checking, approving, and submitting", "parallel"],
   ],
-  qs: [
-    ["fill", "___ the heavy rain, the mobile clinic stayed open.", ["Although", "Despite", "Because", "However"], 1, "ตามด้วยนาม (the heavy rain) → preposition: Despite"],
-    ["fill", "___ it was late, the nurses continued working.", ["Despite", "In spite of", "Although", "Due to"], 2, "ตามด้วย clause → Although"],
-    ["fill", "The flight was delayed ___ bad weather.", ["because", "because of", "although", "so"], 1, "ตามด้วยนาม → because of"],
-    ["fill", "The budget was limited; ___, the project was completed on time.", ["however", "although", "despite", "but"], 0, "หลัง ; และมี comma ตาม → adverb connector: however"],
-    ["fill", "It was ___ a difficult exam that many candidates failed.", ["so", "such", "too", "very"], 1, "such + a + adj + N + that"],
-    ["fill", "The program is not only effective ___ affordable.", ["and", "or", "but also", "also"], 2, "คู่ not only ... but also"],
+  sets: [
+    { t: "แบบฝึกหัด 9A · คำนี้อยู่ตระกูลไหน", d: "ตระกูลกำหนดว่าตามด้วยอะไร", noMock: true, qs: [
+      ["fill", "despite (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 1, "despite + นาม"],
+      ["fill", "although (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 0, "although + clause"],
+      ["fill", "however (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 2, "However, + ประโยค"],
+      ["fill", "because of (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 1, "because of + นาม"],
+      ["fill", "so (ดังนั้น) (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 3, ", so + clause"],
+      ["fill", "therefore (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 2, "Therefore, + ประโยค"],
+      ["fill", "during (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 1, "during + นาม"],
+      ["fill", "while (= ___)", ["Conjunction + clause", "Preposition + นาม/V-ing", "Adverb ระหว่างประโยค", "FANBOYS"], 0, "while + clause"],
+    ]},
+    { t: "แบบฝึกหัด 9B · ขัดแย้ง / เหตุ / ผล", d: "ดูสิ่งที่ตามหลังก่อน แล้วค่อยดูความหมาย", qs: [
+      ["fill", "___ the heavy rain, the mobile clinic stayed open.", ["Although", "Despite", "Because", "However"], 1, "+ นาม → Despite"],
+      ["fill", "___ it was late, the nurses continued working.", ["Despite", "In spite of", "Although", "Due to"], 2, "+ clause → Although"],
+      ["fill", "The flight was delayed ___ bad weather.", ["because", "because of", "although", "so"], 1, "+ นาม → because of"],
+      ["fill", "The budget was limited; ___, the project was completed on time.", ["however", "although", "despite", "but"], 0, "; + adverb"],
+      ["fill", "___ being short-staffed, the clinic served all patients.", ["Although", "Despite", "Because", "Unless"], 1, "+ V-ing → Despite"],
+      ["fill", "The delay was ___ a shortage of staff.", ["because", "due to", "although", "therefore"], 1, "be + due to + นาม"],
+      ["fill", "Several forms were incomplete. ___, the claims were rejected.", ["Therefore", "Because", "Although", "Despite"], 0, "ผลลัพธ์ ระหว่างประโยค"],
+      ["fill", "Some hospitals use e-Claim, ___ others still use paper forms.", ["whereas", "despite", "because of", "therefore"], 0, "เทียบความต่าง + clause"],
+      ["fill", "___ the new system, claims are now processed much faster.", ["Thanks to", "Although", "Because", "Therefore"], 0, "+ นาม (ผลดี)"],
+      ["fill", "___ the budget has been cut, we must reduce overtime.", ["Since", "Due to", "Because of", "Despite"], 0, "+ clause (เพราะ)"],
+      ["fill", "In spite of ___ that the forms were late, the claims were paid.", ["it", "the fact", "being", "although"], 1, "in spite of the fact that + clause"],
+      ["fill", "The system failed, ___ we had to use paper forms.", ["so", "because", "although", "despite"], 0, ", so (ผลลัพธ์)"],
+      ["fill", "___ the audit, three claims were returned for correction.", ["As a result", "As a result of", "Therefore", "Consequently"], 1, "+ นาม → As a result of"],
+      ["fill", "The new software is expensive. ___, it will save money in the long term.", ["Therefore", "Nevertheless", "Moreover", "Because"], 1, "ขัดแย้ง ระหว่างประโยค"],
+      ["fill", "___ it rains, the outdoor event will go ahead as planned.", ["Even if", "Even though", "Despite", "However"], 0, "สมมติ → even if"],
+      ["fill", "___ the clinic is small, it serves over 200 patients a day.", ["Even though", "Even if", "Despite", "In spite of"], 0, "เรื่องจริง + clause → even though"],
+    ]},
+    { t: "แบบฝึกหัด 9C · จุดประสงค์ / เพิ่มเติม / เวลา", d: "so that / in order to / in addition to / during / prior to", qs: [
+      ["fill", "Please arrive early ___ we can start on time.", ["so that", "in order to", "because of", "despite"], 0, "+ clause (can) → so that"],
+      ["fill", "The hospital hired more nurses ___ reduce waiting times.", ["so that", "in order to", "for", "because"], 1, "+ V1 → in order to"],
+      ["fill", "She spoke quietly so as ___ wake the patient.", ["not to", "to not", "not", "no to"], 0, "so as not to"],
+      ["fill", "___ providing care, nurses must keep detailed records.", ["In addition", "In addition to", "Moreover", "Besides that"], 1, "+ V-ing → In addition to"],
+      ["fill", "The system is fast. ___, it is very easy to use.", ["Moreover", "In addition to", "Besides of", "As well as"], 0, "ระหว่างประโยค"],
+      ["fill", "The outpatient department will be closed ___ the holiday.", ["while", "during", "for", "since"], 1, "+ นาม (ช่วงไหน)"],
+      ["fill", "Patients must fast ___ surgery.", ["prior to", "before to", "previous", "until to"], 0, "prior to + นาม"],
+      ["fill", "___ arrival, please register at the front desk.", ["Upon", "While", "When to", "During to"], 0, "Upon + นาม"],
+      ["fill", "___ the system was down, staff used paper forms.", ["During", "While", "For", "Meanwhile"], 1, "+ clause → While"],
+      ["fill", "This form is used ___ requesting annual leave.", ["for", "to", "so that", "in order"], 0, "for + V-ing (หน้าที่ของสิ่งของ)"],
+      ["fill", "Prior to ___ the form, please check all the details.", ["submit", "submitting", "submitted", "be submitted"], 1, "to เป็นบุพบท → V-ing"],
+      ["fill", "Staff can register online. ___, they can visit the HR office.", ["Alternatively", "In addition to", "Despite", "Unless"], 0, "ทางเลือก ระหว่างประโยค"],
+    ]},
+    { t: "แบบฝึกหัด 9D · คำเชื่อมคู่ และ so/such/too/enough", d: "จำคู่ให้แม่น + parallel", qs: [
+      ["fill", "The program is not only effective ___ affordable.", ["and", "or", "but also", "also"], 2, "not only ... but also"],
+      ["fill", "Neither the manager ___ the staff were informed.", ["or", "nor", "and", "but"], 1, "neither ... nor"],
+      ["fill", "You can ___ call us or send an email.", ["both", "either", "neither", "whether"], 1, "either ... or"],
+      ["fill", "The new system is both fast and ___.", ["accurate", "accurately", "accuracy", "accurateness"], 0, "parallel: adj + adj"],
+      ["fill", "Not only ___ time, but it also reduces errors.", ["the system saves", "does the system save", "saves the system", "the system does save"], 1, "Not only ขึ้นต้น → กลับ aux"],
+      ["fill", "It was ___ a difficult exam that many candidates failed.", ["so", "such", "too", "very"], 1, "such + a + adj + N + that"],
+      ["fill", "The exam was ___ difficult that many candidates failed.", ["so", "such", "too", "enough"], 0, "so + adj + that"],
+      ["fill", "The box is too heavy for one person ___.", ["to lift", "lifting", "lift", "lifted"], 0, "too + adj + to V"],
+      ["fill", "She is ___ to lead the new team.", ["enough experienced", "experienced enough", "enough experience", "experience enough"], 1, "adj + enough + to V"],
+      ["fill", "We have not decided ___ to expand or relocate the clinic.", ["whether", "either", "if or", "both"], 0, "whether ... or"],
+    ]},
+    { t: "แบบฝึกหัด 9E · Transition ในเนื้อเรื่อง", d: "แบบ TOEIC Part 6 อ่านประโยคก่อนหน้า", qs: [
+      ["fill", "The new claim system was introduced in January. ___, the rejection rate has dropped by 30%.", ["Since then", "However", "Instead", "Otherwise"], 0, "เวลาต่อเนื่องจาก January"],
+      ["fill", "Our office will be closed on Friday. ___, urgent requests can be sent by email.", ["However", "Therefore", "Similarly", "In conclusion"], 0, "ปิด แต่ยังส่งอีเมลได้ → ขัดแย้ง"],
+      ["fill", "Many hospitals reported delays in payment. ___, Hospital A waited over 60 days.", ["For example", "However", "Instead", "Otherwise"], 0, "ยกตัวอย่าง"],
+      ["fill", "Please submit your forms by Friday. ___, your claim may be delayed.", ["Otherwise", "Moreover", "Similarly", "For instance"], 0, "มิฉะนั้น"],
+      ["fill", "The training was well received. ___, 95% of participants rated it as excellent.", ["In fact", "However", "Otherwise", "Instead"], 0, "เน้น/ยืนยันด้วยข้อมูล"],
+      ["fill", "We could not book the main hall. ___, the meeting will be held in Room 204.", ["Instead", "Moreover", "For example", "Similarly"], 0, "แทน"],
+    ]},
+    { t: "แบบฝึกหัด 9F · หาจุดผิด", d: "แบบ Error Identification", qs: [
+      ["err", "[[Despite]] it [[was]] raining, the [[clinic]] stayed [[open]].", 0, "+ clause → Although"],
+      ["err", "[[Because of]] the weather [[was]] bad, the [[flight]] was [[delayed]].", 0, "+ clause → Because"],
+      ["err", "[[Although]] the budget was limited, [[but]] the [[team]] [[finished]] on time.", 1, "ตัด but"],
+      ["err", "[[Despite of]] the [[heavy]] workload, the nurses [[met]] all [[deadlines]].", 0, "Despite / In spite of"],
+      ["err", "[[During]] I [[was]] [[waiting]], the doctor [[arrived]].", 0, "+ clause → While"],
+      ["err", "[[In addition to]] [[provide]] care, nurses [[keep]] detailed [[records]].", 1, "in addition to + V-ing → providing"],
+      ["err", "Her duties include [[checking]] claims, [[approving]] forms, and [[to submit]] [[reports]].", 2, "parallel → submitting"],
+      ["err", "The program is [[not only]] effective [[and also]] [[affordable]] for [[patients]].", 1, "but also"],
+      ["err", "I came to the clinic [[for]] [[to see]] the [[doctor]] [[yesterday]].", 0, "ตัด for → to see"],
+      ["err", "It was [[so]] [[a difficult]] exam that [[many]] candidates [[failed]].", 0, "such a difficult exam"],
+    ]},
   ]},
 { id: "gerinf", part: "C", title: "Gerunds & Infinitives", th: "V-ing หรือ to V",
   why: "<b>ต้องท่องกลุ่มกริยา</b> ข้อนี้ใช้เหตุผลไม่ได้ จำกลุ่มหลักให้ได้ และระวัง to ที่เป็น preposition (look forward to + V-ing)",
@@ -2895,9 +3176,9 @@ function viewBook(l) {
     </ol><button class="btn toggle" id="plainBtn" aria-pressed="${!S.plain}" style="margin-top:8px">${S.plain ? "แสดงแผนผังประโยค" : "ซ่อนแผนผังประโยค"}</button></nav>
     ${l.book.map((s, k) => `<section class="block chapter" id="sec-${k}">
       <h2><span class="tn">${n}.${k + 1}</span>${esc(s.h)}</h2>
-      ${(s.p || []).map(x => `<p class="para">${x}</p>`).join("")}
-      ${s.pos ? `<div class="poswrap">${s.pos.map(posLine).join("")}</div>` : ""}
-      ${s.table ? tableHTML(s.table) : ""}
+      ${(() => { const ks = Object.keys(s), tFirst = s.table && s.p && ks.indexOf("table") < ks.indexOf("p");
+        const P = (s.p || []).map(x => `<p class="para">${x}</p>`).join(""), T = s.table ? tableHTML(s.table) : "", POS = s.pos ? `<div class="poswrap">${s.pos.map(posLine).join("")}</div>` : "";
+        return tFirst ? T + P + POS : P + POS + T; })()}
       ${s.ex ? `<div class="subh">ตัวอย่าง</div>${exHTML(s.ex)}` : ""}
       ${s.table2 ? `<div class="subh">${esc(s.table2h || "คำลงท้ายที่พบบ่อย")}</div>${tableHTML(s.table2)}` : ""}
       ${s.tip ? `<div class="tip"><b>เทคนิค</b> ${esc(s.tip)}</div>` : ""}
