@@ -181,6 +181,13 @@ select { font: inherit; color: var(--ink); background: var(--surface); border: 1
 .p6-cta b { color: var(--accent); }
 .p6-cta:hover { border-color: var(--accent); }
 .opts.one { grid-template-columns: minmax(0, 1fr); }
+.optwhy { display: grid; gap: 4px; font-size: 14px; }
+.optwhy ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.optwhy li { display: grid; grid-template-columns: 20px 1fr; gap: 6px; align-items: baseline; padding: 4px 8px; border-radius: 8px; }
+.optwhy li .L { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.optwhy li .w { font-family: var(--f-display); font-weight: 600; margin-right: 4px; }
+.optwhy li.mine { background: var(--bad-soft); }
+.optwhy li.mine em { color: var(--bad); font-style: normal; font-size: 12px; }
 .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
 @media (max-width: 420px) { .bar .col { flex-wrap: nowrap; gap: 8px; } .logo { font-size: 17px; } .seg a { padding: 6px 8px; font-size: 13px; } .bar .theme-btn { width: 36px; height: 36px; } h1 { font-size: 24px; } }
 .theme-btn { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; padding: 0; }
@@ -5027,6 +5034,69 @@ P6.push(
   }));
 })();
 
+/* ===== Per-option explanations =====
+   NOTES[questionId] = one note per option, in the ORIGINAL option order (before shuffling).
+   The correct option's note may be "" (the main explanation covers it).
+   For error-ID questions, one note per underlined segment: why the correct segments are fine. */
+const NOTES = {};
+Object.assign(NOTES, {
+  /* ----- Lesson 1 · 1A ----- */
+  "word-s0-0": ["", "หลัง The ต้องเป็นคำนาม กริยาตามหลัง article ไม่ได้", "adjective ต้องมีคำนามตามหลัง แต่หลังช่องว่างเป็น of", "adverb ไม่ทำหน้าที่ประธาน และไม่ตามหลัง The"],
+  "word-s0-1": ["นามขยายนามได้เฉพาะคู่ที่ใช้กันจริง (เช่น ICU nurse) ช่องนี้ต้องการคำบอกลักษณะ", "กริยาวางระหว่าง a กับคำนามไม่ได้", "", "adverb ไม่ขยายคำนาม"],
+  "word-s0-2": ["คำนามแทรกระหว่าง was กับ V3 ไม่ได้", "ประโยคมีกริยาแล้ว (was checked) ใส่กริยาอีกตัวไม่ได้", "adjective ไม่ขยายกริยา (checked)", ""],
+  "word-s0-3": ["หลัง will ต้องเป็นกริยา V1", "", "หลัง will ใส่ adjective ได้เมื่อมี be (will be ready) เท่านั้น", "ถ้าใส่ adverb ประโยคจะไม่มีกริยาหลักมารับกรรม the proposal"],
+  "word-s0-4": ["We are confidence ✗ ช่องหลัง be ที่ตามด้วย that-clause ต้องเป็น adjective (confident, sure, aware)", "มี are แล้ว ใส่กริยาแท้อีกตัวไม่ได้", "", "หลัง be ใช้ adjective ไม่ใช่ adverb"],
+  "word-s0-5": ["", "หลัง your (possessive) ต้องเป็นคำนาม", "adjective ต้องมีคำนามตามหลัง เช่น your kind help", "adverb ไม่ตามหลัง your"],
+  "word-s0-6": ["คำนามลอยต้นประโยคแล้วตามด้วย comma ไม่มีหน้าที่ในประโยค", "กริยาขึ้นต้นแล้วตามด้วย comma ไม่เป็นประโยค", "adjective ลอยต้นประโยคเพื่อขยายทั้งประโยคไม่ได้", ""],
+  "word-s0-7": ["make + กรรม + คำนาม ใช้เมื่อกรรมกลายเป็นสิ่งนั้น (made her director) ไม่เข้ากับ the process", "make + กรรม + V1 = บังคับให้ทำ กระบวนการทำกริยาเองไม่ได้", "", "ส่วนเติมเต็มของกรรมใช้ adjective ไม่ใช่ adverb"],
+  "word-s0-8": ["คำนามไม่ขยาย designed", "กริยาแท้ไม่อยู่ในวลีนาม a ... program", "adjective ขยายนาม แต่ช่องนี้ขยาย designed (V3) จึงต้องเป็น adverb เช่น carefully designed", ""],
+  "word-s0-9": ["Our team + คำนาม + reviews ทำให้มีประธานซ้อนกัน", "มีกริยาแท้ reviews อยู่แล้ว", "adjective ไม่วางระหว่างประธานกับกริยา", ""],
+
+  /* ----- Lesson 1 · 1B ----- */
+  "word-s1-0": ["succeed เป็นกริยา ไม่ตามหลัง The", "", "successful เป็น adjective ต้องมีนามตาม เช่น the successful program", "successfully เป็น adverb ทำหน้าที่ประธานไม่ได้"],
+  "word-s1-1": ["is responsibility for ✗ ถ้าใช้นามต้องเป็น has responsibility for", "", "responsibly เป็น adverb ไม่ใช้เป็นส่วนเติมเต็มหลัง is", "respond เป็นกริยา ประโยคมี is แล้ว"],
+  "word-s1-2": ["significant เป็น adjective ขยายกริยา (reduced) ไม่ได้", "significance เป็นคำนาม แทรกระหว่าง has กับ V3 ไม่ได้", "", "signify เป็นกริยา ทำให้กริยาซ้อนกัน (has signify reduced)"],
+  "word-s1-3": ["attend เป็นกริยา ทำหน้าที่ประธานไม่ได้", "attendance เป็นนามก็จริง แต่ \"การเข้าร่วม\" ลงทะเบียนเองไม่ได้ ต้องเป็นคน", "", "attended เป็น V2/V3 ไม่ใช่คำนาม"],
+  "word-s1-4": ["", "positively เป็น adverb ไม่ขยายคำนาม", "positivity feedback ไม่ใช่คู่คำนามที่ใช้กัน", "posit เป็นกริยา (ตั้งสมมติฐาน)"],
+  "word-s1-5": ["sure เป็น adjective ใช้ Please sure ไม่ได้ ต้องเป็น Please make sure", "", "surely เป็น adverb ไม่ใช่กริยา", "assurance เป็นคำนาม"],
+  "word-s1-6": ["confident เป็น adjective ขยายกริยา spoke ไม่ได้", "spoke confidence ✗ ถ้าใช้นามต้องเป็น spoke with confidence", "", "confide เป็นกริยา (เล่าความลับ) ซ้อนกับ spoke"],
+  "word-s1-7": ["rely เป็นกริยา ไม่ขยายคำนาม", "", "reliably เป็น adverb ไม่ขยายคำนาม method", "reliance เป็นคำนาม a more reliance method ✗"],
+  "word-s1-8": ["extreme เป็น adjective ขยาย adjective (detailed) ไม่ได้", "", "extremity เป็นคำนาม (ความสุดขีด ปลายแขนขา)", "extremes เป็นคำนามพหูพจน์"],
+  "word-s1-9": ["decide เป็นกริยา ไม่ตามหลัง a final", "decisive เป็น adjective ต้องมีคำนามตามหลัง เช่น a final decisive vote", "", "decisively เป็น adverb"],
+  "word-s1-10": ["steady เป็น adjective ขยายกริยา have risen ไม่ได้", "", "steadiness เป็นคำนาม", "steadied เป็นกริยา ทำให้กริยาซ้อนกัน"],
+  "word-s1-11": ["", "comprehension = ความเข้าใจ เป็นคำนาม ความหมายไม่เข้ากับ services", "comprehend เป็นกริยา", "comprehensively เป็น adverb ไม่ขยายคำนาม"],
+  "word-s1-12": ["satisfy เป็นกริยา", "satisfied เป็น adjective ประโยค Customer satisfied is ✗ (ต้องเป็น Satisfied customers are ...)", "", "satisfactory เป็น adjective ทำหน้าที่ประธานไม่ได้"],
+  "word-s1-13": ["", "availability เป็นคำนาม The room is availability ✗", "avail เป็นกริยาหรือคำนามในสำนวน (to no avail) ใช้หลัง is ไม่ได้", "availably ไม่มีที่ใช้ในภาษาอังกฤษ"],
+  "word-s1-14": ["confuse เป็นกริยา find + กรรม + V1 ใช้ไม่ได้ (find ไม่ใช่กริยาแบบ make / let)", "", "confusion เป็นคำนาม found the form confusion ✗", "confusedly เป็น adverb"],
+  "word-s1-15": ["", "tiring = น่าเหนื่อย (ลักษณะของงาน) คนรู้สึก tiring ไม่ได้", "tire เป็นกริยา (หรือ = ยางรถ)", "tiredly เป็น adverb ไม่ตามหลัง feel (linking verb)"],
+  "word-s1-16": ["patient เป็น adjective หรือคำนาม ขยายกริยา explained ไม่ได้", "patience เป็นคำนาม", "", "patients เป็นคำนามพหูพจน์"],
+  "word-s1-17": ["Applicants เป็นคนก็จริง แต่คนถูก \"submitted\" (ยื่นส่ง) ไม่ได้", "", "Apply เป็นกริยา ทำหน้าที่ประธานไม่ได้", "Applied เป็น V2/V3 ไม่ใช่คำนาม"],
+  "word-s1-18": ["great เป็น adjective ขยายกริยา (improved) ไม่ได้", "", "greatness เป็นคำนาม", "greater เป็น adjective ขั้นกว่า"],
+  "word-s1-19": ["limit เป็นคำนามหรือกริยา the limit budget ✗", "", "limiting = ซึ่งเป็นตัวจำกัด (a limiting factor) ไม่ได้แปลว่างบที่ถูกจำกัด", "limitation เป็นคำนาม"],
+  "word-s1-20": ["expansion เป็นคำนาม หลัง to (to-infinitive) ต้องเป็น V1", "", "expansive เป็น adjective", "to expanded ✗ หลัง to ใช้ V1"],
+  "word-s1-21": ["attach เป็นกริยา the attach document ✗", "attaching = กำลังแนบ (active) เอกสารแนบตัวเองไม่ได้", "", "attachment เป็นคำนาม the attachment document ✗ (ใช้ the attachment เฉย ๆ ได้)"],
+
+  /* ----- Lesson 1 · 1C (error ID: notes explain why the other parts are correct) ----- */
+  "word-s2-0": ["new เป็น adjective ขยาย system ถูกต้อง", "works เป็นกริยาเอกพจน์ตาม system ถูกต้อง", "", "and เชื่อม works กับ saves ถูกต้อง"],
+  "word-s2-1": ["Her เป็น possessive หน้าคำนาม ถูกต้อง", "", "the results หลัง of ถูกต้อง", "be + adjective (was clear) ถูกต้อง"],
+  "word-s2-2": ["has + V3 (present perfect) ถูกต้อง", "", "opened เป็น V3 ถูกต้อง", "a new clinic ถูกต้อง"],
+  "word-s2-3": ["need + to V ถูกต้อง", "", "quickly เป็น adverb ขยายกริยา ถูกต้อง", "about the budget ถูกต้อง"],
+  "word-s2-4": ["applicants (พหูพจน์) + were ถูกต้อง", "", "qualified for ถูกต้อง", "for the position ถูกต้อง"],
+  "word-s2-5": ["The training (เอกพจน์) + was ถูกต้อง", "", "useful เป็น adjective หลัง was ถูกต้อง", "all staff ถูกต้อง"],
+  "word-s2-6": ["", "the patient เป็นประธาน ถูกต้อง", "recovered เป็นกริยาอดีต ถูกต้อง", "quickly ขยาย recovered ถูกต้อง"],
+  "word-s2-7": ["", "situation (เอกพจน์) + has ถูกต้อง", "affected เป็น V3 ของกริยา affect ถูกต้อง (effect เป็นคำนาม)", "many + นามพหูพจน์ ถูกต้อง"],
+  "word-s2-8": ["", "safety workshop เป็นนามขยายนาม ถูกต้อง", "organized เป็น V3 ลดรูป (ถูกจัดโดย) ถูกต้อง", "provincial เป็น adjective ขยาย office ถูกต้อง"],
+  "word-s2-9": ["new เป็น adjective ถูกต้อง", "treats เป็นกริยาเอกพจน์ ถูกต้อง", "", "fairly เป็น adverb ขยาย treats ถูกต้อง"],
+
+  /* ----- Lesson 1 · 1D ----- */
+  "word-s3-0": ["", "considerate = เกรงใจผู้อื่น ใช้กับคน ไม่ใช้กับ amount", "considering = เมื่อพิจารณาว่า (ใช้เป็นบุพบท/คำเชื่อม)", "consideration เป็นคำนาม a consideration amount ✗"],
+  "word-s3-1": ["economic = เกี่ยวกับเศรษฐกิจ ไม่ได้แปลว่าประหยัด", "", "economy เป็นคำนาม", "economics = วิชาเศรษฐศาสตร์ เป็นคำนาม"],
+  "word-s3-2": ["confident = มั่นใจ ใช้กับคน", "", "confidence เป็นคำนาม", "confidently เป็น adverb แต่ keep + กรรม + ต้องเป็น adjective"],
+  "word-s3-3": ["respectful = ให้ความเคารพ (กิริยาของคน)", "", "respectable = น่านับถือ", "respect เป็นคำนามหรือกริยา"],
+  "word-s3-4": ["sensible = มีเหตุผล ใช้กับการตัดสินใจ ไม่ใช่ข้อมูล", "", "sense เป็นคำนามหรือกริยา", "sensibly เป็น adverb"],
+  "word-s3-5": ["successful years = ปีที่ประสบความสำเร็จ ไม่ได้บอกว่าติดต่อกัน", "", "success เป็นคำนาม", "succession เป็นคำนาม (ใช้ในวลี in succession)"],
+});
+
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
@@ -5040,7 +5110,8 @@ function seededOrder(key, n) {
 function mkQ(q, id, lesson, set, noMock) {
   const o = { id, lesson, set, noMock: !!noMock, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] };
   /* Spread answer letters: fixed shuffle per question for exam-style fill items (not label sets, not error-ID) */
-  if (o.type === "fill" && !o.noMock && o.opts.length === 4) { const idx = seededOrder(id, 4), right = o.opts[o.ans]; o.opts = idx.map(k => o.opts[k]); o.ans = o.opts.indexOf(right); }
+  o.notes = NOTES[id] && NOTES[id].length === o.opts.length ? NOTES[id].slice() : null;
+  if (o.type === "fill" && !o.noMock && o.opts.length === 4) { const idx = seededOrder(id, 4), right = o.opts[o.ans]; o.opts = idx.map(k => o.opts[k]); if (o.notes) o.notes = idx.map(k => o.notes[k]); o.ans = o.opts.indexOf(right); }
   return o;
 }
 L.forEach(l => {
@@ -5095,6 +5166,8 @@ function qCard(q, idx, opts = {}) {
       return `<button class="${cls}" data-pick="${j}"${reveal ? " disabled" : ""}><span class="L">${"ABCD"[j]}</span><span lang="en">${esc(o)}</span></button>`;
     }).join("")}</div>
     ${reveal ? `<div class="exp"><b>${picked === q.ans ? "ถูก" : "เฉลย " + "ABCD"[q.ans]}</b> · ${esc(q.exp)}</div>` : ""}
+    ${reveal && q.notes ? `<div class="optwhy"><div class="note">${q.type === "err" ? "ส่วนอื่นถูกอยู่แล้วเพราะ" : "ทำไมตัวเลือกอื่นผิด"}</div><ul>${q.opts.map((o, j) => j === q.ans || !q.notes[j] ? "" :
+      `<li${j === picked ? ' class="mine"' : ""}><span class="L">${"ABCD"[j]}</span><span><span lang="en" class="w">${esc(o)}</span> ${esc(q.notes[j].startsWith(o + " ") ? q.notes[j].slice(o.length + 1) : q.notes[j])}${j === picked ? ' <em>(คุณเลือกข้อนี้)</em>' : ""}</span></li>`).join("")}</ul></div>` : ""}
   </div>`;
 }
 
