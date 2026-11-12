@@ -1,0 +1,872 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Grammar Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: study-guide column; sticky segmented nav; every sentence can be shown as colored S/V/O/C/A slots */
+:root {
+  --bg: #F6F7FA; --surface: #FFFFFF; --sunk: #ECEEF4; --ink: #171B30; --muted: #5C6381; --line: #DADDE8;
+  --accent: #3446C9; --accent-soft: #E4E7FA; --mark: #FFE58A;
+  --ok: #1F7A4D; --ok-soft: #DDF1E6; --bad: #B83A30; --bad-soft: #F8E0DD;
+  --sS: #2F5BD3; --sV: #C8372D; --sO: #1E8A5B; --sC: #8A3FC4; --sA: #A86A12; --sX: #6B7186;
+  --f-display: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1120; --surface: #181B2E; --sunk: #21253B; --ink: #E8EAF5; --muted: #A0A6C3; --line: #2E3350;
+  --accent: #8E9BFF; --accent-soft: #272D55; --mark: #6B5A12;
+  --ok: #5FD39A; --ok-soft: #173528; --bad: #FF8A7E; --bad-soft: #3E1E1C;
+  --sS: #7EA0FF; --sV: #FF7E73; --sO: #5FD39A; --sC: #C99BFF; --sA: #F1B85A; --sX: #9AA0B8;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1120; --surface: #181B2E; --sunk: #21253B; --ink: #E8EAF5; --muted: #A0A6C3; --line: #2E3350;
+  --accent: #8E9BFF; --accent-soft: #272D55; --mark: #6B5A12;
+  --ok: #5FD39A; --ok-soft: #173528; --bad: #FF8A7E; --bad-soft: #3E1E1C;
+  --sS: #7EA0FF; --sV: #FF7E73; --sO: #5FD39A; --sC: #C99BFF; --sA: #F1B85A; --sX: #9AA0B8;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.65; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 760px; margin: 0 auto; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar .col { display: flex; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; }
+.logo { font-family: var(--f-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; margin: 0; margin-right: auto; }
+.logo i { font-style: normal; color: var(--accent); }
+.seg { display: flex; background: var(--sunk); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg a { text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; font-size: 14px; white-space: nowrap; }
+.seg a[aria-current="page"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+main { padding-block: 20px 60px; }
+h1, h2, h3 { text-wrap: balance; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 4px; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 19px; margin: 0 0 8px; }
+h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.en { font-family: var(--f-display); }
+.block { margin-top: 26px; }
+.note { font-size: 13px; color: var(--muted); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-size: 14px; min-height: 40px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+:root[data-theme="dark"] .btn.primary { color: #0F1120; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0F1120; } }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Strategy */
+.strategy { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; counter-increment: s; }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; display: grid; place-items: center; font-size: 13px; font-family: var(--f-display); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 12px; font-size: 13px; }
+
+/* Lesson list */
+.part { margin-top: 22px; }
+.part > .eyebrow { margin-bottom: 8px; display: block; }
+.lessons { display: grid; gap: 8px; }
+.li { width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; }
+.li .n { font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.li .t { font-family: var(--f-display); font-weight: 600; font-size: 16px; display: block; line-height: 1.3; }
+.li .d { font-size: 13px; color: var(--muted); }
+.pill { font-size: 12px; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 2px 8px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.pill.good { background: var(--ok-soft); color: var(--ok); }
+.pill.weak { background: var(--bad-soft); color: var(--bad); }
+
+/* Slots */
+.sent { font-family: var(--f-display); font-size: 17px; line-height: 2.5; }
+.slot { position: relative; display: inline; border-bottom: 3px solid var(--c); padding-bottom: 1px; }
+.slot b { position: relative; top: -0.95em; font-family: var(--f-mono); font-size: 10px; font-weight: 500; color: var(--c); margin-right: 2px; letter-spacing: 0; }
+.k-S { --c: var(--sS); } .k-V { --c: var(--sV); } .k-O { --c: var(--sO); } .k-C { --c: var(--sC); } .k-A { --c: var(--sA); } .k-X { --c: var(--sX); }
+.swatch { display: inline-flex; gap: 6px; align-items: center; }
+.swatch::before { content: ""; width: 14px; height: 3px; background: var(--c); border-radius: 2px; }
+.plain .slot { border-bottom-color: transparent; } .plain .slot b { display: none; }
+.plain .sent { line-height: 1.6; }
+
+/* Lesson */
+.why { background: var(--accent-soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.why b { color: var(--accent); }
+.formula { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px 14px; font-family: var(--f-mono); font-size: 14px; display: grid; gap: 6px; overflow-x: auto; }
+.formula div { white-space: pre; }
+.ex { display: grid; gap: 14px; }
+.ex .item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px 14px 10px; min-width: 0; }
+.ex .th { font-size: 14px; color: var(--muted); }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--sunk); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.en, td .en { font-family: var(--f-display); }
+td.mono { font-family: var(--f-mono); font-size: 13px; white-space: nowrap; }
+.traps { display: grid; gap: 8px; }
+.trap { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.trap .w { color: var(--bad); text-decoration: line-through; font-family: var(--f-display); }
+.trap .r { color: var(--ok); font-weight: 600; font-family: var(--f-display); }
+.toggle { font-size: 13px; }
+
+/* Questions */
+.qs { display: grid; gap: 12px; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.q .head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.q .stem { font-family: var(--f-display); font-size: 17px; line-height: 1.6; }
+.q .stem u { text-decoration: none; border-bottom: 2px solid var(--ink); position: relative; }
+.q .stem u sup { font-family: var(--f-mono); font-size: 10px; color: var(--muted); margin-left: 2px; }
+.blank { display: inline-block; min-width: 64px; border-bottom: 2px solid var(--accent); }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.opt { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 10px; text-align: left; font-family: var(--f-display); display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.opt .L { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.opt.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.opt.no { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.opt.picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.exp { font-size: 14px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.exp a { color: var(--accent); }
+
+/* Test & stats */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.big { font-family: var(--f-display); font-weight: 700; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.testbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 4; background: var(--bg); padding-block: 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; font-size: 14px; }
+.progress { height: 6px; background: var(--sunk); border-radius: 99px; overflow: hidden; flex: 1; }
+.progress i { display: block; height: 100%; background: var(--accent); }
+.statrow { display: grid; grid-template-columns: minmax(0, 1fr) 90px 48px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.statrow:last-child { border-bottom: 0; }
+.meter { height: 8px; background: var(--sunk); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: 99px; }
+.num { font-variant-numeric: tabular-nums; text-align: right; }
+select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 40px; max-width: 100%; }
+.pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
+@media (max-width: 420px) { .seg a { padding: 6px 9px; } h1 { font-size: 24px; } }
+</style>
+
+<header class="bar gut">
+  <div class="col">
+    <p class="logo">Grammar<i>/</i>Lab</p>
+    <nav class="seg" aria-label="เมนู">
+      <a href="#lessons" data-tab="lessons">บทเรียน</a>
+      <a href="#test" data-tab="test">ข้อสอบ</a>
+      <a href="#stats" data-tab="stats">สถิติ</a>
+    </nav>
+  </div>
+</header>
+<main class="gut"><div class="col" id="view"></div></main>
+
+<script>
+/* ===== Content =====
+   Annotated sentence: {S:...} {V:...} {O:...} {C:...} {A:...} {X:...}  (X = connector / clause marker)
+   Question: ["fill", stem with ___, [4 options], answerIndex, explanation]
+             ["err",  stem with [[segment]] x4, answerIndex, explanation]          */
+const PARTS = [
+  { id: "A", name: "Part A · โครงสร้างประโยค" },
+  { id: "B", name: "Part B · กริยาและกาล" },
+  { id: "C", name: "Part C · ประโยคซ้อนและคำเชื่อม" },
+  { id: "D", name: "Part D · เปรียบเทียบ คำนำหน้านาม บุพบท" },
+  { id: "E", name: "Part E · โครงสร้างขั้นสูง" },
+];
+
+const L = [
+{ id: "word", part: "A", title: "Parts of Speech & Word Form", th: "ชนิดของคำและการเลือกรูปคำ",
+  why: "<b>ออกบ่อยที่สุด</b> ใน TOEIC Part 5 และ CU-TEP ราว 1 ใน 3 ของข้อ grammar คือตัวเลือก 4 ตัวรากเดียวกัน (care / careful / carefully / carefulness) ให้เลือกตามตำแหน่งในประโยค",
+  formula: ["Det/Adj + [NOUN]           the [decision]", "Det + [ADJ] + Noun          an [effective] plan", "be/seem/become + [ADJ]      is [available]", "Verb (+O) + [ADV]           reviewed it [carefully]", "[ADV] + Adj / V3            [highly] qualified", "Prep + [NOUN / V-ing]       for [approval] / by [checking]"],
+  ruleHead: ["หน้าที่", "ลงท้ายที่พบบ่อย", "ตัวอย่าง"],
+  rules: [
+    ["Noun (นาม)", "-tion -sion -ment -ness -ity -ance -ence -er -or -ee -ist", "installation, payment, accuracy, attendance, employee"],
+    ["Adjective (คุณศัพท์)", "-ive -ful -ous -able -ible -al -ic -ent -ant -less", "effective, careful, various, available, financial"],
+    ["Adverb (กริยาวิเศษณ์)", "-ly (adj + ly)", "effectively, carefully, recently, highly"],
+    ["Verb (กริยา)", "-ize -ify -ate -en", "organize, clarify, evaluate, strengthen"],
+  ],
+  examples: [
+    ["{S:The installation} {V:took} {O:three weeks}.", "การติดตั้งใช้เวลา 3 สัปดาห์ (ตำแหน่งประธานต้องเป็นนาม)"],
+    ["{S:Ms. Lee} {V:gave} {O:an impressive presentation}.", "หลัง an และหน้านาม ต้องเป็นคุณศัพท์"],
+    ["{S:The team} {V:checked} {O:the data} {A:carefully}.", "ขยายกริยา checked ใช้ adverb"],
+    ["{S:The new system} {V:is} {C:highly efficient}.", "highly (adv) ขยาย efficient (adj) ซึ่งเป็นส่วนเติมเต็มหลัง is"],
+  ],
+  traps: [
+    ["a success plan", "a successful plan", "หน้านามต้องใช้ adj ไม่ใช่ noun"],
+    ["The price is reasonably.", "The price is reasonable.", "หลัง be ใช้ adj ไม่ใช้ adv"],
+    ["She works hardly.", "She works hard.", "hard เป็น adv อยู่แล้ว hardly แปลว่า แทบจะไม่"],
+    ["friendly → friendlily", "in a friendly way", "-ly บางคำเป็น adj: friendly, costly, timely, likely, lively"],
+  ],
+  qs: [
+    ["fill", "Please read the instructions ___ before using the machine.", ["careful", "carefully", "carefulness", "care"], 1, "ประโยคมี S-V-O ครบแล้ว (read the instructions) ช่องว่างขยายกริยา read จึงใช้ adverb"],
+    ["fill", "The ___ of the new software took three months.", ["install", "installed", "installation", "installing"], 2, "หลัง The และหน้า of ต้องเป็นนาม คำนามคือ installation"],
+    ["fill", "Ms. Park gave an ___ presentation at the conference.", ["impress", "impressive", "impressively", "impression"], 1, "an ___ presentation ช่องว่างอยู่ระหว่าง article กับนาม จึงต้องเป็น adj"],
+    ["fill", "The hospital is ___ committed to patient safety.", ["deep", "deeply", "depth", "deepen"], 1, "ขยาย committed (V3 ที่ใช้เหมือน adj) ใช้ adverb"],
+    ["fill", "Most staff members are now ___ with the new procedure.", ["familiar", "familiarity", "familiarize", "familiarly"], 0, "หลัง be ใช้ adj และ familiar with เป็นคู่คำ"],
+    ["err", "The [[annual]] report was [[careful]] [[reviewed]] by [[the]] committee.", 1, "careful ขยาย reviewed (กริยา) ต้องเป็น carefully"],
+  ]},
+{ id: "pattern", part: "A", title: "Sentence Patterns & Clauses", th: "5 โครงสร้างประโยค วลีกับอนุประโยค",
+  why: "<b>หัวใจของการทำข้อสอบ</b> หา S และ V แท้ (finite verb) ให้เจอก่อน แล้วจะรู้ทันทีว่าช่องว่างขาดอะไร กฎสำคัญคือ 1 clause มี V แท้ 1 ตัว ถ้ามี 2 clause ต้องมีคำเชื่อม",
+  formula: ["1  S + V                    The meeting ended.", "2  S + V + C (linking verb)  The plan seems good.", "3  S + V + O                She signed the form.", "4  S + V + IO + DO          He gave the patient water.", "5  S + V + O + OC           They made him manager.", "clause = S + V แท้   |   phrase = ไม่มี V แท้"],
+  ruleHead: ["ประเภท", "คำอธิบาย", "ตัวอย่าง"],
+  rules: [
+    ["Linking verb", "be, seem, appear, become, remain, look, sound, feel, taste, stay ตามด้วย adj (ไม่ใช่ adv)", "The results remain consistent."],
+    ["V แท้ (finite)", "มี tense และผันตามประธาน: is, works, worked, has done, will go", "The survey shows that..."],
+    ["V ไม่แท้ (non-finite)", "to V, V-ing, V3 ที่ไม่มีกริยาช่วย เป็น V หลักของประโยคไม่ได้", "The survey showing... ✗"],
+    ["Phrase vs Clause", "phrase ตามหลัง preposition (despite, during, because of) / clause ตามหลัง conjunction (although, while, because)", "during the meeting / while we were meeting"],
+  ],
+  examples: [
+    ["{S:The proposal} {V:sounds} {C:reasonable}.", "Pattern 2: sound เป็น linking verb ตามด้วย adj"],
+    ["{S:The nurse} {V:gave} {O:the patient} {O:a glass of water}.", "Pattern 4: กรรมรอง (คน) + กรรมตรง (สิ่งของ)"],
+    ["{S:The board} {V:appointed} {O:Dr. Kim} {C:director}.", "Pattern 5: director เป็นส่วนเติมเต็มของกรรม"],
+    ["{X:Although} {S:the budget} {V:was} {C:limited}, {S:the team} {V:finished} {O:the project}.", "2 clause มี V แท้ 2 ตัว เชื่อมด้วย Although"],
+  ],
+  traps: [
+    ["The results of the survey showing that...", "The results of the survey show that...", "ไม่มี V แท้ ประโยคไม่สมบูรณ์"],
+    ["The food tastes deliciously.", "The food tastes delicious.", "taste เป็น linking verb ตามด้วย adj"],
+    ["The meeting was long, everyone was tired.", "The meeting was long, so everyone was tired.", "2 clause ใช้แค่ comma ไม่ได้ (comma splice)"],
+  ],
+  qs: [
+    ["fill", "The new proposal sounds ___ to most of the committee.", ["good", "well", "goodly", "goodness"], 0, "sound เป็น linking verb ตามด้วย adj คือ good"],
+    ["fill", "The good news made the whole team ___.", ["happily", "happy", "happiness", "happen"], 1, "Pattern 5: make + O + adj (ส่วนเติมเต็มของกรรม)"],
+    ["fill", "The nurse ___ the patient a glass of water.", ["gave", "gave to", "giving", "to give"], 0, "Pattern 4: S + V + IO + DO ต้องใช้ V แท้ และไม่มี to คั่นถ้ากรรมรองมาก่อน"],
+    ["fill", "___ the meeting ended, everyone went back to work.", ["When", "During", "Despite", "Because of"], 0, "หลังช่องว่างเป็น clause (the meeting ended) ต้องใช้ conjunction"],
+    ["fill", "Patient satisfaction remained ___ throughout the year.", ["consistent", "consistently", "consistency", "consist"], 0, "remain เป็น linking verb ตามด้วย adj"],
+    ["err", "The results [[of the survey]] [[showing]] that most [[patients]] [[were]] satisfied.", 1, "ประโยคหลักไม่มี V แท้ ต้องเป็น show / showed"],
+  ]},
+{ id: "tense", part: "B", title: "The 12 Tenses", th: "12 Tense โครงสร้าง การใช้ และคำบอกเวลา",
+  why: "<b>ข้อสอบไม่ถามชื่อ tense</b> แต่ให้ดู <b>คำบอกเวลา (signal words)</b> ในประโยค เช่น since, by the time, ago แล้วเลือกรูปกริยาให้ตรง",
+  formula: ["Simple       V1 / V2 / will V1", "Continuous   be + V-ing", "Perfect      have/has/had/will have + V3", "Perfect Cont have/has/had/will have + been + V-ing"],
+  ruleHead: ["Tense", "โครงสร้าง", "ใช้เมื่อ / signal words"],
+  rules: [
+    ["Present Simple", "S + V1(s/es)", "นิสัย ความจริง ตารางเวลา: every day, usually, always"],
+    ["Present Continuous", "S + am/is/are + V-ing", "กำลังทำตอนนี้ แผนที่นัดแล้ว: now, at the moment, currently"],
+    ["Present Perfect", "S + have/has + V3", "เริ่มอดีตต่อเนื่องถึงปัจจุบัน หรือผลยังอยู่: since, for, already, yet, recently, so far"],
+    ["Present Perfect Cont.", "S + have/has been + V-ing", "ทำต่อเนื่องมาจนถึงตอนนี้ เน้นระยะเวลา: for 3 hours, all day"],
+    ["Past Simple", "S + V2", "จบในอดีต ระบุเวลา: yesterday, ago, last week, in 2020"],
+    ["Past Continuous", "S + was/were + V-ing", "กำลังทำในอดีตแล้วมีอีกเหตุการณ์แทรก: when, while"],
+    ["Past Perfect", "S + had + V3", "เกิดก่อนอีกเหตุการณ์ในอดีต: by the time + V2, before, after"],
+    ["Past Perfect Cont.", "S + had been + V-ing", "ทำต่อเนื่องก่อนเหตุการณ์ในอดีต"],
+    ["Future Simple", "S + will + V1", "ตัดสินใจทันที คาดการณ์ สัญญา: tomorrow, next week"],
+    ["Future Continuous", "S + will be + V-ing", "จะกำลังทำ ณ เวลาหนึ่งในอนาคต: at 10 a.m. tomorrow"],
+    ["Future Perfect", "S + will have + V3", "จะเสร็จก่อนเวลาหนึ่งในอนาคต: by + เวลาอนาคต, by the time + V1"],
+    ["Future Perfect Cont.", "S + will have been + V-ing", "ทำต่อเนื่องจนถึงเวลาหนึ่งในอนาคต: by 2027, for 10 years"],
+  ],
+  examples: [
+    ["{S:Mr. Kim} {V:has worked} {A:here} {A:since 2019}.", "since + จุดเวลา → Present Perfect"],
+    ["{X:By the time} {S:the doctor} {V:arrived}, {S:the patient} {V:had left}.", "เหตุการณ์ที่เกิดก่อนในอดีตใช้ had + V3"],
+    ["{A:By the end of this year}, {S:we} {V:will have treated} {O:500 patients}.", "by + เวลาอนาคต → Future Perfect"],
+    ["{X:If} {S:it} {V:rains} {A:tomorrow}, {S:we} {V:will cancel} {O:the trip}.", "clause เวลาหรือเงื่อนไข (if, when, before, as soon as) ใช้ present แทน future"],
+  ],
+  traps: [
+    ["I have visited the clinic last week.", "I visited the clinic last week.", "มีเวลาอดีตชัดเจน (last week, ago) ใช้ Present Perfect ไม่ได้"],
+    ["When he will arrive, call me.", "When he arrives, call me.", "time clause ไม่ใช้ will"],
+    ["I am knowing the answer.", "I know the answer.", "stative verbs (know, believe, own, need, belong) ไม่ใช้รูป continuous"],
+    ["I live here since 2020.", "I have lived here since 2020.", "since ต้องใช้ perfect"],
+  ],
+  qs: [
+    ["fill", "Mr. Kim ___ at this company since 2019.", ["works", "worked", "has worked", "is working"], 2, "since + จุดเวลาในอดีต ต่อเนื่องถึงปัจจุบัน → has worked"],
+    ["fill", "By the time the ambulance arrived, the patient ___ consciousness.", ["already lost", "had already lost", "has already lost", "loses"], 1, "by the time + V2 → อีกเหตุการณ์ที่เกิดก่อนใช้ had + V3"],
+    ["fill", "By the end of this year, the clinic ___ more than 5,000 patients.", ["will treat", "will have treated", "treated", "has treated"], 1, "by + เวลาในอนาคต → will have + V3"],
+    ["fill", "The staff ___ a training session at the moment.", ["attend", "attended", "are attending", "have attended"], 2, "at the moment → Present Continuous"],
+    ["fill", "Please call me as soon as the results ___.", ["arrive", "will arrive", "arrived", "would arrive"], 0, "หลัง as soon as (time clause) ใช้ present แทน future"],
+    ["err", "She [[has visited]] [[the clinic]] [[twice]] [[last month]].", 0, "last month ระบุเวลาอดีต ต้องใช้ visited"],
+  ]},
+{ id: "agree", part: "B", title: "Subject–Verb Agreement", th: "ประธานกับกริยาต้องสอดคล้องกัน",
+  why: "<b>กับดักคลาสสิก</b> ข้อสอบมักใส่วลียาว ๆ คั่นระหว่างประธานกับกริยา ให้ตัดวลี of..., with..., as well as... ทิ้งก่อน แล้วดูคำนามหลัก (head noun)",
+  formula: ["[Head noun] + (of / with / in ... ) + V", "Each / Every / Everyone + V เอกพจน์", "A + as well as / along with / together with + B → ตาม A", "Either A or B / Neither A nor B → ตามตัวที่ใกล้กริยา (B)", "The number of + N พหูพจน์ → V เอกพจน์", "A number of + N พหูพจน์ → V พหูพจน์"],
+  ruleHead: ["ประธาน", "กริยา", "ตัวอย่าง"],
+  rules: [
+    ["นามนับไม่ได้: information, equipment, furniture, advice, news, research, staff*", "เอกพจน์", "The equipment is new. (*staff ใช้ได้ทั้งสองแบบ)"],
+    ["V-ing / to V เป็นประธาน", "เอกพจน์", "Reading reports takes time."],
+    ["There is / are + N", "ตามนามที่ตามหลัง", "There are two problems."],
+    ["Most / Some / All / Half / % of + N", "ตามนามหลัง of", "Most of the data is... / Most of the patients are..."],
+    ["One of + N พหูพจน์", "เอกพจน์", "One of the doctors is on leave."],
+    ["Who / which / that (relative)", "ตามคำนามที่ถูกขยาย", "nurses who work at night"],
+  ],
+  examples: [
+    ["{S:The quality} {X:of the products} {V:has improved}.", "head noun คือ quality (เอกพจน์)"],
+    ["{S:The doctor}, {X:together with two nurses}, {V:is visiting} {O:the ward}.", "together with ไม่นับ ประธานคือ The doctor"],
+    ["{S:Neither the manager nor the staff members} {V:were} {C:aware}.", "ใกล้กริยาคือ staff members (พหูพจน์)"],
+    ["{S:The number of complaints} {V:has decreased}.", "The number of → เอกพจน์"],
+  ],
+  traps: [
+    ["The list of items are on the desk.", "The list of items is on the desk.", "head noun = list"],
+    ["Each of the nurses wear a badge.", "Each of the nurses wears a badge.", "Each → เอกพจน์"],
+    ["The informations are correct.", "The information is correct.", "information นับไม่ได้ ไม่เติม s"],
+  ],
+  qs: [
+    ["fill", "The quality of the medical supplies ___ improved significantly.", ["have", "has", "are", "were"], 1, "head noun คือ quality (เอกพจน์) → has"],
+    ["fill", "Each of the nurses ___ required to wear a name badge.", ["are", "is", "were", "have been"], 1, "Each of + N พหูพจน์ → กริยาเอกพจน์"],
+    ["fill", "A number of patients ___ complained about the waiting time.", ["has", "have", "is", "was"], 1, "A number of = หลาย → พหูพจน์"],
+    ["fill", "Neither the director nor the board members ___ aware of the change.", ["was", "were", "is", "has"], 1, "neither...nor ตามตัวที่ใกล้ (board members) → were"],
+    ["fill", "All of the new equipment ___ checked every morning.", ["is", "are", "were", "have"], 0, "All of + นามนับไม่ได้ (equipment) → เอกพจน์"],
+    ["err", "The doctor, [[together with]] two nurses, [[are]] [[visiting]] the [[ward]] now.", 1, "together with ไม่นับ ประธานคือ The doctor → is"],
+  ]},
+{ id: "passive", part: "B", title: "Passive Voice", th: "ประโยคถูกกระทำ",
+  why: "<b>วิธีตัดสินเร็ว</b>: ดูว่าหลังช่องว่างมีกรรมไหม ถ้ากริยาต้องการกรรมแต่ไม่มีกรรมตามหลัง และประธานเป็นผู้ถูกกระทำ → passive",
+  formula: ["be + V3 (+ by agent)", "is/are done          was/were done", "is being done        has/have been done", "will be done         modal + be done", "had been done        will have been done"],
+  ruleHead: ["Active", "Passive", "หมายเหตุ"],
+  rules: [
+    ["They clean the room.", "The room is cleaned.", "Present Simple"],
+    ["They are cleaning the room.", "The room is being cleaned.", "Continuous: being + V3"],
+    ["They have cleaned the room.", "The room has been cleaned.", "Perfect: been + V3"],
+    ["They must clean the room.", "The room must be cleaned.", "Modal + be + V3"],
+    ["They gave him a prize.", "He was given a prize.", "กริยา 2 กรรม ทำ passive ได้ 2 แบบ"],
+    ["—", "happen, occur, arise, remain, exist, appear, disappear, rise", "กริยาไม่มีกรรม ทำ passive ไม่ได้"],
+  ],
+  examples: [
+    ["{S:The results} {V:will be announced} {A:next week}.", "ผลจะถูกประกาศ (ไม่มีกรรม ประธานถูกกระทำ)"],
+    ["{S:The report} {V:is currently being reviewed} {A:by the finance team}.", "กำลังถูกตรวจ: is being + V3"],
+    ["{S:All forms} {V:must be submitted} {A:by Friday}.", "modal + be + V3"],
+    ["{S:The accident} {V:occurred} {A:at 3 a.m.}", "occur ไม่มีกรรม ใช้ active เท่านั้น"],
+  ],
+  traps: [
+    ["The accident was occurred.", "The accident occurred.", "occur ทำ passive ไม่ได้"],
+    ["The meeting has been postpone.", "The meeting has been postponed.", "passive ต้องใช้ V3"],
+    ["The system is maintaining by IT.", "The system is maintained by IT.", "มี by agent และประธานถูกกระทำ → V3"],
+  ],
+  qs: [
+    ["fill", "The exam results will ___ on the website next week.", ["announce", "announced", "be announced", "announcing"], 2, "ผลถูกประกาศ + หลัง will → be + V3"],
+    ["fill", "The new hospital wing ___ last year.", ["built", "was built", "has built", "building"], 1, "อาคารถูกสร้าง + last year → was built"],
+    ["fill", "The power failure ___ shortly after midnight.", ["occurred", "was occurred", "is occurred", "has been occurred"], 0, "occur ไม่มีกรรม ทำ passive ไม่ได้"],
+    ["fill", "All claim forms must ___ by the 5th of each month.", ["submit", "be submitted", "submitted", "submitting"], 1, "แบบฟอร์มถูกส่ง + modal → be + V3"],
+    ["fill", "The budget proposal is currently ___ by the finance team.", ["reviewing", "reviewed", "being reviewed", "review"], 2, "is + being + V3 = กำลังถูกตรวจ"],
+    ["err", "The meeting [[has]] [[been]] [[postpone]] [[until]] next Monday.", 2, "has been + V3 → postponed"],
+  ]},
+{ id: "modal", part: "B", title: "Modal Verbs", th: "กริยาช่วย และ Perfect Modals",
+  why: "<b>กฎเหล็ก</b>: หลัง modal ใช้ V1 เสมอ ไม่มี to ไม่เติม s และใน TOEIC/CU-TEP มักออก perfect modal (should have V3, must have V3) เพื่อวัดความหมาย",
+  formula: ["Modal + V1                  must submit", "Modal + be + V3 (passive)   must be submitted", "Modal + have + V3 (อดีต)     should have told", "have to / need to / ought to + V1"],
+  ruleHead: ["Modal", "ความหมาย", "ตัวอย่าง"],
+  rules: [
+    ["must / have to", "ต้อง (กฎ หน้าที่)", "Staff must wear ID cards."],
+    ["must not vs don't have to", "ห้าม / ไม่จำเป็น", "You must not smoke. / You don't have to come."],
+    ["should / ought to", "ควร", "You should rest."],
+    ["may / might / could", "อาจจะ", "It might rain."],
+    ["can / could", "สามารถ / ขออนุญาต / could = สุภาพหรืออดีต", "She could read at four."],
+    ["should have + V3", "ควรทำแต่ไม่ได้ทำ (เสียดาย ตำหนิ)", "You should have called."],
+    ["must have + V3", "คงจะ...แล้ว (อนุมานอดีตแบบมั่นใจ)", "He must have left."],
+    ["could / might have + V3", "อาจจะ...แล้ว", "They might have missed the bus."],
+    ["can't have + V3", "ไม่น่าจะ...แน่ ๆ", "She can't have seen it."],
+  ],
+  examples: [
+    ["{S:Employees} {V:must wear} {O:ID cards} {A:at all times}.", "must + V1"],
+    ["{S:You} {V:should have told} {O:me} {A:earlier}.", "ควรบอกแต่ไม่ได้บอก"],
+    ["{S:The lights} {V:are} {C:off}; {S:they} {V:must have gone} {A:home}.", "อนุมานอดีต: คงกลับบ้านไปแล้ว"],
+  ],
+  traps: [
+    ["He should to finish it.", "He should finish it.", "หลัง should ไม่มี to"],
+    ["She cans speak English.", "She can speak English.", "modal ไม่เติม s"],
+    ["He must went home.", "He must have gone home.", "อดีตของ modal ใช้ have + V3"],
+  ],
+  qs: [
+    ["fill", "You ___ have told me earlier. Now it is too late to change the schedule.", ["should", "must", "can", "will"], 0, "should have + V3 = ควรทำแต่ไม่ได้ทำ"],
+    ["fill", "The office is dark. Everyone must ___ home already.", ["go", "have gone", "went", "going"], 1, "must have + V3 = อนุมานเหตุการณ์ที่เกิดแล้ว"],
+    ["fill", "All visitors ___ sign in at the front desk.", ["must", "must to", "musts", "are must"], 0, "must + V1 ไม่มี to ไม่เติม s"],
+    ["fill", "It ___ rain this afternoon, so take an umbrella.", ["might", "must have", "should have", "could have"], 0, "คาดการณ์อนาคต (อาจจะ) ใช้ might + V1"],
+    ["fill", "Staff ___ attend the optional workshop, but it is recommended.", ["must not", "don't have to", "can't", "should have"], 1, "optional = ไม่บังคับ → don't have to (ไม่จำเป็น)"],
+    ["err", "He [[should]] [[to]] [[finish]] the report [[by noon]].", 1, "หลัง should ใช้ V1 ตัด to ออก"],
+  ]},
+{ id: "cond", part: "C", title: "Conditionals", th: "ประโยคเงื่อนไข If และ Inversion",
+  why: "<b>จับคู่ให้ถูก</b>: ดู tense ใน if-clause แล้วเลือก main clause ให้ตรงชนิด ข้อสอบระดับสูงชอบตัด if แล้วกลับประโยค (Should you..., Had I known...)",
+  formula: ["Type 0  If + V1,  V1                       ความจริง", "Type 1  If + V1,  will + V1                 เป็นไปได้ในอนาคต", "Type 2  If + V2/were,  would + V1          สมมติปัจจุบัน (ไม่จริง)", "Type 3  If + had V3,  would have + V3      สมมติอดีต (ไม่ได้เกิด)", "Mixed   If + had V3,  would + V1 (now)", "Inversion  Should S V1 / Were S... / Had S V3"],
+  ruleHead: ["รูป", "แทน", "ตัวอย่าง"],
+  rules: [
+    ["Should you need help, ...", "If you need help (Type 1)", "Should you have questions, call us."],
+    ["Were I you, ...", "If I were you (Type 2)", "Were I in charge, I would change it."],
+    ["Had I known, ...", "If I had known (Type 3)", "Had we left earlier, we would have arrived."],
+    ["unless", "if ... not", "Unless you hurry, you will be late."],
+    ["provided (that) / as long as", "ก็ต่อเมื่อ", "You can go, provided that you finish."],
+    ["otherwise", "มิฉะนั้น (ขึ้นประโยคใหม่หรือหลัง ; )", "Hurry; otherwise, you'll be late."],
+  ],
+  examples: [
+    ["{X:If} {S:it} {V:rains} {A:tomorrow}, {S:the event} {V:will be held} {A:indoors}.", "Type 1"],
+    ["{X:If} {S:I} {V:were} {C:you}, {S:I} {V:would accept} {O:the offer}.", "Type 2: ทุกประธานใช้ were (ภาษาทางการ)"],
+    ["{X:Had} {S:we} {V:known}, {S:we} {V:would have acted} {A:sooner}.", "Type 3 แบบ inversion"],
+  ],
+  traps: [
+    ["If it will rain, ...", "If it rains, ...", "if-clause ไม่ใช้ will"],
+    ["If I would have known, ...", "If I had known, ...", "Type 3 ใช้ had V3 ใน if-clause"],
+    ["Unless you don't hurry, ...", "Unless you hurry, ...", "unless มีความหมายปฏิเสธอยู่แล้ว"],
+  ],
+  qs: [
+    ["fill", "If it rains tomorrow, the ceremony ___ indoors.", ["is held", "will be held", "would be held", "had been held"], 1, "If + V1 → will + V1 (Type 1) และพิธีถูกจัด → passive"],
+    ["fill", "If I ___ you, I would accept the job offer.", ["am", "was", "were", "be"], 2, "Type 2 สมมติ ภาษาทางการใช้ were กับทุกประธาน"],
+    ["fill", "If they had left earlier, they ___ the train.", ["would catch", "will catch", "would have caught", "had caught"], 2, "If + had V3 → would have + V3"],
+    ["fill", "___ you have any questions, please contact the front desk.", ["Should", "Would", "Had", "Were"], 0, "Should + S + V1 = If you have (inversion Type 1)"],
+    ["fill", "___ I known about the problem, I would have fixed it.", ["If", "Had", "Have", "Did"], 1, "Had + S + V3 = If I had known (inversion Type 3)"],
+    ["fill", "The project will not start ___ the budget is approved.", ["unless", "if", "although", "despite"], 0, "unless = if not → จะไม่เริ่มถ้างบไม่ผ่าน"],
+  ]},
+{ id: "rel", part: "C", title: "Relative Clauses", th: "who / which / that / whose / where และ reduced clause",
+  why: "<b>ดู 2 อย่าง</b>: คำนามข้างหน้าเป็นคนหรือสิ่งของ และหลังช่องว่างขาดอะไร (ขาดประธาน → who/which, ขาดกรรม → whom/which, มีครบแต่ต้องการ 'ของ' → whose, สถานที่ครบประโยค → where)",
+  formula: ["N(คน) + who + V ...          the doctor who treated me", "N(สิ่ง) + which/that + V ...   the form which was sent", "N + whose + N + V ...          the patient whose file...", "N(สถานที่) + where + S + V     the room where we met", "Reduced:  N + V-ing (active) / N + V3 (passive)"],
+  ruleHead: ["คำ", "ใช้กับ", "หน้าที่ใน clause"],
+  rules: [
+    ["who", "คน", "ประธาน (ทางการใช้เป็นกรรมได้ด้วย)"],
+    ["whom", "คน", "กรรม หรือหลัง preposition: to whom"],
+    ["which", "สิ่งของ", "ประธาน/กรรม ใช้หลัง comma ได้"],
+    ["that", "คน/สิ่งของ", "เฉพาะ defining (ไม่มี comma) ห้ามตามหลัง preposition"],
+    ["whose", "คน/สิ่งของ", "แสดงความเป็นเจ้าของ ตามด้วยนามเสมอ"],
+    ["where / when", "สถานที่ / เวลา", "ตามด้วย clause ที่ครบ S + V (+O)"],
+  ],
+  examples: [
+    ["{S:The doctor} {X:who treated my mother} {V:is} {C:very kind}.", "who เป็นประธานของ treated"],
+    ["{S:The hospital}, {X:which opened in 1990}, {V:has} {O:120 beds}.", "non-defining มี comma ใช้ that ไม่ได้"],
+    ["{S:Applicants} {X:applying for the position} {V:must submit} {O:a resume}.", "reduced: who apply → applying"],
+    ["{S:The forms} {X:submitted yesterday} {V:were} {C:incomplete}.", "reduced passive: which were submitted → submitted"],
+  ],
+  traps: [
+    ["The hospital, that opened in 1990, ...", "The hospital, which opened in 1990, ...", "หลัง comma ใช้ that ไม่ได้"],
+    ["the man to who I spoke", "the man to whom I spoke", "หลัง preposition ใช้ whom"],
+    ["the room which we met", "the room where we met / in which we met", "clause ครบแล้ว ต้องใช้ where"],
+  ],
+  qs: [
+    ["fill", "The doctor ___ treated my mother is very experienced.", ["who", "which", "whose", "whom"], 0, "นามเป็นคน และขาดประธานของ treated → who"],
+    ["fill", "The provincial hospital, ___ opened in 1990, has 120 beds.", ["that", "which", "who", "where"], 1, "สิ่งของ + มี comma (non-defining) → which"],
+    ["fill", "The patient ___ file was missing was asked to wait.", ["who", "whom", "whose", "which"], 2, "file ของผู้ป่วย → whose + N"],
+    ["fill", "This is the room ___ the committee meeting will be held.", ["which", "where", "when", "that"], 1, "หลังช่องว่างเป็น clause ครบ (passive) และนามเป็นสถานที่ → where"],
+    ["fill", "Applicants ___ for the position must submit a resume by Friday.", ["apply", "applying", "applied", "are applying"], 1, "ประโยคมี V หลักคือ must submit แล้ว ช่องว่างเป็น reduced clause แบบ active → applying"],
+    ["fill", "The claim forms ___ last week were incomplete.", ["submitting", "submitted", "submit", "were submitted"], 1, "แบบฟอร์มถูกส่ง → reduced passive ใช้ V3"],
+  ]},
+{ id: "conj", part: "C", title: "Connectors", th: "Conjunction / Preposition / Adverb เชื่อมความ",
+  why: "<b>เลือกตามสิ่งที่ตามหลัง</b> ไม่ใช่ตามความหมายอย่างเดียว: Although กับ Despite ความหมายเหมือนกัน แต่ Although ตามด้วย clause ส่วน Despite ตามด้วยนามหรือ V-ing",
+  formula: ["Conjunction + S + V          although / because / while / since / unless", "Preposition + N / V-ing      despite / because of / due to / during", "S + V. Adverb, S + V.         However, / Therefore, / Moreover,", "so + adj/adv + that  |  such + (a) adj + N + that", "both A and B | either A or B | not only A but (also) B"],
+  ruleHead: ["ความหมาย", "+ clause", "+ noun / V-ing", "+ ระหว่างประโยค"],
+  rules: [
+    ["แม้ว่า", "although, though, even though", "despite, in spite of", "however, nevertheless"],
+    ["เพราะ", "because, since, as", "because of, due to, owing to", "therefore (ผล)"],
+    ["ระหว่าง", "while", "during", "meanwhile"],
+    ["นอกจากนี้", "—", "in addition to, besides", "moreover, furthermore, in addition"],
+    ["ถ้าไม่", "unless", "without", "otherwise"],
+  ],
+  examples: [
+    ["{X:Despite} {A:the heavy rain}, {S:the clinic} {V:stayed} {C:open}.", "Despite + นาม"],
+    ["{X:Although} {S:it} {V:was} {C:late}, {S:the nurses} {V:continued} {O:working}.", "Although + clause"],
+    ["{S:The budget} {V:was} {C:limited}; {X:however}, {S:the project} {V:was completed}.", "however อยู่ระหว่าง 2 ประโยค"],
+    ["{S:It} {V:was} {C:such a difficult exam} {X:that} {S:many} {V:failed}.", "such + a + adj + N + that"],
+  ],
+  traps: [
+    ["Despite it was raining, ...", "Although it was raining, ... / Despite the rain, ...", "despite ตามด้วยนาม"],
+    ["Because of the weather was bad, ...", "Because the weather was bad, ...", "because of ตามด้วยนาม"],
+    ["Although it was late, but they stayed.", "Although it was late, they stayed.", "ใช้ although คู่กับ but ไม่ได้"],
+  ],
+  qs: [
+    ["fill", "___ the heavy rain, the mobile clinic stayed open.", ["Although", "Despite", "Because", "However"], 1, "ตามด้วยนาม (the heavy rain) → preposition: Despite"],
+    ["fill", "___ it was late, the nurses continued working.", ["Despite", "In spite of", "Although", "Due to"], 2, "ตามด้วย clause → Although"],
+    ["fill", "The flight was delayed ___ bad weather.", ["because", "because of", "although", "so"], 1, "ตามด้วยนาม → because of"],
+    ["fill", "The budget was limited; ___, the project was completed on time.", ["however", "although", "despite", "but"], 0, "หลัง ; และมี comma ตาม → adverb connector: however"],
+    ["fill", "It was ___ a difficult exam that many candidates failed.", ["so", "such", "too", "very"], 1, "such + a + adj + N + that"],
+    ["fill", "The program is not only effective ___ affordable.", ["and", "or", "but also", "also"], 2, "คู่ not only ... but also"],
+  ]},
+{ id: "gerinf", part: "C", title: "Gerunds & Infinitives", th: "V-ing หรือ to V",
+  why: "<b>ต้องท่องกลุ่มกริยา</b> ข้อนี้ใช้เหตุผลไม่ได้ จำกลุ่มหลักให้ได้ และระวัง to ที่เป็น preposition (look forward to + V-ing)",
+  formula: ["V + V-ing     avoid, enjoy, finish, consider, suggest, recommend, mind, postpone, delay, deny, risk, keep", "V + to V      want, plan, decide, agree, hope, refuse, afford, expect, need, promise, aim, fail", "V + O + to V  ask, allow, encourage, require, remind, invite, advise, enable", "Prep + V-ing  by checking, before leaving, interested in joining", "to (prep) + V-ing  look forward to, be used to, be committed to, object to, contribute to"],
+  ruleHead: ["กริยา", "+ V-ing", "+ to V"],
+  rules: [
+    ["stop", "เลิกทำ: stopped smoking", "หยุดเพื่อไปทำ: stopped to smoke"],
+    ["remember", "จำได้ว่าเคยทำ: remember meeting her", "จำว่าต้องทำ: remember to lock"],
+    ["forget", "ลืมว่าเคยทำ", "ลืมทำ: forgot to call"],
+    ["try", "ลองทำดู: try restarting", "พยายาม: try to finish"],
+    ["regret", "เสียใจที่ทำไปแล้ว", "เสียใจที่ต้องแจ้ง: regret to inform"],
+  ],
+  examples: [
+    ["{S:We} {V:look forward to} {O:seeing you}.", "to ในที่นี้เป็น preposition → V-ing"],
+    ["{S:The new rule} {V:requires} {O:all staff} {C:to complete training}.", "require + O + to V"],
+    ["{S:She} {V:suggested} {O:postponing the meeting}.", "suggest + V-ing"],
+  ],
+  traps: [
+    ["I look forward to see you.", "I look forward to seeing you.", "to เป็น preposition"],
+    ["He suggested to postpone it.", "He suggested postponing it.", "suggest + V-ing"],
+    ["They allowed to leave early.", "They allowed us to leave early. / We were allowed to leave early.", "allow + O + to V"],
+  ],
+  qs: [
+    ["fill", "We look forward to ___ you at the annual conference.", ["see", "seeing", "seen", "saw"], 1, "look forward to + V-ing"],
+    ["fill", "The director decided ___ the meeting until next week.", ["postpone", "to postpone", "postponing", "postponed"], 1, "decide + to V"],
+    ["fill", "Please avoid ___ your mobile phone during the session.", ["use", "to use", "using", "used"], 2, "avoid + V-ing"],
+    ["fill", "The new regulation requires all staff ___ annual training.", ["complete", "to complete", "completing", "completed"], 1, "require + O + to V"],
+    ["fill", "Thank you for ___ the patient satisfaction survey.", ["complete", "completing", "to complete", "completed"], 1, "หลัง preposition (for) → V-ing"],
+    ["fill", "We regret ___ you that your application was unsuccessful.", ["inform", "informing", "to inform", "informed"], 2, "regret to inform = เสียใจที่ต้องแจ้ง (สำนวนจดหมายทางการ)"],
+  ]},
+{ id: "comp", part: "D", title: "Comparison", th: "เปรียบเทียบขั้นกว่า ขั้นสุด และ as...as",
+  why: "<b>ดูคำบอกใบ้ในประโยค</b>: than → ขั้นกว่า, the ... in/of → ขั้นสุด, as ... as → ขั้นเท่า และระวังคำขยายขั้นกว่า (much, far, even, a lot) ที่ใช้ very ไม่ได้",
+  formula: ["as + adj/adv + as                as high as", "adj-er / more adj + than          better than / more efficient than", "the + adj-est / most adj          the largest / the most efficient", "much / far / even + comparative   much faster", "The + comparative ..., the + comparative ...", "superior / inferior / prior + to   (ไม่ใช้ than)"],
+  ruleHead: ["คำ", "ขั้นกว่า", "ขั้นสุด"],
+  rules: [
+    ["good / well", "better", "best"],
+    ["bad / badly", "worse", "worst"],
+    ["many / much", "more", "most"],
+    ["little", "less", "least"],
+    ["far", "farther / further", "farthest / furthest"],
+  ],
+  examples: [
+    ["{S:This year's results} {V:are} {C:much better than last year's}.", "much ขยายขั้นกว่า"],
+    ["{X:The more} {S:you} {V:practice}, {X:the better} {S:you} {V:become}.", "The + comparative, the + comparative"],
+    ["{S:Her score} {V:was} {C:as high as mine}.", "ขั้นเท่า"],
+  ],
+  traps: [
+    ["more easier", "easier", "ห้ามซ้อน more กับ -er"],
+    ["very better", "much better", "ขยายขั้นกว่าใช้ much/far/even"],
+    ["superior than", "superior to", "superior/inferior/prior ใช้ to"],
+  ],
+  qs: [
+    ["fill", "This year's audit results are ___ than last year's.", ["good", "better", "best", "more good"], 1, "มี than → ขั้นกว่าของ good คือ better"],
+    ["fill", "It is the ___ hospital in the province.", ["large", "larger", "largest", "most large"], 2, "the ... in the province → ขั้นสุด"],
+    ["fill", "The ___ you practice, the more confident you become.", ["much", "more", "most", "many"], 1, "The + comparative, the + comparative"],
+    ["fill", "The new model is ___ more efficient than the old one.", ["very", "much", "most", "so"], 1, "ขยายขั้นกว่าใช้ much ใช้ very ไม่ได้"],
+    ["fill", "Her score was as high ___ mine.", ["than", "as", "so", "like"], 1, "as + adj + as"],
+    ["err", "This method is [[more]] [[easier]] [[than]] the [[old]] one.", 0, "easier เป็นขั้นกว่าอยู่แล้ว ตัด more ออก"],
+  ]},
+{ id: "article", part: "D", title: "Articles & Quantifiers", th: "a / an / the และ much / many / few / little",
+  why: "<b>ดูนามที่ตามหลัง</b>: นับได้หรือไม่ เอกพจน์หรือพหูพจน์ แล้วเลือกคำบอกปริมาณให้ตรง a/an ดูจาก <b>เสียง</b> ไม่ใช่ตัวอักษร",
+  formula: ["a + เสียงพยัญชนะ    a university, a one-time fee", "an + เสียงสระ        an hour, an MRI, an honest person", "the + เฉพาะเจาะจง / มีหนึ่งเดียว / ขั้นสุด / ลำดับที่", "many / few / a few / several / a number of + N นับได้พหูพจน์", "much / little / a little / a great deal of / an amount of + N นับไม่ได้", "each / every / another + N เอกพจน์"],
+  ruleHead: ["คำ", "ความหมาย", "ตัวอย่าง"],
+  rules: [
+    ["few / little", "น้อย (แทบไม่มี) เน้นปฏิเสธ", "Few students passed."],
+    ["a few / a little", "มีบ้าง พอสมควร", "We have a few minutes."],
+    ["number vs amount", "number + นับได้ / amount + นับไม่ได้", "a number of complaints / an amount of money"],
+    ["other / another / the other(s)", "อื่น ๆ / อีกอัน / ที่เหลือ", "another form, the other nurses"],
+    ["no article", "นามพหูพจน์หรือนับไม่ได้ในความหมายทั่วไป", "Nurses work hard. / Water is essential."],
+  ],
+  examples: [
+    ["{S:She} {V:is} {C:an honest person}.", "honest ออกเสียงขึ้นต้นด้วยสระ"],
+    ["{S:Every employee} {V:must sign} {O:the form}.", "every + เอกพจน์"],
+    ["{S:We} {V:received} {O:a large number of complaints}.", "complaints นับได้ → number"],
+  ],
+  traps: [
+    ["an university", "a university", "u ออกเสียง /juː/ เป็นพยัญชนะ"],
+    ["many informations", "much information", "information นับไม่ได้"],
+    ["every employees", "every employee", "every + เอกพจน์"],
+  ],
+  qs: [
+    ["fill", "She is ___ honest and reliable colleague.", ["a", "an", "the", "—"], 1, "honest ออกเสียงขึ้นต้นด้วยสระ → an"],
+    ["fill", "There is very ___ information about the new regulation.", ["many", "few", "little", "several"], 2, "information นับไม่ได้ + ความหมายน้อย → little"],
+    ["fill", "___ students passed the exam, so the teacher was disappointed.", ["Few", "A few", "Little", "A little"], 0, "students นับได้ + ผิดหวัง (แทบไม่มีใครผ่าน) → Few"],
+    ["fill", "___ employee must sign the confidentiality agreement.", ["All", "Every", "Many", "Several"], 1, "employee เอกพจน์ → Every"],
+    ["fill", "We received a large ___ of complaints last month.", ["amount", "number", "deal", "much"], 1, "complaints นับได้ → a number of"],
+    ["fill", "Dr. Somchai is ___ most experienced surgeon in our team.", ["a", "an", "the", "—"], 2, "ขั้นสุด (most experienced) ใช้ the"],
+  ]},
+{ id: "prep", part: "D", title: "Prepositions", th: "บุพบทเวลา สถานที่ และคำที่มากับบุพบทเฉพาะ",
+  why: "<b>ครึ่งหนึ่งคือ collocation</b> ต้องจำเป็นคู่ เช่น responsible for, comply with และระวังคู่ที่ความหมายใกล้กัน: by / until, for / since, during / for",
+  formula: ["at + เวลาเจาะจง      at 9 a.m., at noon", "on + วัน/วันที่         on Monday, on 5 May", "in + เดือน/ปี/ช่วง     in May, in 2026, in the morning", "by (ภายใน กำหนดส่ง)  vs  until (ต่อเนื่องจนถึง)", "for + ระยะเวลา  vs  since + จุดเริ่มต้น", "during + นาม  vs  while + clause"],
+  ruleHead: ["Collocation", "ความหมาย", ""],
+  rules: [
+    ["responsible for", "รับผิดชอบ", ""], ["comply with", "ปฏิบัติตาม", ""], ["in charge of", "ดูแล", ""],
+    ["according to", "ตาม", ""], ["on behalf of", "ในนามของ", ""], ["depend on / rely on", "ขึ้นอยู่กับ / พึ่งพา", ""],
+    ["aware of", "ตระหนัก", ""], ["eligible for", "มีสิทธิ์", ""], ["in accordance with", "ให้สอดคล้องกับ", ""],
+    ["prior to", "ก่อน", ""], ["regardless of", "ไม่ว่า", ""], ["access to", "การเข้าถึง", ""],
+  ],
+  examples: [
+    ["{V:Please submit} {O:the report} {A:by Friday}.", "by = ไม่เกินวันศุกร์"],
+    ["{S:The office} {V:will be closed} {A:until Monday}.", "until = ปิดต่อเนื่องไปจนถึงวันจันทร์"],
+    ["{S:All staff} {V:must comply} {A:with the new regulations}.", "comply with"],
+  ],
+  traps: [
+    ["Submit it until Friday.", "Submit it by Friday.", "กำหนดส่งใช้ by"],
+    ["I have worked here since five years.", "I have worked here for five years.", "ระยะเวลาใช้ for"],
+    ["during I was waiting", "while I was waiting", "during + นาม"],
+  ],
+  qs: [
+    ["fill", "The meeting will start ___ 9 a.m. sharp.", ["in", "on", "at", "by"], 2, "เวลาเจาะจง → at"],
+    ["fill", "Please submit the monthly report ___ Friday.", ["until", "by", "since", "during"], 1, "กำหนดส่ง (ไม่เกิน) → by"],
+    ["fill", "The head nurse is responsible ___ the ward schedule.", ["of", "for", "to", "with"], 1, "responsible for"],
+    ["fill", "All hospitals must comply ___ the new regulations.", ["to", "with", "for", "by"], 1, "comply with"],
+    ["fill", "The outpatient department will be closed ___ the holiday.", ["while", "during", "for", "since"], 1, "ตามด้วยนาม (the holiday) → during"],
+    ["fill", "She has been working at the provincial office ___ five years.", ["since", "for", "during", "from"], 1, "ระยะเวลา → for"],
+  ]},
+{ id: "report", part: "E", title: "Reported Speech & Noun Clauses", th: "ประโยคบอกเล่าทางอ้อม และคำถามซ้อน",
+  why: "<b>คำถามซ้อน (embedded question) ไม่กลับ S-V</b> เป็นจุดที่ข้อสอบชอบออกมากที่สุด: Do you know where <b>the office is</b>? ไม่ใช่ where is the office",
+  formula: ["said (that) + S + V (เลื่อน tense ถอยหลัง)", "told + O + (that) + S + V", "asked + if/whether + S + V", "asked + wh- + S + V        (ไม่กลับ S-V)", "told/asked + O + to V        (คำสั่ง คำขอ)"],
+  ruleHead: ["Direct", "Reported", ""],
+  rules: [
+    ["am / is / are", "was / were", ""], ["V1", "V2", ""], ["V2 / have V3", "had V3", ""],
+    ["will / can / may", "would / could / might", ""], ["today / tomorrow", "that day / the next day", ""],
+    ["here / this / now", "there / that / then", ""],
+  ],
+  examples: [
+    ["{S:She} {V:said} {X:that} {S:she} {V:was} {C:tired}.", "is → was"],
+    ["{S:He} {V:asked} {O:me} {X:where} {S:I} {V:lived}.", "คำถามซ้อน: S + V ไม่กลับ"],
+    ["{S:The doctor} {V:told} {O:me} {C:to drink more water}.", "คำแนะนำ: told + O + to V"],
+  ],
+  traps: [
+    ["Can you tell me where is the pharmacy?", "Can you tell me where the pharmacy is?", "embedded question ไม่กลับ S-V"],
+    ["He said me that...", "He told me that... / He said that...", "said ไม่ตามด้วยกรรมคนโดยตรง"],
+    ["She asked that I needed help.", "She asked if/whether I needed help.", "คำถาม yes/no ใช้ if/whether"],
+  ],
+  qs: [
+    ["fill", "She said that she ___ too tired to continue.", ["is", "was", "were", "be"], 1, "reported speech เลื่อน tense: is → was"],
+    ["fill", "The receptionist asked me where ___.", ["did I live", "I lived", "do I live", "lived I"], 1, "คำถามซ้อนไม่กลับ S-V → I lived"],
+    ["fill", "The doctor told me ___ more water.", ["drink", "to drink", "drinking", "drank"], 1, "told + O + to V"],
+    ["fill", "The officer asked ___ I needed any assistance.", ["that", "whether", "what", "which"], 1, "คำถาม yes/no ในรูป reported → whether/if"],
+    ["fill", "He ___ me that the meeting had been cancelled.", ["said", "told", "spoke", "talked"], 1, "มีกรรมคน (me) → told"],
+    ["err", "[[Could you]] tell me [[what time]] [[does the clinic]] [[open]]?", 2, "คำถามซ้อน → what time the clinic opens"],
+  ]},
+{ id: "adv", part: "E", title: "Inversion, Subjunctive & Causative", th: "กลับประโยค ประโยค that + V1 และ have something done",
+  why: "<b>ข้อยากของ CU-TEP / TOEIC 900+</b> จำ 3 กลุ่ม: คำปฏิเสธขึ้นต้นประโยคต้องกลับกริยาช่วย, กริยาแนะนำหรือบังคับ + that + S + V1 (ไม่ผัน), และ have/get ให้คนอื่นทำ",
+  formula: ["Never / Rarely / Seldom / Hardly + aux + S + V", "Not only + aux + S + V, but S also V", "Only after / Only when ... + aux + S + V", "No sooner had S V3 than ... | Hardly had S V3 when ...", "recommend / suggest / insist / require / request + that + S + V1", "It is essential / important / necessary that + S + V1", "have + O + V1  |  get + O + to V  |  have / get + thing + V3"],
+  ruleHead: ["โครงสร้าง", "ความหมาย", "ตัวอย่าง"],
+  rules: [
+    ["Never have I seen...", "ไม่เคยเห็นเลย (เน้น)", "Never have I seen such a busy day."],
+    ["Not only did she..., but...", "ไม่เพียงแต่", "Not only did she write it, but she also presented it."],
+    ["recommend that he be / get", "subjunctive: V1 ทุกประธาน", "The doctor recommended that he get more rest."],
+    ["have someone do", "ให้ใครทำ", "I had the IT staff fix it."],
+    ["have something done", "ให้สิ่งนั้นถูกทำ (คนอื่นทำ)", "I had my car repaired."],
+  ],
+  examples: [
+    ["{X:Never} {V:have} {S:I} {V:seen} {O:such a busy day}.", "Never ขึ้นต้น → กลับ have + I"],
+    ["{S:The doctor} {V:recommended} {X:that} {S:he} {V:get} {O:more rest}.", "subjunctive: get ไม่เติม s"],
+    ["{S:We} {V:had} {O:the equipment} {C:checked} {A:yesterday}.", "have + สิ่งของ + V3"],
+  ],
+  traps: [
+    ["Never I have seen...", "Never have I seen...", "ต้องกลับกริยาช่วย"],
+    ["He suggested that she goes.", "He suggested that she go.", "subjunctive ใช้ V1"],
+    ["I had my car repair.", "I had my car repaired.", "สิ่งของถูกซ่อม → V3"],
+  ],
+  qs: [
+    ["fill", "Never ___ such a busy day in the emergency room.", ["I have seen", "have I seen", "I saw", "did I saw"], 1, "Never ขึ้นต้นประโยค → กลับ aux + S"],
+    ["fill", "The doctor recommended that he ___ more rest.", ["gets", "get", "got", "to get"], 1, "recommend that + S + V1 (subjunctive)"],
+    ["fill", "Not only ___ the report, but she also presented it to the board.", ["she wrote", "did she write", "she did write", "wrote she"], 1, "Not only ขึ้นต้น → did + S + V1"],
+    ["fill", "We had the air conditioner ___ yesterday.", ["repair", "repaired", "repairing", "to repair"], 1, "have + สิ่งของ + V3"],
+    ["fill", "No sooner had he arrived ___ the meeting started.", ["when", "than", "then", "that"], 1, "No sooner ... than"],
+    ["fill", "It is essential that every patient ___ informed of the risks.", ["is", "be", "was", "being"], 1, "It is essential that + S + V1 → be"],
+  ]},
+];
+
+const STRATEGY = [
+  "อ่านตัวเลือกก่อน: ถ้าเป็นรากเดียวกัน (care / careful / carefully) = ข้อรูปคำ ถ้าเป็นกริยาหลายรูป = tense/passive/agreement ถ้าเป็นคำเชื่อม = connector",
+  "หา S และ V แท้ของประโยค ถ้ายังไม่มี V แท้ ช่องว่างต้องเป็น V แท้ ถ้ามีแล้ว ช่องว่างเป็นอย่างอื่น",
+  "ดูคำรอบช่องว่าง: หน้า/หลังเป็นอะไร มี than, since, by, of, that ไหม",
+  "ตัดตัวเลือกที่ผิดโครงสร้างทิ้งก่อน แล้วค่อยเลือกตามความหมาย",
+];
+
+/* ===== Derived ===== */
+const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
+const BANK = [];
+L.forEach(l => l.qs.forEach((q, i) => BANK.push({ id: l.id + "-" + i, lesson: l.id, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] })));
+function segs(stem) { return [...stem.matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1]); }
+
+/* ===== Storage (per-viewer) ===== */
+const KEY = "grammar-lab-v1";
+let S = { ans: {}, tests: [], plain: false };
+try { const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function record(qid, ok) { const a = S.ans[qid] || { n: 0, c: 0 }; a.n++; if (ok) a.c++; a.last = ok ? 1 : 0; S.ans[qid] = a; save(); }
+function lessonStat(id) {
+  let n = 0, c = 0, seen = 0, total = 0;
+  BANK.filter(q => q.lesson === id).forEach(q => { total++; const a = S.ans[q.id]; if (a) { seen++; n += a.n; c += a.c; } });
+  return { seen, total, pct: n ? Math.round(c / n * 100) : null };
+}
+
+/* ===== Rendering helpers ===== */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const SLOT = { S: "S", V: "V", O: "O", C: "C", A: "A", X: "+" };
+function annotate(s) {
+  return esc(s).replace(/\{([SVOCAX]):([^}]*)\}/g, (_, k, t) => `<span class="slot k-${k}"><b>${SLOT[k]}</b>${t}</span>`);
+}
+function stemHTML(q, filled) {
+  if (q.type === "err") { let i = 0; return esc(q.stem).replace(/\[\[(.+?)\]\]/g, (_, t) => `<u>${t}<sup>${"ABCD"[i++]}</sup></u>`); }
+  return esc(q.stem).replace("___", filled != null ? `<span class="blank" style="text-align:center">${esc(q.opts[filled])}</span>` : '<span class="blank" aria-label="ช่องว่าง">&nbsp;</span>');
+}
+function pillFor(st) {
+  if (st.pct == null) return `<span class="pill">ยังไม่ทำ</span>`;
+  return `<span class="pill ${st.pct >= 80 ? "good" : st.pct < 60 ? "weak" : ""}">${st.pct}%</span>`;
+}
+function qCard(q, idx, opts = {}) {
+  const picked = opts.picked, reveal = opts.reveal;
+  return `<div class="q" data-qid="${q.id}">
+    <div class="head"><span>${opts.label || "ข้อ " + (idx + 1)} · ${q.type === "err" ? "หาจุดผิด" : "เติมคำ"}</span>${opts.showLesson ? `<a href="#lesson-${q.lesson}" style="color:inherit">${esc(LESSON[q.lesson].title)}</a>` : ""}</div>
+    <div class="stem" lang="en">${stemHTML(q)}</div>
+    <div class="opts">${q.opts.map((o, j) => {
+      let cls = "opt";
+      if (reveal) { if (j === q.ans) cls += " ok"; else if (j === picked) cls += " no"; }
+      else if (j === picked) cls += " picked";
+      return `<button class="${cls}" data-pick="${j}"${reveal ? " disabled" : ""}><span class="L">${"ABCD"[j]}</span><span lang="en">${esc(o)}</span></button>`;
+    }).join("")}</div>
+    ${reveal ? `<div class="exp"><b>${picked === q.ans ? "ถูก" : "เฉลย " + "ABCD"[q.ans]}</b> · ${esc(q.exp)}</div>` : ""}
+  </div>`;
+}
+
+/* ===== Views ===== */
+const $v = document.getElementById("view");
+let route = { tab: "lessons", lesson: null };
+let practiceState = {};   // per-lesson question picks: qid -> picked
+let test = null;          // { qs, picks, start, done, end }
+
+function legend() {
+  return `<div class="legend">${[["S", "ประธาน"], ["V", "กริยา"], ["O", "กรรม"], ["C", "ส่วนเติมเต็ม"], ["A", "ส่วนขยาย เวลา สถานที่"], ["X", "คำเชื่อม / วลีหรือ clause ขยาย"]].map(([k, t]) => `<span class="swatch k-${k}">${k === "X" ? "+" : k} ${t}</span>`).join("")}</div>`;
+}
+
+function viewLessons() {
+  const done = L.filter(l => (lessonStat(l.id).pct || 0) >= 80).length;
+  return `<h1>Grammar สำหรับข้อสอบ</h1>
+    <p class="sub">15 บท เรียงจากโครงสร้างพื้นฐานไปขั้นสูง ครอบคลุมจุดที่ออกบ่อยใน TOEIC Part 5–6, CU-TEP, TU-GET และภาษาอังกฤษ ก.พ. · ผ่านแล้ว ${done}/${L.length} บท (ทำถูก 80% ขึ้นไป)</p>
+    <section class="strategy">
+      <h2>4 ขั้นทำข้อเติมคำ</h2>
+      <ol class="steps">${STRATEGY.map(s => `<li><span>${esc(s)}</span></li>`).join("")}</ol>
+      <div class="block" style="margin-top:16px"><div class="eyebrow">วิธีอ่านแผนผังประโยคในแอปนี้</div>
+        <div class="sent" lang="en" style="margin-top:4px">${annotate("{X:Although} {S:the budget} {V:was} {C:limited}, {S:the team} {V:completed} {O:the project} {A:on time}.")}</div>
+        ${legend()}
+      </div>
+    </section>
+    ${PARTS.map(p => `<div class="part"><span class="eyebrow">${esc(p.name)}</span><div class="lessons">
+      ${L.filter(l => l.part === p.id).map(l => { const i = L.indexOf(l); return `<button class="li" data-go="lesson-${l.id}">
+        <span class="n">${String(i + 1).padStart(2, "0")}</span>
+        <span style="min-width:0"><span class="t" lang="en">${esc(l.title)}</span><span class="d">${esc(l.th)}</span></span>
+        ${pillFor(lessonStat(l.id))}</button>`; }).join("")}
+    </div></div>`).join("")}`;
+}
+
+function viewLesson(id) {
+  const l = LESSON[id], i = L.indexOf(l);
+  const prev = L[i - 1], next = L[i + 1];
+  const qs = BANK.filter(q => q.lesson === id);
+  const answered = qs.filter(q => practiceState[q.id] != null).length;
+  const correct = qs.filter(q => practiceState[q.id] === q.ans).length;
+  return `<div class="${S.plain ? "plain" : ""}">
+    <a class="note" href="#lessons" style="color:var(--muted)">‹ ทุกบท</a>
+    <div class="eyebrow" style="margin-top:10px">บทที่ ${i + 1} · ${esc(PARTS.find(p => p.id === l.part).name)}</div>
+    <h1 lang="en">${esc(l.title)}</h1>
+    <p class="sub">${esc(l.th)}</p>
+    <div class="why">${l.why}</div>
+
+    <section class="block"><h2>โครงสร้าง</h2><div class="formula" lang="en">${l.formula.map(f => `<div>${esc(f)}</div>`).join("")}</div></section>
+
+    <section class="block">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">ตัวอย่างแยกส่วนประโยค</h2>
+        <button class="btn toggle" id="plainBtn" aria-pressed="${!S.plain}">${S.plain ? "แสดงแผนผัง" : "ซ่อนแผนผัง"}</button></div>
+      ${S.plain ? "" : legend()}
+      <div class="ex" style="margin-top:12px">${l.examples.map(e => `<div class="item"><div class="sent" lang="en">${annotate(e[0])}</div><div class="th">${esc(e[1])}</div></div>`).join("")}</div>
+    </section>
+
+    <section class="block"><h2>กฎที่ต้องจำ</h2>
+      <div class="tbl-wrap"><table><thead><tr>${l.ruleHead.filter(h => h !== "").map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead>
+      <tbody>${l.rules.map(r => `<tr>${r.slice(0, l.ruleHead.filter(h => h !== "").length).map((c, j) => `<td${j === 0 ? ' class="en"' : ""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    </section>
+
+    <section class="block"><h2>กับดักในข้อสอบ</h2>
+      <div class="traps">${l.traps.map(t => `<div class="trap"><div lang="en"><span class="w">${esc(t[0])}</span> → <span class="r">${esc(t[1])}</span></div><div class="note">${esc(t[2])}</div></div>`).join("")}</div>
+    </section>
+
+    <section class="block"><div class="row" style="justify-content:space-between"><h2 style="margin:0">ทำข้อสอบท้ายบท</h2>
+      <span class="note" style="font-variant-numeric:tabular-nums">${answered ? `ถูก ${correct}/${answered}` : `${qs.length} ข้อ`}</span></div>
+      <div class="qs" style="margin-top:12px">${qs.map((q, j) => qCard(q, j, { picked: practiceState[q.id], reveal: practiceState[q.id] != null })).join("")}</div>
+      ${answered ? `<button class="btn" id="redoBtn" style="margin-top:12px">ทำบทนี้ใหม่</button>` : ""}
+    </section>
+
+    <nav class="pager">
+      ${prev ? `<a class="btn" href="#lesson-${prev.id}">‹ <span lang="en">${esc(prev.title)}</span></a>` : "<span></span>"}
+      ${next ? `<a class="btn primary" href="#lesson-${next.id}"><span lang="en">${esc(next.title)}</span> ›</a>` : `<a class="btn primary" href="#test">ไปทำข้อสอบรวม ›</a>`}
+    </nav>
+  </div>`;
+}
+
+function fmt(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function newTest(n, scope) {
+  let pool = BANK.slice();
+  if (scope === "weak") {
+    const weakIds = L.filter(l => { const p = lessonStat(l.id).pct; return p == null || p < 80; }).map(l => l.id);
+    pool = pool.filter(q => weakIds.includes(q.lesson) && !(S.ans[q.id] && S.ans[q.id].last === 1));
+    if (pool.length < 5) pool = BANK.slice();
+  } else if (scope !== "all") pool = pool.filter(q => LESSON[q.lesson].part === scope);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  test = { qs: pool.slice(0, Math.min(n, pool.length)), picks: {}, start: Date.now(), done: false };
+}
+function viewTest() {
+  if (!test) return `<h1>ข้อสอบจำลอง</h1>
+    <p class="sub">สุ่มจากคลังข้อสอบ ${BANK.length} ข้อ ส่งแล้วได้เฉลยพร้อมคำอธิบาย และดูได้ว่าพลาดบทไหน · TOEIC Part 5 มีเวลาราว 20–30 วินาทีต่อข้อ</p>
+    <div class="panel">
+      <div class="row"><label for="tN" class="note">จำนวนข้อ</label>
+        <select id="tN"><option value="10">10 ข้อ (~5 นาที)</option><option value="20" selected>20 ข้อ (~10 นาที)</option><option value="40">40 ข้อ (~20 นาที)</option></select></div>
+      <div class="row"><label for="tScope" class="note">ขอบเขต</label>
+        <select id="tScope"><option value="all">ทุกบท</option><option value="weak">เฉพาะบทที่ยังไม่ผ่าน</option>${PARTS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></div>
+      <div><button class="btn primary" id="startBtn">เริ่มทำข้อสอบ</button></div>
+    </div>
+    ${S.tests.length ? `<div class="block"><h2>ผลครั้งก่อน</h2><div class="panel" style="gap:0">${S.tests.slice(-5).reverse().map(t => `<div class="statrow"><span>${esc(t.date)} · ${t.n} ข้อ · ${esc(t.time)}</span><div class="meter"><i style="width:${t.pct}%;background:${t.pct >= 80 ? "var(--ok)" : t.pct < 60 ? "var(--bad)" : "var(--accent)"}"></i></div><span class="num">${t.pct}%</span></div>`).join("")}</div></div>` : ""}`;
+
+  const n = test.qs.length, answered = Object.keys(test.picks).length;
+  if (!test.done) return `<div class="testbar"><span>ตอบแล้ว ${answered}/${n}</span><div class="progress"><i style="width:${answered / n * 100}%"></i></div><span id="clock">${fmt(Date.now() - test.start)}</span></div>
+    <div class="qs">${test.qs.map((q, i) => qCard(q, i, { picked: test.picks[q.id] })).join("")}</div>
+    <div class="row" style="margin-top:16px;justify-content:space-between"><button class="btn" id="quitBtn">ยกเลิก</button>
+      <button class="btn primary" id="submitBtn">${answered < n ? `ส่งคำตอบ (ยังเหลือ ${n - answered} ข้อ)` : "ส่งคำตอบ"}</button></div>`;
+
+  const correct = test.qs.filter(q => test.picks[q.id] === q.ans).length, pct = Math.round(correct / n * 100);
+  const byL = {};
+  test.qs.forEach(q => { const b = byL[q.lesson] || (byL[q.lesson] = { n: 0, c: 0 }); b.n++; if (test.picks[q.id] === q.ans) b.c++; });
+  const weak = Object.entries(byL).filter(([, b]) => b.c < b.n).sort((a, b) => a[1].c / a[1].n - b[1].c / b[1].n);
+  return `<div class="panel">
+      <div class="eyebrow">ผลสอบ</div>
+      <div class="row" style="align-items:baseline;gap:14px"><span class="big">${correct}/${n}</span><span class="note">${pct}% · ใช้เวลา ${fmt(test.end - test.start)} · เฉลี่ย ${Math.round((test.end - test.start) / 1000 / n)} วินาที/ข้อ</span></div>
+      ${weak.length ? `<div><h3>บทที่ควรทบทวน</h3><div class="row">${weak.map(([id, b]) => `<a class="btn" href="#lesson-${id}"><span lang="en">${esc(LESSON[id].title)}</span> <span class="pill weak">${b.c}/${b.n}</span></a>`).join("")}</div></div>` : `<p style="margin:0">ถูกทุกข้อ</p>`}
+      <div class="row"><button class="btn primary" id="againBtn">ทำชุดใหม่</button><button class="btn" id="quitBtn">กลับหน้าตั้งค่า</button></div>
+    </div>
+    <h2 class="block">เฉลยทุกข้อ</h2>
+    <div class="qs">${test.qs.map((q, i) => qCard(q, i, { picked: test.picks[q.id], reveal: true, showLesson: true })).join("")}</div>`;
+}
+
+function viewStats() {
+  const tried = Object.keys(S.ans).length;
+  const totals = Object.values(S.ans).reduce((a, x) => ({ n: a.n + x.n, c: a.c + x.c }), { n: 0, c: 0 });
+  const rows = L.map(l => ({ l, st: lessonStat(l.id) }));
+  const weakest = rows.filter(r => r.st.pct != null).sort((a, b) => a.st.pct - b.st.pct).slice(0, 3);
+  return `<h1>สถิติ</h1><p class="sub">เก็บในเบราว์เซอร์นี้เท่านั้น นับทั้งข้อสอบท้ายบทและข้อสอบจำลอง</p>
+    <div class="panel"><div class="row" style="gap:28px">
+      <div><div class="big">${tried}<span class="note" style="font-size:16px">/${BANK.length}</span></div><div class="note">ข้อที่เคยทำ</div></div>
+      <div><div class="big">${totals.n ? Math.round(totals.c / totals.n * 100) + "%" : "–"}</div><div class="note">ความแม่นยำรวม</div></div>
+      <div><div class="big">${S.tests.length}</div><div class="note">ข้อสอบจำลองที่ทำ</div></div>
+    </div>
+    ${weakest.length ? `<div><h3>จุดอ่อน 3 อันดับแรก</h3><div class="row">${weakest.map(r => `<a class="btn" href="#lesson-${r.l.id}"><span lang="en">${esc(r.l.title)}</span> <span class="pill ${r.st.pct < 60 ? "weak" : ""}">${r.st.pct}%</span></a>`).join("")}</div></div>` : ""}
+    </div>
+    <div class="block"><h2>รายบท</h2><div class="panel" style="gap:0">
+      ${rows.map(r => `<a class="statrow" href="#lesson-${r.l.id}" style="text-decoration:none;color:inherit"><span style="min-width:0"><span lang="en" class="en">${esc(r.l.title)}</span> <span class="note">${r.st.seen}/${r.st.total} ข้อ</span></span>
+        <div class="meter"><i style="width:${r.st.pct || 0}%;background:${r.st.pct == null ? "transparent" : r.st.pct >= 80 ? "var(--ok)" : r.st.pct < 60 ? "var(--bad)" : "var(--accent)"}"></i></div>
+        <span class="num">${r.st.pct == null ? "–" : r.st.pct + "%"}</span></a>`).join("")}
+    </div></div>
+    <div class="block"><button class="btn" id="resetBtn">${resetArmed ? "แตะอีกครั้งเพื่อยืนยันล้างสถิติ" : "ล้างสถิติทั้งหมด"}</button></div>`;
+}
+let resetArmed = false;
+
+/* ===== Router ===== */
+function parse() {
+  const h = location.hash.slice(1);
+  if (h.startsWith("lesson-") && LESSON[h.slice(7)]) return { tab: "lessons", lesson: h.slice(7) };
+  if (h === "test" || h === "stats") return { tab: h, lesson: null };
+  return { tab: "lessons", lesson: null };
+}
+function render(keepScroll) {
+  const y = window.scrollY;
+  document.querySelectorAll(".seg a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === route.tab ? "page" : "false"));
+  $v.innerHTML = route.tab === "test" ? viewTest() : route.tab === "stats" ? viewStats() : route.lesson ? viewLesson(route.lesson) : viewLessons();
+  if (keepScroll) window.scrollTo(0, y);
+}
+window.addEventListener("hashchange", () => { route = parse(); resetArmed = false; render(); window.scrollTo(0, 0); });
+
+/* ===== Events ===== */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.go) { location.hash = b.dataset.go; return; }
+  if (b.dataset.pick != null) {
+    const qid = b.closest(".q").dataset.qid, q = BANK.find(x => x.id === qid), pick = +b.dataset.pick;
+    if (route.tab === "test" && test && !test.done) { test.picks[qid] = pick; render(true); return; }
+    if (route.lesson && practiceState[qid] == null) { practiceState[qid] = pick; record(qid, pick === q.ans); render(true); }
+    return;
+  }
+  switch (b.id) {
+    case "plainBtn": S.plain = !S.plain; save(); render(true); break;
+    case "redoBtn": BANK.filter(q => q.lesson === route.lesson).forEach(q => delete practiceState[q.id]); render(true); break;
+    case "startBtn": newTest(+document.getElementById("tN").value, document.getElementById("tScope").value); render(); window.scrollTo(0, 0); break;
+    case "submitBtn": {
+      test.done = true; test.end = Date.now();
+      test.qs.forEach(q => { if (test.picks[q.id] != null) record(q.id, test.picks[q.id] === q.ans); else record(q.id, false); });
+      const c = test.qs.filter(q => test.picks[q.id] === q.ans).length;
+      const d = new Date();
+      S.tests.push({ date: d.getDate() + "/" + (d.getMonth() + 1), n: test.qs.length, pct: Math.round(c / test.qs.length * 100), time: fmt(test.end - test.start) });
+      S.tests = S.tests.slice(-30); save(); render(); window.scrollTo(0, 0); break;
+    }
+    case "againBtn": newTest(test.qs.length, "all"); render(); window.scrollTo(0, 0); break;
+    case "quitBtn": test = null; render(); window.scrollTo(0, 0); break;
+    case "resetBtn":
+      if (!resetArmed) { resetArmed = true; render(true); setTimeout(() => { if (resetArmed) { resetArmed = false; if (route.tab === "stats") render(true); } }, 4000); }
+      else { S.ans = {}; S.tests = []; save(); resetArmed = false; practiceState = {}; render(true); }
+      break;
+  }
+});
+setInterval(() => { const c = document.getElementById("clock"); if (c && test && !test.done) c.textContent = fmt(Date.now() - test.start); }, 1000);
+
+route = parse(); render();
+</script>
+
+</body></html>
