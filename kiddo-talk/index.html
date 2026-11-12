@@ -1,0 +1,785 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Kiddo Talk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-column phone app, routine timeline as the spine, bottom tab bar */
+:root {
+  --bg: #F3F7F6; --surface: #FFFFFF; --sunk: #E8EFED;
+  --ink: #14302D; --muted: #587069; --line: #D7E2DF;
+  --accent: #F2A531; --accent-ink: #3F2700; --accent-soft: #FCEBCB;
+  --leaf: #2A7A67; --leaf-soft: #D9EFE8; --bad: #B9443A; --bad-soft: #F7DEDB;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E1918; --surface: #162423; --sunk: #1D2E2C;
+  --ink: #E6F0EE; --muted: #97ADA8; --line: #2A3D3A;
+  --accent: #F5B84E; --accent-ink: #2A1A00; --accent-soft: #3A2C12;
+  --leaf: #5CC2A8; --leaf-soft: #17352E; --bad: #F07D70; --bad-soft: #3B1F1C;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0E1918; --surface: #162423; --sunk: #1D2E2C;
+  --ink: #E6F0EE; --muted: #97ADA8; --line: #2A3D3A;
+  --accent: #F5B84E; --accent-ink: #2A1A00; --accent-soft: #3A2C12;
+  --leaf: #5CC2A8; --leaf-soft: #17352E; --bad: #F07D70; --bad-soft: #3B1F1C;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 110px; }
+
+header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.brand { font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: -0.02em; margin: 0; }
+.brand span { color: var(--accent); }
+.streak { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; }
+.sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+/* Phrase card */
+.en { font-family: var(--f-display); font-weight: 700; font-size: 20px; line-height: 1.3; letter-spacing: -0.01em; }
+.th { color: var(--muted); font-size: 14px; }
+.kid { font-size: 13px; color: var(--leaf); display: flex; gap: 6px; align-items: baseline; }
+.kid b { font-weight: 600; }
+
+.hero { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 20px; display: grid; gap: 10px; }
+.hero .eyebrow { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+.hero .en { font-size: 28px; }
+.hero .th { color: color-mix(in srgb, var(--bg) 78%, transparent); }
+.hero .kid { color: var(--accent); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; min-height: 40px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.ghost { background: transparent; }
+.hero .btn { background: transparent; border-color: color-mix(in srgb, var(--bg) 35%, transparent); color: var(--bg); }
+.hero .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.icon { width: 18px; height: 18px; flex: none; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-block: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.stat .n { font-family: var(--f-display); font-weight: 800; font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .l { font-size: 12px; color: var(--muted); }
+.bar { height: 6px; background: var(--sunk); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: var(--leaf); border-radius: 99px; }
+
+/* Timeline */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.tl { display: grid; grid-template-columns: 56px 1fr; gap: 12px; }
+.tl .t { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); padding-top: 14px; text-align: right; position: relative; }
+.tl .t.now { color: var(--accent-ink); }
+.tl .t.now::before { content: "ตอนนี้"; display: block; font-size: 11px; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 0 6px; width: max-content; margin-left: auto; margin-bottom: 2px; font-weight: 600; }
+.scene { width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; margin-bottom: 10px; display: grid; gap: 2px; min-width: 0; }
+.scene .en { font-size: 17px; }
+.scene .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.scene.is-now { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+.back { border: 0; background: none; color: var(--muted); padding: 0; margin-bottom: 12px; display: inline-flex; gap: 4px; align-items: center; font-size: 14px; min-height: 32px; }
+
+.list { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 6px; min-width: 0; }
+.card.done { border-color: var(--leaf); }
+.card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.tag { font-size: 12px; background: var(--sunk); color: var(--muted); border: 0; border-radius: 6px; padding: 2px 8px; }
+button.tag:hover { color: var(--ink); }
+.chk[aria-pressed="true"] { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf); }
+
+/* Grammar */
+.lesson-item { width: 100%; text-align: left; display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.lesson-item .num { font-family: var(--f-display); font-weight: 800; font-size: 18px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.score { font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 8px; border-radius: 6px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.score.good { background: var(--leaf-soft); color: var(--leaf); }
+.pattern { background: var(--sunk); border-radius: 10px; padding: 10px 12px; font-family: var(--f-display); font-weight: 500; font-size: 15px; overflow-x: auto; }
+.pattern div + div { margin-top: 4px; }
+.section { display: grid; gap: 10px; margin-top: 22px; }
+.mistake { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.wrong { color: var(--bad); text-decoration: line-through; text-decoration-thickness: 1px; }
+.right { color: var(--leaf); font-weight: 600; }
+.explain { font-size: 15px; }
+.explain p { margin: 0 0 8px; }
+
+.quiz { display: grid; gap: 12px; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; }
+.q .stem { font-family: var(--f-display); font-weight: 600; font-size: 17px; }
+.opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.opt { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px; text-align: left; font-family: var(--f-display); font-weight: 500; }
+.opt.ok { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf); }
+.opt.no { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.why { font-size: 14px; color: var(--muted); }
+
+/* Practice */
+.flash { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 14px; }
+.flash .prompt { font-size: 22px; font-weight: 600; line-height: 1.4; }
+.answer { border-top: 1px dashed var(--line); padding-top: 14px; display: grid; gap: 6px; }
+.heard { background: var(--sunk); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.heard .w-ok { color: var(--leaf); font-weight: 600; }
+.heard .w-miss { color: var(--bad); text-decoration: underline dotted; }
+.mic.listening { background: var(--bad); border-color: var(--bad); color: #fff; }
+select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 40px; max-width: 100%; }
+.note { font-size: 13px; color: var(--muted); }
+
+/* Tab bar */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); z-index: 5; }
+nav.tabs .in { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+nav.tabs a { text-decoration: none; color: var(--muted); display: grid; justify-items: center; gap: 2px; padding: 8px 4px 10px; font-size: 12px; }
+nav.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+nav.tabs a[aria-current="page"] svg { color: var(--accent); }
+nav.tabs svg { width: 22px; height: 22px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 99px; font-size: 14px; z-index: 6; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .view { animation: in .18s ease-out; } @keyframes in { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">Kiddo<span>.</span>Talk</h1>
+    <div class="streak" id="streak"></div>
+  </header>
+  <main id="view" class="view"></main>
+</div>
+
+<nav class="tabs" aria-label="เมนูหลัก">
+  <div class="in">
+    <a href="#today" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>วันนี้</a>
+    <a href="#phrases" data-tab="phrases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>พูดกับลูก</a>
+    <a href="#grammar" data-tab="grammar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M8 7h8M8 11h6"/></svg>Grammar</a>
+    <a href="#practice" data-tab="practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>ฝึกพูด</a>
+  </div>
+</nav>
+
+<script>
+/* ---------- Content ---------- */
+// Phrase: [english, thai, kid reply or "", grammar lesson id]
+const SCENES = [
+  { id: "wake", time: "06:30", h: 6, en: "Wake up", th: "ตื่นนอน", items: [
+    ["Good morning, sweetie!", "อรุณสวัสดิ์จ้ะลูก", "Good morning!", "imp"],
+    ["Time to wake up.", "ได้เวลาตื่นแล้วจ้ะ", "Five more minutes!", "imp"],
+    ["Did you sleep well?", "หลับสบายไหมลูก", "Yes, I did.", "past"],
+    ["Open your eyes, sleepyhead.", "ลืมตาหน่อย เจ้าขี้เซา", "", "imp"],
+    ["Go to the bathroom first.", "เข้าห้องน้ำก่อนนะ", "Okay!", "imp"],
+    ["Let's brush your teeth.", "ไปแปรงฟันกัน", "", "imp"],
+    ["Wash your face, please.", "ล้างหน้าด้วยนะ", "", "imp"],
+  ]},
+  { id: "breakfast", time: "07:00", h: 7, en: "Breakfast", th: "อาหารเช้า", items: [
+    ["What do you want for breakfast?", "อยากกินอะไรเป็นมื้อเช้า", "Can I have eggs, please?", "wh"],
+    ["Sit down, please.", "นั่งลงก่อนนะ", "", "imp"],
+    ["Is it too hot? Blow on it first.", "ร้อนไปไหม เป่าก่อนนะ", "It's hot!", "yn"],
+    ["Don't talk with your mouth full.", "อย่าพูดตอนที่ข้าวเต็มปากนะ", "", "imp"],
+    ["Finish your milk, please.", "ดื่มนมให้หมดนะ", "", "imp"],
+    ["Are you full?", "อิ่มหรือยัง", "Yes, I'm full.", "yn"],
+    ["Do you want some more?", "เอาเพิ่มอีกไหม", "No, thank you.", "some"],
+  ]},
+  { id: "school", time: "07:30", h: 7.5, en: "Getting ready", th: "แต่งตัว ไปโรงเรียน", items: [
+    ["Get dressed, please.", "แต่งตัวได้แล้วจ้ะ", "", "imp"],
+    ["Which shirt do you want to wear?", "อยากใส่เสื้อตัวไหน", "The blue one!", "wh"],
+    ["Put on your socks and shoes.", "ใส่ถุงเท้ากับรองเท้านะ", "", "imp"],
+    ["Your shoes are on the wrong feet.", "ใส่รองเท้าสลับข้างนะลูก", "Oops!", "prep"],
+    ["Did you pack your water bottle?", "ใส่ขวดน้ำในกระเป๋าหรือยัง", "Yes, I did.", "past"],
+    ["Hurry up, we're going to be late.", "เร็วหน่อย เดี๋ยวสายนะ", "", "fut"],
+    ["Buckle up, please.", "คาดเข็มขัดนิรภัยด้วยนะ", "", "imp"],
+    ["Have a great day! I love you.", "ขอให้วันนี้สนุกนะ รักลูกนะ", "Love you too!", "imp"],
+  ]},
+  { id: "pickup", time: "15:30", h: 15.5, en: "After school", th: "กลับจากโรงเรียน", items: [
+    ["How was school today?", "วันนี้ที่โรงเรียนเป็นยังไงบ้าง", "It was fun!", "wh"],
+    ["What did you do today?", "วันนี้ทำอะไรบ้าง", "We painted pictures.", "past"],
+    ["What did you have for lunch?", "มื้อกลางวันกินอะไร", "I had chicken and rice.", "past"],
+    ["Who did you play with?", "เล่นกับใครบ้าง", "I played with Ploy.", "past"],
+    ["Did you learn anything new?", "ได้เรียนอะไรใหม่ ๆ ไหม", "Yes! I learned about frogs.", "some"],
+    ["Wash your hands, please.", "ไปล้างมือก่อนนะ", "", "imp"],
+    ["Do you have any homework?", "มีการบ้านไหม", "Just a little.", "some"],
+    ["Let's have a snack.", "มากินขนมกัน", "Yay!", "imp"],
+  ]},
+  { id: "play", time: "16:30", h: 16.5, en: "Playtime", th: "เล่นด้วยกัน", items: [
+    ["What do you want to play?", "อยากเล่นอะไร", "Let's play blocks!", "wh"],
+    ["It's your turn.", "ตาลูกแล้ว", "My turn!", "pres"],
+    ["Let's take turns.", "ผลัดกันเล่นนะ", "", "imp"],
+    ["Can you build a tall tower?", "ต่อหอคอยสูง ๆ ได้ไหม", "Yes, I can!", "can"],
+    ["Let's share with your friend.", "แบ่งให้เพื่อนเล่นด้วยนะ", "", "imp"],
+    ["Good try! Try again.", "พยายามดีมาก ลองอีกทีนะ", "", "imp"],
+    ["Five more minutes, then we clean up.", "อีก 5 นาทีนะ แล้วเก็บของกัน", "Okay.", "fut"],
+    ["Put your toys away, please.", "เก็บของเล่นให้เรียบร้อยนะ", "", "imp"],
+  ]},
+  { id: "bath", time: "18:00", h: 18, en: "Bath time", th: "อาบน้ำ", items: [
+    ["Bath time!", "ได้เวลาอาบน้ำแล้ว", "", "imp"],
+    ["Take off your clothes.", "ถอดเสื้อผ้าเลยจ้ะ", "", "imp"],
+    ["Close your eyes. I'm washing your hair.", "หลับตานะ กำลังสระผมให้", "", "pres"],
+    ["Is the water too hot?", "น้ำร้อนไปไหม", "No, it's okay.", "yn"],
+    ["Dry yourself with the towel.", "เช็ดตัวด้วยผ้าเช็ดตัวนะ", "", "imp"],
+    ["Put on your pajamas.", "ใส่ชุดนอนเลย", "", "imp"],
+  ]},
+  { id: "dinner", time: "18:30", h: 18.5, en: "Dinner", th: "อาหารเย็น", items: [
+    ["Dinner is ready!", "ข้าวเย็นเสร็จแล้ว", "Coming!", "pres"],
+    ["Can you help me set the table?", "ช่วยจัดโต๊ะหน่อยได้ไหม", "Sure!", "can"],
+    ["Just try one bite.", "ลองชิมแค่คำเดียวนะ", "Okay...", "imp"],
+    ["Use your spoon, please.", "ใช้ช้อนนะลูก", "", "imp"],
+    ["Could you pass me the rice, please?", "ส่งข้าวให้หน่อยได้ไหมจ๊ะ", "Here you are.", "can"],
+    ["You ate everything. Well done!", "กินหมดเลย เก่งมาก", "", "past"],
+    ["Help me clear the table, please.", "ช่วยเก็บโต๊ะหน่อยนะ", "", "imp"],
+  ]},
+  { id: "bed", time: "20:00", h: 20, en: "Bedtime", th: "ก่อนนอน", items: [
+    ["It's bedtime.", "ได้เวลานอนแล้ว", "Not yet!", "pres"],
+    ["Which book do you want to read?", "อยากอ่านเล่มไหน", "This one!", "wh"],
+    ["What was the best part of your day?", "วันนี้ชอบตอนไหนที่สุด", "Playing with you!", "past"],
+    ["Stay in your bed, please.", "อยู่บนเตียงนะลูก", "", "imp"],
+    ["I'm going to turn off the light.", "จะปิดไฟแล้วนะ", "", "fut"],
+    ["Good night. I love you.", "ฝันดีนะ รักลูกนะ", "Love you too.", "imp"],
+    ["Sweet dreams.", "หลับฝันดีนะ", "", "imp"],
+  ]},
+  { id: "praise", time: "ทั้งวัน", h: -1, en: "Praise", th: "ชมเชย ให้กำลังใจ", items: [
+    ["Good job!", "เก่งมาก", "", "imp"],
+    ["I'm proud of you.", "ภูมิใจในตัวลูกนะ", "", "feel"],
+    ["You did it!", "ทำได้แล้ว!", "I did it!", "past"],
+    ["That's so kind of you.", "ลูกใจดีมากเลย", "", "pres"],
+    ["Thank you for helping me.", "ขอบคุณที่ช่วยนะ", "You're welcome.", "pres"],
+    ["You worked really hard.", "ลูกพยายามมากเลยนะ", "", "past"],
+    ["Nice try. You'll get it next time.", "ลองได้ดีมาก ครั้งหน้าทำได้แน่", "", "fut"],
+  ]},
+  { id: "feel", time: "ทั้งวัน", h: -1, en: "Feelings", th: "ความรู้สึก", items: [
+    ["How do you feel?", "รู้สึกยังไงบ้าง", "I feel tired.", "wh"],
+    ["What happened?", "เกิดอะไรขึ้น", "He took my toy.", "past"],
+    ["It's okay to feel angry.", "โกรธได้นะ ไม่เป็นไร", "", "feel"],
+    ["Take a deep breath.", "หายใจลึก ๆ นะ", "", "imp"],
+    ["Do you want a hug?", "อยากให้กอดไหม", "Yes, please.", "yn"],
+    ["Are you bored?", "เบื่อเหรอ", "Yes, I'm bored.", "feel"],
+    ["Use your words, please.", "พูดบอกมาเลยลูก (แทนการร้องหรือตี)", "", "imp"],
+  ]},
+  { id: "safe", time: "ทั้งวัน", h: -1, en: "Safety & rules", th: "ความปลอดภัย กติกา", items: [
+    ["Stop! It's dangerous.", "หยุด! อันตราย", "", "imp"],
+    ["Hold my hand.", "จับมือไว้นะ", "", "imp"],
+    ["Don't run. Walk, please.", "อย่าวิ่ง เดินดี ๆ", "", "imp"],
+    ["Look both ways.", "มองซ้ายมองขวาก่อน", "", "imp"],
+    ["Be gentle with the cat.", "ทำกับแมวเบา ๆ นะ", "", "imp"],
+    ["We don't hit. Say sorry.", "เราไม่ตีกันนะ ขอโทษเพื่อนเลย", "Sorry.", "pres"],
+    ["You have to wear a helmet.", "ต้องใส่หมวกกันน็อกนะ", "", "must"],
+  ]},
+];
+
+const LESSONS = [
+  { id: "imp", title: "Imperatives", th: "ประโยคสั่ง ขอให้ทำ และชวนกันทำ",
+    explain: [
+      "ใช้กริยาช่องที่ 1 ขึ้นต้นประโยคได้เลย ไม่ต้องมีประธาน เป็นรูปที่ใช้กับลูกบ่อยที่สุด",
+      "เติม <b>please</b> ท้ายประโยคให้นุ่มลง ชวนทำด้วยกันใช้ <b>Let's</b> ห้ามใช้ <b>Don't</b>",
+    ],
+    pattern: ["Verb + ... (+ please).", "Let's + verb.", "Don't + verb."],
+    examples: [["Put on your shoes, please.", "ใส่รองเท้าด้วยนะ"], ["Let's go to the park.", "ไปสวนกันเถอะ"], ["Don't touch that.", "อย่าจับอันนั้น"]],
+    mistakes: [["Let's to go.", "Let's go.", "หลัง Let's ใช้กริยาเปล่า ไม่มี to"], ["Don't to run.", "Don't run.", "หลัง Don't ใช้กริยาเปล่า"], ["You wash your hands!", "Wash your hands, please.", "ใส่ You นำหน้าฟังดูดุ ใช้คำสั่งตรง ๆ + please จะนุ่มกว่า"]],
+    quiz: [
+      ["___ go home now.", ["Let's", "Let", "Lets to"], 0, "ชวนทำด้วยกันใช้ Let's + กริยาเปล่า"],
+      ["Don't ___ on the sofa.", ["jumping", "jump", "to jump"], 1, "Don't + กริยาเปล่า"],
+      ["___ your teeth, please.", ["Brushing", "Brushes", "Brush"], 2, "ประโยคสั่งขึ้นต้นด้วยกริยาช่อง 1"],
+      ["Let's ___ a story.", ["read", "reading", "to read"], 0, "Let's + กริยาเปล่า"],
+    ]},
+  { id: "pres", title: "Present Simple vs Continuous", th: "ทำเป็นประจำ หรือกำลังทำอยู่ตอนนี้",
+    explain: [
+      "<b>Present Simple</b> ใช้กับสิ่งที่ทำเป็นนิสัยหรือความจริง ประธานเอกพจน์บุรุษที่ 3 (he/she/it) กริยาเติม -s",
+      "<b>Present Continuous</b> (am/is/are + V-ing) ใช้กับสิ่งที่กำลังทำอยู่ตอนนี้ ลูกถามว่า \"ทำอะไรอยู่\" ต้องตอบด้วยรูปนี้",
+    ],
+    pattern: ["I/You/We/They + verb", "He/She/It + verb-s", "I am / He is / They are + verb-ing"],
+    examples: [["We brush our teeth every night.", "เราแปรงฟันทุกคืน"], ["She likes bananas.", "น้องชอบกล้วย"], ["I'm cooking dinner.", "แม่/พ่อกำลังทำกับข้าว"], ["What are you doing?", "ลูกทำอะไรอยู่"]],
+    mistakes: [["She like bananas.", "She likes bananas.", "she/he/it ต้องเติม -s"], ["I cooking.", "I'm cooking.", "ขาด am/is/are ไม่ได้"], ["What you doing?", "What are you doing?", "คำถามต้องมี are"]],
+    quiz: [
+      ["Look! The baby ___.", ["sleeps", "is sleeping", "sleep"], 1, "Look! บอกว่ากำลังเกิดขึ้นตอนนี้"],
+      ["He ___ milk every morning.", ["drink", "drinks", "is drink"], 1, "every morning = เป็นประจำ และ He ต้องเติม -s"],
+      ["What ___ you doing?", ["do", "is", "are"], 2, "you ใช้ are + V-ing"],
+      ["I ___ washing your hair.", ["am", "is", "do"], 0, "I ใช้ am"],
+    ]},
+  { id: "yn", title: "Yes/No Questions", th: "คำถามตอบ ใช่/ไม่ใช่: Do, Does, Is, Are",
+    explain: [
+      "ประโยคที่มี <b>is/are</b> ให้ย้าย is/are ขึ้นหน้า: You are hungry → <b>Are</b> you hungry?",
+      "ประโยคกริยาทั่วไปให้เติม <b>Do/Does</b> ข้างหน้า แล้วกริยากลับเป็นรูปเปล่า: <b>Does</b> she <b>like</b> it?",
+      "คนไทยมักถามด้วยการขึ้นเสียงท้ายอย่างเดียว ซึ่งพอเข้าใจได้ แต่ฝึกใส่ Do/Are ให้ติดปากจะเป็นแบบอย่างให้ลูก",
+    ],
+    pattern: ["Are/Is + subject + adjective/noun?", "Do/Does + subject + verb?", "Short answer: Yes, I am. / No, I don't."],
+    examples: [["Are you hungry?", "หิวไหม"], ["Is it too cold?", "หนาวไปไหม"], ["Do you want water?", "เอาน้ำไหม"], ["Does your tummy hurt?", "ปวดท้องไหม"]],
+    mistakes: [["You hungry?", "Are you hungry?", "ขาด are"], ["Do you are tired?", "Are you tired?", "ใช้ Do คู่กับ are ไม่ได้"], ["Does she likes it?", "Does she like it?", "มี Does แล้ว กริยาไม่ต้องเติม -s"]],
+    quiz: [
+      ["___ you sleepy?", ["Do", "Are", "Is"], 1, "sleepy เป็นคำคุณศัพท์ ใช้ Are"],
+      ["___ you like carrots?", ["Do", "Are", "Does"], 0, "like เป็นกริยา ใช้ Do กับ you"],
+      ["Does he ___ to play?", ["wants", "want", "wanting"], 1, "หลัง Does ใช้กริยาเปล่า"],
+      ["Is the soup hot? — Yes, it ___.", ["does", "is", "are"], 1, "ถามด้วย Is ตอบด้วย is"],
+    ]},
+  { id: "wh", title: "Wh- Questions", th: "คำถาม What / Where / Who / How / Which",
+    explain: [
+      "เอาคำ Wh- ขึ้นต้น แล้วตามด้วยโครงสร้างคำถามแบบ Yes/No ตามปกติ",
+      "คำถามปลายเปิดช่วยให้ลูกพูดเป็นประโยคยาวขึ้น เช่น <b>How was school?</b> ได้คำตอบมากกว่า Was school good?",
+    ],
+    pattern: ["Wh- + do/does + subject + verb?", "Wh- + is/are + subject?", "How was + noun?"],
+    examples: [["Where are your shoes?", "รองเท้าอยู่ไหน"], ["What do you want to eat?", "อยากกินอะไร"], ["Who is your best friend?", "เพื่อนสนิทชื่ออะไร"], ["Which one do you like?", "ชอบอันไหน"]],
+    mistakes: [["Where your shoes?", "Where are your shoes?", "ขาด are"], ["What you want?", "What do you want?", "ขาด do"], ["How about school today?", "How was school today?", "How about ใช้เสนอหรือชวน ถามว่าเป็นยังไงใช้ How was"]],
+    quiz: [
+      ["___ is your water bottle?", ["What", "Where", "Who"], 1, "ถามตำแหน่ง ใช้ Where"],
+      ["What ___ you want for dinner?", ["are", "do", "does"], 1, "want เป็นกริยา ใช้ do กับ you"],
+      ["___ was your day?", ["How", "What", "Which"], 0, "ถามความรู้สึกหรือสภาพ ใช้ How was"],
+      ["___ do you play with at school?", ["Who", "Where", "How"], 0, "ถามคน ใช้ Who"],
+    ]},
+  { id: "past", title: "Past Simple", th: "เล่าเรื่องที่เกิดขึ้นแล้ว",
+    explain: [
+      "ใช้เล่าหรือถามเรื่องที่จบไปแล้ว เช่น ที่โรงเรียนวันนี้ กริยาปกติเติม -ed กริยาอปกติต้องจำ (go → went, eat → ate)",
+      "คำถามและปฏิเสธใช้ <b>did</b> แล้วกริยา<b>กลับเป็นรูปเปล่า</b>: What did you <b>eat</b>?",
+    ],
+    pattern: ["Subject + verb-ed / irregular", "Did + subject + verb?", "What did + subject + verb?"],
+    examples: [["We played in the park.", "เราเล่นที่สวน"], ["I ate all my rice.", "หนูกินข้าวหมดแล้ว"], ["Did you have fun?", "สนุกไหม"], ["What did you learn today?", "วันนี้เรียนอะไร"]],
+    mistakes: [["What did you ate?", "What did you eat?", "มี did แล้ว กริยาใช้รูปเปล่า"], ["Yesterday I go to the zoo.", "Yesterday I went to the zoo.", "อดีตต้องเปลี่ยนกริยา"], ["Did you finished?", "Did you finish?", "หลัง did ไม่เติม -ed"]],
+    quiz: [
+      ["What did you ___ for lunch?", ["had", "have", "has"], 1, "หลัง did ใช้รูปเปล่า"],
+      ["We ___ to the beach last week.", ["go", "goed", "went"], 2, "go เป็นกริยาอปกติ อดีตคือ went"],
+      ["___ you sleep well?", ["Do", "Did", "Was"], 1, "ถามเรื่องเมื่อคืน ใช้ Did"],
+      ["She ___ a picture at school.", ["drew", "draw", "drawed"], 0, "draw → drew"],
+    ]},
+  { id: "fut", title: "Will & Going to", th: "พูดถึงอนาคต",
+    explain: [
+      "<b>going to</b> ใช้กับสิ่งที่ตั้งใจหรือวางแผนไว้แล้ว หรือเห็นสัญญาณว่ากำลังจะเกิด (เดี๋ยวสายแน่)",
+      "<b>will</b> ใช้เสนอตัว ตัดสินใจตอนนั้นเลย หรือให้สัญญา: I'll help you.",
+    ],
+    pattern: ["am/is/are + going to + verb", "will ('ll) + verb", "We're going to be late."],
+    examples: [["We're going to visit Grandma on Sunday.", "วันอาทิตย์เราจะไปหายาย"], ["I'll help you.", "เดี๋ยวช่วยนะ"], ["It's going to rain.", "ฝนกำลังจะตก"], ["Don't worry, I'll be right back.", "ไม่ต้องห่วง เดี๋ยวกลับมา"]],
+    mistakes: [["I will to help you.", "I'll help you.", "หลัง will ใช้กริยาเปล่า"], ["We going to the zoo tomorrow.", "We're going to the zoo tomorrow.", "ขาด are"], ["I'm going help.", "I'm going to help.", "อย่าลืม to"]],
+    quiz: [
+      ["Look at the clouds. It's ___ rain.", ["going to", "will", "going"], 0, "เห็นสัญญาณแล้ว ใช้ going to"],
+      ["The phone is ringing. — I ___ get it!", ["am going to", "'ll", "going"], 1, "ตัดสินใจตอนนั้นเลย ใช้ will"],
+      ["We ___ going to be late!", ["is", "are", "will"], 1, "We ใช้ are"],
+      ["I will ___ you a story.", ["read", "to read", "reading"], 0, "หลัง will ใช้กริยาเปล่า"],
+    ]},
+  { id: "can", title: "Can & Could", th: "ทำได้ ขออนุญาต และขอร้องอย่างสุภาพ",
+    explain: [
+      "<b>can</b> บอกความสามารถ (I can swim) และขออนุญาต (Can I have a cookie?)",
+      "<b>Could you...?</b> ขอร้องสุภาพกว่า Can you...? สอนลูกให้ขอว่า <b>Can I have ..., please?</b> แทนการพูดว่า I want...",
+    ],
+    pattern: ["Subject + can / can't + verb", "Can I + verb?", "Could you + verb, please?"],
+    examples: [["You can do it!", "ลูกทำได้!"], ["Can I have some water, please?", "ขอน้ำหน่อยได้ไหม"], ["Could you close the door, please?", "ช่วยปิดประตูหน่อยได้ไหม"], ["You can't go outside now.", "ตอนนี้ออกไปข้างนอกไม่ได้นะ"]],
+    mistakes: [["Can you to help me?", "Can you help me?", "หลัง can ไม่มี to"], ["He cans swim.", "He can swim.", "can ไม่เติม -s"], ["I want water!", "Can I have some water, please?", "ไม่ผิดไวยากรณ์ แต่แบบขอสุภาพกว่า"]],
+    quiz: [
+      ["___ I have a cookie, please?", ["Can", "Do", "Am"], 0, "ขออนุญาต ใช้ Can I"],
+      ["She can ___ very fast.", ["runs", "run", "to run"], 1, "หลัง can ใช้กริยาเปล่า"],
+      ["___ you pass the salt, please?", ["Could", "Are", "Did"], 0, "ขอร้องสุภาพ ใช้ Could you"],
+      ["Sorry, you ___ play now. It's bedtime.", ["can", "can't", "could"], 1, "ไม่อนุญาต ใช้ can't"],
+    ]},
+  { id: "some", title: "Some / Any / a / an", th: "นับได้ นับไม่ได้ และคำถาม any",
+    explain: [
+      "<b>a</b> ใช้นำหน้าเสียงพยัญชนะ <b>an</b> ใช้นำหน้าเสียงสระ (an apple, an egg)",
+      "<b>some</b> ใช้ในประโยคบอกเล่าและตอนเสนอให้ <b>any</b> ใช้ในคำถามทั่วไปและประโยคปฏิเสธ",
+      "นับไม่ได้ (water, milk, rice) ไม่ใช้ a/an และไม่เติม -s",
+    ],
+    pattern: ["a + consonant sound / an + vowel sound", "Do you have any ...?", "Would you like some ...?"],
+    examples: [["I have an idea!", "พ่อ/แม่มีไอเดีย!"], ["Do you have any homework?", "มีการบ้านไหม"], ["Do you want some more rice?", "เอาข้าวเพิ่มไหม"], ["We don't have any milk.", "นมหมดแล้ว"]],
+    mistakes: [["a egg", "an egg", "egg ขึ้นต้นเสียงสระ"], ["I want a water.", "I want some water.", "water นับไม่ได้"], ["Do you have some homework?", "Do you have any homework?", "คำถามทั่วไปใช้ any"]],
+    quiz: [
+      ["Can I have ___ apple?", ["a", "an", "some"], 1, "apple ขึ้นต้นเสียงสระ"],
+      ["We don't have ___ bread.", ["some", "any", "a"], 1, "ปฏิเสธใช้ any"],
+      ["Would you like ___ juice?", ["any", "a", "some"], 2, "เสนอให้ใช้ some"],
+      ["Please drink ___ water.", ["some", "a", "an"], 0, "water นับไม่ได้"],
+    ]},
+  { id: "prep", title: "Prepositions of Place", th: "in / on / under / next to / behind",
+    explain: [
+      "เด็กหาของไม่เจอทุกวัน ใช้บุพบทบอกตำแหน่งได้ทันที",
+      "<b>in</b> = ข้างใน, <b>on</b> = วางบนผิว, <b>under</b> = ข้างใต้, <b>next to</b> = ข้าง ๆ, <b>behind</b> = ข้างหลัง, <b>in front of</b> = ข้างหน้า",
+    ],
+    pattern: ["It's in / on / under the + noun.", "It's next to / behind / in front of the + noun."],
+    examples: [["Your shoes are under the bed.", "รองเท้าอยู่ใต้เตียง"], ["The book is on the table.", "หนังสืออยู่บนโต๊ะ"], ["Put it in the box.", "ใส่ไว้ในกล่อง"], ["Stand next to me.", "ยืนข้าง ๆ พ่อ/แม่นะ"]],
+    mistakes: [["It's on the box. (อยู่ข้างใน)", "It's in the box.", "ข้างในใช้ in"], ["Sit next me.", "Sit next to me.", "next ต้องตามด้วย to"], ["It's under of the table.", "It's under the table.", "under ไม่ต้องมี of"]],
+    quiz: [
+      ["The cat is sleeping ___ the sofa. (ข้างใต้)", ["on", "under", "in"], 1, "ข้างใต้ = under"],
+      ["Your toothbrush is ___ the cup.", ["in", "under", "behind"], 0, "แปรงอยู่ในแก้ว"],
+      ["Sit ___ your brother.", ["next", "next to", "next of"], 1, "next to"],
+      ["The ball is ___ the door. (ข้างหลัง)", ["behind", "in front", "on"], 0, "ข้างหลัง = behind"],
+    ]},
+  { id: "feel", title: "Feelings: -ed vs -ing", th: "bored กับ boring, I'm proud of you",
+    explain: [
+      "คำลงท้าย <b>-ed</b> บอกความรู้สึกของคน: I'm <b>bored</b> = ฉันเบื่อ",
+      "คำลงท้าย <b>-ing</b> บอกลักษณะของสิ่งที่ทำให้เกิดความรู้สึก: This game is <b>boring</b> = เกมนี้น่าเบื่อ",
+      "คนไทยพูดผิดบ่อยมากว่า I'm boring ซึ่งแปลว่า \"ฉันเป็นคนน่าเบื่อ\"",
+    ],
+    pattern: ["I'm / You're + feeling-ed", "It's + -ing", "I'm proud of you. / It's okay to feel + adj."],
+    examples: [["Are you tired?", "เหนื่อยไหม"], ["That movie was exciting!", "หนังเรื่องนั้นสนุกตื่นเต้นมาก"], ["Are you scared? I'm here.", "กลัวเหรอ อยู่นี่แล้ว"], ["I'm proud of you.", "ภูมิใจในตัวลูก"]],
+    mistakes: [["I'm boring.", "I'm bored.", "ความรู้สึกของเราใช้ -ed"], ["I'm exciting!", "I'm excited!", "ตื่นเต้นใช้ excited"], ["I'm proud in you.", "I'm proud of you.", "proud of"]],
+    quiz: [
+      ["I have nothing to do. I'm ___.", ["boring", "bored", "bore"], 1, "ความรู้สึกของคน ใช้ -ed"],
+      ["This puzzle is so ___!", ["interesting", "interested", "interest"], 0, "ลักษณะของสิ่งของ ใช้ -ing"],
+      ["Tomorrow is your birthday! Are you ___?", ["exciting", "excited", "excite"], 1, "ถามความรู้สึก ใช้ -ed"],
+      ["I'm so proud ___ you.", ["in", "for", "of"], 2, "proud of"],
+    ]},
+  { id: "must", title: "Have to / Need to / Should", th: "ต้องทำ จำเป็น และควรทำ",
+    explain: [
+      "<b>have to</b> = ต้องทำ (เป็นกฎ), <b>need to</b> = จำเป็นต้องทำ, <b>should</b> = ควรทำ (แนะนำ)",
+      "<b>don't have to</b> แปลว่า \"ไม่จำเป็นต้อง\" ไม่ได้แปลว่า \"ห้าม\" ถ้าห้ามให้ใช้ Don't หรือ You can't",
+    ],
+    pattern: ["Subject + have to / has to + verb", "Subject + need(s) to + verb", "Subject + should + verb"],
+    examples: [["You have to wear a seatbelt.", "ต้องคาดเข็มขัดนะ"], ["You need to sleep now.", "ตอนนี้ต้องนอนแล้ว"], ["You should say thank you.", "ควรพูดขอบคุณนะ"], ["You don't have to finish it.", "ไม่ต้องกินให้หมดก็ได้"]],
+    mistakes: [["She have to go.", "She has to go.", "she/he/it ใช้ has to"], ["You should to sleep.", "You should sleep.", "หลัง should ไม่มี to"], ["You don't have to hit. (หมายถึงห้าม)", "Don't hit. / You can't hit.", "don't have to = ไม่จำเป็น"]],
+    quiz: [
+      ["He ___ to go to school today.", ["have", "has", "having"], 1, "He ใช้ has to"],
+      ["You ___ eat more vegetables.", ["should", "should to", "shoulds"], 0, "should + กริยาเปล่า"],
+      ["It's Saturday. You ___ wake up early.", ["don't have to", "have to", "has to"], 0, "วันหยุด ไม่จำเป็นต้องตื่นเช้า"],
+      ["We ___ to leave now.", ["need", "should", "must"], 0, "need to + verb"],
+    ]},
+];
+
+/* ---------- Derived ---------- */
+const PHRASES = [];
+SCENES.forEach(s => s.items.forEach((p, i) => PHRASES.push({ id: s.id + "-" + i, scene: s, en: p[0], th: p[1], kid: p[2], g: p[3] })));
+const LESSON = Object.fromEntries(LESSONS.map(l => [l.id, l]));
+
+/* ---------- Storage (per-viewer convenience) ---------- */
+const KEY = "kiddo-talk-v1";
+let S = { learned: {}, quiz: {}, days: [] };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function todayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function markActive() { const k = todayKey(); if (!S.days.includes(k)) { S.days.push(k); S.days = S.days.slice(-60); save(); } }
+function streak() {
+  let n = 0; const d = new Date();
+  if (!S.days.includes(todayKey(d))) d.setDate(d.getDate() - 1);
+  while (S.days.includes(todayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+/* ---------- Speech: Claude voice first, browser voice as fallback ---------- */
+let tts = null, dict = null, dictBlocked = false;
+const speakIcon = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+const micIcon = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>';
+let slow = false;
+try { slow = localStorage.getItem(KEY + "-slow") === "1"; } catch (e) {}
+
+function browserSpeak(text) {
+  if (!("speechSynthesis" in window)) return toast("อุปกรณ์นี้ไม่รองรับการอ่านออกเสียง");
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US"; u.rate = slow ? 0.7 : 0.95;
+  const v = speechSynthesis.getVoices().find(v => /^en[-_]US/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^en/i.test(v.lang));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function say(text) {
+  if (tts) {
+    tts.speak(text, { language: "en", rate: slow ? 0.75 : 1 }).catch(err => {
+      if (err && (err.code === "not_granted" || err.code === "unavailable")) { tts = null; browserSpeak(text); }
+    });
+  } else browserSpeak(text);
+}
+function sayDialog(parent, kid) {
+  if (tts && kid) {
+    tts.speak([{ text: parent, voice: "buttery", language: "en" }, { text: kid, voice: "airy", language: "en" }], { rate: slow ? 0.75 : 1 }).catch(() => {});
+  } else say(kid ? parent + " ... " + kid : parent);
+}
+
+/* Listening: Claude dictation, else the browser's own recognizer */
+const BrowserSR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function canListen() { return !dictBlocked && (dict || BrowserSR); }
+function listen(onText, onState) {
+  if (dict) {
+    let finalText = "";
+    const offs = [
+      dict.onPartial(({ text }) => onText(finalText + " " + text, false)),
+      dict.onFinal(({ text }) => { finalText += " " + text; onText(finalText, false); }),
+      dict.onState(({ state, reason }) => {
+        onState(state === "listening" || state === "starting");
+        if (state === "idle") { offs.forEach(f => f()); onText(finalText, true); if (reason === "not_granted") { dictBlocked = true; toast("ไม่ได้รับอนุญาตใช้ไมค์ ใช้ปุ่มเฉลยแทนได้"); } }
+      }),
+    ];
+    dict.start().catch(err => { offs.forEach(f => f()); onState(false); if (err && err.code === "not_granted") { dictBlocked = true; toast("ไม่ได้รับอนุญาตใช้ไมค์"); render(); } });
+    return () => dict.stop().catch(() => {});
+  }
+  const r = new BrowserSR();
+  r.lang = "en-US"; r.interimResults = true; r.maxAlternatives = 1;
+  r.onresult = e => { const t = Array.from(e.results).map(x => x[0].transcript).join(" "); onText(t, false); };
+  r.onstart = () => onState(true);
+  r.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { dictBlocked = true; toast("เบราว์เซอร์นี้ใช้ไมค์ไม่ได้ ใช้ปุ่มเฉลยแทนได้"); render(); } };
+  r.onend = () => { onState(false); onText(null, true); };
+  try { r.start(); } catch (e) { onState(false); }
+  return () => { try { r.stop(); } catch (e) {} };
+}
+
+/* Compare what was said with the target, word by word */
+const norm = s => (s || "").toLowerCase().replace(/[’']/g, "'").replace(/[^a-z' ]+/g, " ").split(/\s+/).filter(Boolean)
+  .map(w => ({ "i'm": "i am", "it's": "it is", "you're": "you are", "we're": "we are", "don't": "do not", "can't": "can not", "i'll": "i will", "that's": "that is", "let's": "let us", "what's": "what is" }[w] || w)).join(" ").split(" ");
+function compare(target, heard) {
+  const t = norm(target), h = new Set(norm(heard));
+  const words = target.split(/\s+/);
+  let hit = 0;
+  const marked = words.map(w => {
+    const ok = norm(w).every(x => h.has(x));
+    if (ok) hit++;
+    return `<span class="${ok ? "w-ok" : "w-miss"}">${esc(w)}</span>`;
+  });
+  return { pct: Math.round(hit / words.length * 100), html: marked.join(" ") };
+}
+
+/* ---------- Helpers ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $view = document.getElementById("view");
+let toastT;
+function toast(msg) {
+  let t = document.querySelector(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2200);
+}
+function nowScene() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  const timed = SCENES.filter(s => s.h >= 0);
+  let cur = timed[timed.length - 1];
+  for (const s of timed) if (h >= s.h - 0.25) cur = s;
+  if (h < 5) cur = timed[timed.length - 1];
+  return cur;
+}
+function phraseOfDay() {
+  const d = new Date(); const seed = d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate();
+  const pool = nowScene().items.map((_, i) => PHRASES.find(p => p.id === nowScene().id + "-" + i));
+  return pool[seed % pool.length];
+}
+function phraseCard(p, opts = {}) {
+  const done = !!S.learned[p.id];
+  return `<div class="card${done ? " done" : ""}">
+    <div class="en" lang="en">${esc(p.en)}</div>
+    <div class="th">${esc(p.th)}</div>
+    ${p.kid ? `<div class="kid"><b>ลูกตอบ:</b><span lang="en">${esc(p.kid)}</span></div>` : ""}
+    <div class="actions">
+      <button class="btn" data-say="${esc(p.id)}">${speakIcon}ฟัง</button>
+      <button class="btn chk" aria-pressed="${done}" data-learn="${esc(p.id)}">${done ? "จำได้แล้ว ✓" : "จำได้แล้ว"}</button>
+      ${opts.hideTag ? "" : `<button class="tag" data-lesson="${p.g}">${esc(LESSON[p.g].title)}</button>`}
+    </div>
+  </div>`;
+}
+function lessonScore(id) { const r = S.quiz[id]; return r ? r.best : null; }
+
+/* ---------- Views ---------- */
+let route = { tab: "today", scene: null, lesson: null };
+
+function viewToday() {
+  const sc = nowScene(), p = phraseOfDay();
+  const learned = Object.keys(S.learned).length, total = PHRASES.length;
+  const lessonsDone = LESSONS.filter(l => (lessonScore(l.id) || 0) >= 75).length;
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  return `
+    <p class="sub" lang="en" style="margin-bottom:10px">${greet}! วันนี้ลองใช้ประโยคนี้กับลูกดูนะ</p>
+    <section class="hero" aria-label="ประโยคของวันนี้">
+      <div class="eyebrow">ประโยคของวันนี้ · ${esc(sc.th)} ${esc(sc.time)}</div>
+      <div class="en" lang="en">${esc(p.en)}</div>
+      <div class="th">${esc(p.th)}</div>
+      ${p.kid ? `<div class="kid"><b>ลูกอาจตอบ:</b><span lang="en">${esc(p.kid)}</span></div>` : ""}
+      <div class="row">
+        <button class="btn primary" data-dialog="${p.id}">${speakIcon}ฟังบทสนทนา</button>
+        <button class="btn" data-lesson="${p.g}">เรียน ${esc(LESSON[p.g].title)}</button>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><div class="n">${learned}</div><div class="l">ประโยคที่จำได้ จาก ${total}</div><div class="bar"><i style="width:${Math.round(learned / total * 100)}%"></i></div></div>
+      <div class="stat"><div class="n">${lessonsDone}/${LESSONS.length}</div><div class="l">บท grammar ผ่าน 75%</div><div class="bar"><i style="width:${Math.round(lessonsDone / LESSONS.length * 100)}%"></i></div></div>
+      <div class="stat"><div class="n">${streak()}</div><div class="l">วันติดต่อกัน</div></div>
+    </div>
+
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <h2>ช่วงนี้ของวัน: ${esc(sc.th)}</h2>
+      <button class="btn ghost" data-scene="${sc.id}">ดูทั้งหมด</button>
+    </div>
+    <div class="list">${sc.items.slice(0, 3).map((_, i) => phraseCard(PHRASES.find(x => x.id === sc.id + "-" + i))).join("")}</div>
+
+    <div class="row" style="margin-top:18px">
+      <a class="btn primary" href="#practice">${micIcon}ฝึกพูดช่วงนี้</a>
+      <button class="btn" id="slowBtn" aria-pressed="${slow}">${slow ? "เสียงช้า: เปิด" : "เสียงช้า: ปิด"}</button>
+    </div>`;
+}
+
+function viewPhrases() {
+  if (route.scene) {
+    const s = SCENES.find(x => x.id === route.scene);
+    return `<button class="back" data-scene="">‹ ทุกช่วงเวลา</button>
+      <div class="eyebrow">${esc(s.time)}</div>
+      <h2 lang="en">${esc(s.en)}</h2><p class="sub">${esc(s.th)} · ${s.items.length} ประโยค</p>
+      <div class="list">${s.items.map((_, i) => phraseCard(PHRASES.find(x => x.id === s.id + "-" + i))).join("")}</div>`;
+  }
+  const cur = nowScene().id;
+  const timed = SCENES.filter(s => s.h >= 0), allDay = SCENES.filter(s => s.h < 0);
+  const item = s => {
+    const n = s.items.filter((_, i) => S.learned[s.id + "-" + i]).length;
+    return `<li class="tl"><div class="t${s.id === cur ? " now" : ""}">${esc(s.time)}</div>
+      <button class="scene${s.id === cur ? " is-now" : ""}" data-scene="${s.id}">
+        <span class="en" lang="en">${esc(s.en)}</span>
+        <span class="meta"><span>${esc(s.th)}</span><span>${n}/${s.items.length}</span></span>
+      </button></li>`;
+  };
+  return `<h2>พูดกับลูกตลอดวัน</h2><p class="sub">เรียงตามกิจวัตรของเด็ก 4–7 ขวบ เลือกช่วงที่กำลังจะเกิดขึ้นแล้วใช้จริงได้เลย</p>
+    <ul class="timeline">${timed.map(item).join("")}</ul>
+    <div class="eyebrow" style="margin:14px 0 8px">ใช้ได้ทั้งวัน</div>
+    <ul class="timeline">${allDay.map(item).join("")}</ul>`;
+}
+
+function viewGrammar() {
+  if (route.lesson) {
+    const l = LESSON[route.lesson];
+    const used = PHRASES.filter(p => p.g === l.id).slice(0, 4);
+    return `<button class="back" data-lesson="">‹ ทุกบท</button>
+      <div class="eyebrow">บทที่ ${LESSONS.indexOf(l) + 1}</div>
+      <h2 lang="en">${esc(l.title)}</h2><p class="sub">${esc(l.th)}</p>
+      <div class="explain">${l.explain.map(t => `<p>${t}</p>`).join("")}</div>
+      <div class="pattern" lang="en">${l.pattern.map(t => `<div>${esc(t)}</div>`).join("")}</div>
+
+      <div class="section"><h3>ตัวอย่าง</h3>
+        <div class="list">${l.examples.map(e => `<div class="card"><div class="en" lang="en" style="font-size:17px">${esc(e[0])}</div><div class="th">${esc(e[1])}</div>
+          <div class="actions"><button class="btn" data-say-text="${esc(e[0])}">${speakIcon}ฟัง</button></div></div>`).join("")}</div>
+      </div>
+
+      <div class="section"><h3>ที่คนไทยพูดผิดบ่อย</h3>
+        ${l.mistakes.map(m => `<div class="mistake"><div lang="en"><span class="wrong">${esc(m[0])}</span> → <span class="right">${esc(m[1])}</span></div><div class="th">${esc(m[2])}</div></div>`).join("")}
+      </div>
+
+      ${used.length ? `<div class="section"><h3>ใช้ในบ้าน</h3><div class="list">${used.map(p => phraseCard(p, { hideTag: true })).join("")}</div></div>` : ""}
+
+      <div class="section"><h3>แบบทดสอบ</h3>
+        <div class="quiz" id="quiz">${l.quiz.map((q, i) => `<div class="q" data-q="${i}">
+          <div class="stem" lang="en">${i + 1}. ${esc(q[0])}</div>
+          <div class="opts">${q[1].map((o, j) => `<button class="opt" data-opt="${j}" lang="en">${esc(o)}</button>`).join("")}</div>
+          <div class="why" hidden></div></div>`).join("")}</div>
+        <p class="note" id="quizResult">${lessonScore(l.id) != null ? "คะแนนดีที่สุด " + lessonScore(l.id) + "%" : "ตอบให้ครบทุกข้อเพื่อบันทึกคะแนน"}</p>
+        <button class="btn" id="quizReset">ทำใหม่</button>
+      </div>`;
+  }
+  return `<h2>Grammar ที่ใช้พูดกับลูกได้จริง</h2><p class="sub">เรียงจากรูปที่ใช้บ่อยที่สุดในบ้าน แต่ละบทมีจุดที่คนไทยพูดผิดบ่อยและแบบทดสอบ 4 ข้อ</p>
+    <div class="list">${LESSONS.map((l, i) => {
+      const sc = lessonScore(l.id);
+      return `<button class="lesson-item" data-lesson="${l.id}"><span class="num">${String(i + 1).padStart(2, "0")}</span>
+        <span style="min-width:0"><span class="en" lang="en" style="font-size:16px;display:block">${esc(l.title)}</span><span class="th">${esc(l.th)}</span></span>
+        <span class="score${sc >= 75 ? " good" : ""}">${sc == null ? "ยังไม่ทำ" : sc + "%"}</span></button>`;
+    }).join("")}</div>`;
+}
+
+let practice = { scene: null, deck: [], i: 0, revealed: false, heard: "", result: null, listening: false, stopFn: null };
+function buildDeck(sceneId) {
+  let pool = sceneId === "all" ? PHRASES.slice() : sceneId === "learned" ? PHRASES.filter(p => S.learned[p.id]) : PHRASES.filter(p => p.scene.id === sceneId);
+  if (!pool.length) pool = PHRASES.filter(p => p.scene.id === nowScene().id);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  Object.assign(practice, { scene: sceneId, deck: pool, i: 0, revealed: false, heard: "", result: null });
+}
+function viewPractice() {
+  if (!practice.scene) buildDeck(nowScene().id);
+  const p = practice.deck[practice.i];
+  const listenable = canListen();
+  return `<h2>ฝึกพูด</h2><p class="sub">ดูประโยคภาษาไทย ลองพูดเป็นภาษาอังกฤษ แล้วเช็กคำตอบ</p>
+    <div class="row" style="margin-bottom:14px">
+      <label for="deckSel" class="note">ชุดฝึก</label>
+      <select id="deckSel">
+        ${SCENES.map(s => `<option value="${s.id}"${practice.scene === s.id ? " selected" : ""}>${esc(s.th)}</option>`).join("")}
+        <option value="learned"${practice.scene === "learned" ? " selected" : ""}>ประโยคที่จำได้แล้ว (ทบทวน)</option>
+        <option value="all"${practice.scene === "all" ? " selected" : ""}>ทั้งหมด</option>
+      </select>
+      <span class="note" style="margin-left:auto;font-variant-numeric:tabular-nums">${practice.i + 1}/${practice.deck.length}</span>
+    </div>
+    <div class="flash">
+      <div class="eyebrow">${esc(p.scene.th)} · พูดว่าอะไรดี</div>
+      <div class="prompt">${esc(p.th)}</div>
+      <div class="row">
+        ${listenable ? `<button class="btn primary mic${practice.listening ? " listening" : ""}" id="micBtn">${micIcon}${practice.listening ? "กำลังฟัง แตะเพื่อหยุด" : "แตะแล้วพูด"}</button>` : ""}
+        <button class="btn" id="revealBtn">${practice.revealed ? "ซ่อนเฉลย" : "เฉลย"}</button>
+      </div>
+      ${practice.heard ? `<div class="heard" aria-live="polite"><div class="note">ที่ได้ยิน</div><div lang="en">${esc(practice.heard)}</div>
+        ${practice.result ? `<div style="margin-top:6px" lang="en">${practice.result.html}</div><div class="note" style="margin-top:4px">ตรง ${practice.result.pct}% ${practice.result.pct >= 80 ? "เยี่ยมมาก!" : practice.result.pct >= 50 ? "ใกล้แล้ว ฟังแล้วลองอีกที" : "ฟังตัวอย่างแล้วพูดตามช้า ๆ"}</div>` : ""}</div>` : ""}
+      ${practice.revealed ? `<div class="answer">
+        <div class="en" lang="en">${esc(p.en)}</div>
+        ${p.kid ? `<div class="kid"><b>ลูกตอบ:</b><span lang="en">${esc(p.kid)}</span></div>` : ""}
+        <div class="row"><button class="btn" data-say="${p.id}">${speakIcon}ฟัง</button><button class="tag" data-lesson="${p.g}">${esc(LESSON[p.g].title)}</button></div>
+      </div>` : ""}
+      <div class="row" style="justify-content:space-between">
+        <button class="btn" id="againBtn">ยังไม่ได้ ข้ามไปก่อน</button>
+        <button class="btn primary" id="gotBtn">จำได้แล้ว ไปต่อ</button>
+      </div>
+    </div>
+    ${listenable ? "" : `<p class="note" style="margin-top:12px">ใช้ไมค์ในหน้านี้ไม่ได้ ลองพูดออกเสียงเองแล้วกดเฉลยเพื่อเทียบ (การฟังเสียงพูดใช้ได้ใน Chrome และแอป Claude บนเดสก์ท็อป)</p>`}`;
+}
+
+/* ---------- Router & events ---------- */
+function render() {
+  const tab = route.tab;
+  document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === tab ? "page" : "false"));
+  $view.innerHTML = tab === "phrases" ? viewPhrases() : tab === "grammar" ? viewGrammar() : tab === "practice" ? viewPractice() : viewToday();
+  const st = streak(); document.getElementById("streak").textContent = st ? "ฝึกติดต่อกัน " + st + " วัน" : "";
+  $view.classList.remove("view"); void $view.offsetWidth; $view.classList.add("view");
+}
+function go(tab, extra = {}) {
+  route = Object.assign({ tab, scene: null, lesson: null }, extra);
+  if (location.hash.slice(1) !== tab) history.replaceState(null, "", "#" + tab);
+  render(); window.scrollTo(0, 0);
+}
+function fromHash() {
+  const h = location.hash.slice(1);
+  route = { tab: ["today", "phrases", "grammar", "practice"].includes(h) ? h : "today", scene: null, lesson: null };
+  render();
+}
+window.addEventListener("hashchange", fromHash);
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button, a"); if (!b) return;
+  const d = b.dataset;
+  if (d.say) { const p = PHRASES.find(x => x.id === d.say); say(p.en); markActive(); return; }
+  if (d.sayText) { say(d.sayText); return; }
+  if (d.dialog) { const p = PHRASES.find(x => x.id === d.dialog); sayDialog(p.en, p.kid); markActive(); return; }
+  if (d.learn) {
+    if (S.learned[d.learn]) delete S.learned[d.learn]; else { S.learned[d.learn] = Date.now(); markActive(); }
+    save(); const y = window.scrollY; render(); window.scrollTo(0, y); return;
+  }
+  if ("scene" in d) { go("phrases", { scene: d.scene || null }); return; }
+  if ("lesson" in d) { go("grammar", { lesson: d.lesson || null }); return; }
+  if (b.id === "slowBtn") { slow = !slow; try { localStorage.setItem(KEY + "-slow", slow ? "1" : "0"); } catch (e) {} render(); toast(slow ? "อ่านออกเสียงช้าลง" : "อ่านออกเสียงความเร็วปกติ"); return; }
+
+  // Quiz
+  if (d.opt != null && b.classList.contains("opt")) {
+    const qEl = b.closest(".q"); if (qEl.dataset.answered) return;
+    const l = LESSON[route.lesson], qi = +qEl.dataset.q, q = l.quiz[qi], pick = +d.opt;
+    qEl.dataset.answered = pick === q[2] ? "1" : "0";
+    qEl.querySelectorAll(".opt").forEach((o, j) => { if (j === q[2]) o.classList.add("ok"); else if (j === pick) o.classList.add("no"); o.disabled = true; });
+    const why = qEl.querySelector(".why"); why.hidden = false; why.textContent = (pick === q[2] ? "ถูก · " : "ยังไม่ถูก · ") + q[3];
+    const all = [...document.querySelectorAll("#quiz .q")];
+    if (all.every(x => x.dataset.answered)) {
+      const pct = Math.round(all.filter(x => x.dataset.answered === "1").length / all.length * 100);
+      const prev = S.quiz[l.id]; S.quiz[l.id] = { best: Math.max(pct, prev ? prev.best : 0), last: pct }; markActive(); save();
+      document.getElementById("quizResult").textContent = "ได้ " + pct + "% · ดีที่สุด " + S.quiz[l.id].best + "%" + (pct >= 75 ? " ผ่านบทนี้แล้ว" : " ลองทวนจุดที่ผิดแล้วทำใหม่");
+    }
+    return;
+  }
+  if (b.id === "quizReset") { const y = window.scrollY; render(); window.scrollTo(0, y); return; }
+
+  // Practice
+  if (b.id === "revealBtn") { practice.revealed = !practice.revealed; if (practice.revealed) say(practice.deck[practice.i].en); render(); return; }
+  if (b.id === "gotBtn" || b.id === "againBtn") {
+    if (practice.stopFn) practice.stopFn();
+    if (b.id === "gotBtn") { S.learned[practice.deck[practice.i].id] = S.learned[practice.deck[practice.i].id] || Date.now(); save(); }
+    markActive();
+    practice.i = (practice.i + 1) % practice.deck.length;
+    Object.assign(practice, { revealed: false, heard: "", result: null, listening: false });
+    render(); return;
+  }
+  if (b.id === "micBtn") {
+    if (practice.listening && practice.stopFn) { practice.stopFn(); return; }
+    const target = practice.deck[practice.i].en;
+    practice.heard = ""; practice.result = null;
+    practice.stopFn = listen((text, done) => {
+      if (text != null) practice.heard = text.trim();
+      if (done && practice.heard) { practice.result = compare(target, practice.heard); markActive(); }
+      render();
+    }, on => { practice.listening = on; render(); });
+    return;
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "deckSel") { buildDeck(e.target.value); render(); }
+});
+
+fromHash();
+
+/* Light up Claude voice + dictation when the viewer offers them */
+if (window.claude && window.claude.use) {
+  window.claude.use("tts").then(t => { if (t) tts = t; }).catch(() => {});
+  window.claude.use("dictation").then(d => { if (d) { dict = d; if (route.tab === "practice") render(); } }).catch(() => {});
+}
+</script>
+
+</body></html>
