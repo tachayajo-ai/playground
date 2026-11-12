@@ -13,10 +13,10 @@ Branch: `claude/serene-meitner-hs4lf2`
 - Part 6: 28 เรื่อง 112 ข้อ (fill / voc / ins)
 - สลับตำแหน่งตัวเลือกแบบคงที่ต่อข้อ (`seededOrder`) ทั้งบทเรียนและ Part 6
 - ตรวจเนื้อหาครบทุกข้อแล้ว แก้ 17 ข้อ
-- คำอธิบายรายตัวเลือก (NOTES): **บท 1–6 เสร็จ (346 ข้อ)**
+- คำอธิบายรายตัวเลือก (NOTES): **บท 1–7 เสร็จ (406 ข้อ)**
 
 ## งานที่เหลือ: คำอธิบายรายตัวเลือก
-- บท 7–15 (cond, rel, conj, gerinf, comp, article, prep, report, adv) = 562 ข้อ
+- บท 8–15 (rel, conj, gerinf, comp, article, prep, report, adv) = 502 ข้อ
 - Part 6 (ข้อ fill/voc ที่ยังไม่มี NOTES) ทำตอนท้าย
 
 ## วิธีทำต่อ (ต่อบท)
