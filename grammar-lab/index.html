@@ -4672,7 +4672,7 @@ const L = [
 
 const STRATEGY = [
   "อ่านตัวเลือกก่อน: ถ้าเป็นรากเดียวกัน (care / careful / carefully) = ข้อรูปคำ ถ้าเป็นกริยาหลายรูป = tense/passive/agreement ถ้าเป็นคำเชื่อม = connector",
-  "หา S และ V แท้ของประโยค ถ้ายังไม่มี V แท้ ช่องว่างต้องเป็น V แท้ ถ้ามีแล้ว ช่องว่างเป็นอย่างอื่น",
+  "หา S (Subject ประธาน) และ V แท้ (Verb กริยาแท้) ของประโยค ถ้ายังไม่มี V แท้ ช่องว่างต้องเป็น V แท้ ถ้ามีแล้ว ช่องว่างเป็นอย่างอื่น",
   "ดูคำรอบช่องว่าง: หน้า/หลังเป็นอะไร มี than, since, by, of, that ไหม",
   "ตัดตัวเลือกที่ผิดโครงสร้างทิ้งก่อน แล้วค่อยเลือกตามความหมาย",
 ];
@@ -5770,7 +5770,7 @@ let practiceState = {};   // per-lesson question picks: qid -> picked
 let test = null;          // { qs, picks, start, done, end }
 
 function legend() {
-  return `<div class="legend">${[["S", "ประธาน"], ["V", "กริยา"], ["O", "กรรม"], ["C", "ส่วนเติมเต็ม"], ["A", "ส่วนขยาย เวลา สถานที่"], ["X", "คำเชื่อม / วลีหรือ clause ขยาย"]].map(([k, t]) => `<span class="swatch k-${k}">${k === "X" ? "+" : k} ${t}</span>`).join("")}</div>`;
+  return `<div class="legend">${[["S", "Subject", "ประธาน"], ["V", "Verb", "กริยา"], ["O", "Object", "กรรม"], ["C", "Complement", "ส่วนเติมเต็ม"], ["A", "Adverbial", "ส่วนขยาย เวลา สถานที่"], ["X", "Connector / Modifier", "คำเชื่อม / วลีหรือ clause ขยาย"]].map(([k, en, t]) => `<span class="swatch k-${k}"><span><b>${k === "X" ? "+" : k}</b> = ${en} · ${t}</span></span>`).join("")}</div>`;
 }
 
 function viewLessons() {
