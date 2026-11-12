@@ -180,6 +180,7 @@ select { font: inherit; color: var(--ink); background: var(--surface); border: 1
 .p6-cta { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
 .p6-cta b { color: var(--accent); }
 .p6-cta:hover { border-color: var(--accent); }
+.opts.one { grid-template-columns: minmax(0, 1fr); }
 .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
 @media (max-width: 420px) { .bar .col { flex-wrap: nowrap; gap: 8px; } .logo { font-size: 17px; } .seg a { padding: 6px 8px; font-size: 13px; } .bar .theme-btn { width: 36px; height: 36px; } h1 { font-size: 24px; } }
 .theme-btn { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; padding: 0; }
@@ -4796,6 +4797,103 @@ const P6 = [
   ]},
 ];
 
+/* Part 6 passages with vocabulary blanks ("voc": options share a part of speech; choose by meaning and collocation) */
+P6.push(
+{ id: "reimbursement", kind: "Email", title: "Changes to outpatient reimbursement",
+  head: ["To: All district hospital directors", "From: Provincial Health Office", "Subject: Changes to outpatient reimbursement"],
+  body: ["Dear hospital directors,",
+    "Please be informed that the NHSO has {1} its outpatient reimbursement rates for the 2027 fiscal year. The new rates will apply to all services provided on or after 1 October.",
+    "Hospitals must submit claims within 30 days of the service date. Claims received after this deadline will not be {2} for payment. {3}",
+    "A detailed table of the new rates is {4} to this email. Please share it with your finance and coding staff."],
+  qs: [
+    ["voc", null, ["revised", "reviewed", "resigned", "reserved"], 0, "revised = ปรับแก้ · reviewed = ทบทวน ตรวจสอบ · resigned = ลาออก · reserved = จองไว้ → ประโยคถัดไปพูดถึง new rates จึงต้องเป็น revised", "The NHSO has ___ its outpatient reimbursement rates for the 2027 fiscal year."],
+    ["voc", null, ["eligible", "responsible", "capable", "available"], 0, "eligible for payment = มีสิทธิ์ได้รับเงิน · responsible for = รับผิดชอบ · capable of = สามารถ · available = มีให้", "Claims received after this deadline will not be ___ for payment."],
+    ["ins", null, ["Late claims may be resubmitted only with a written explanation.", "The NHSO was established in 2002.", "Outpatient numbers fell during the flood.", "Please bring your own lunch to the meeting."], 0, "ต่อจากเรื่องเคลมที่ส่งเกินกำหนด → อธิบายข้อยกเว้น"],
+    ["fill", "passive", ["attach", "attaching", "attached", "attachment"], 2, "ตารางถูกแนบ → is attached", "A detailed table of the new rates is ___ to this email."],
+  ]},
+{ id: "overtime", kind: "Memo", title: "Overtime approval procedure",
+  head: ["MEMO", "To: Ward managers", "From: Nursing Director", "Subject: Overtime approval"],
+  body: ["Effective immediately, all overtime must be {1} in advance by the ward manager. Requests should be submitted through the online HR system at least 24 hours before the shift.",
+    "In an emergency, staff may work overtime without prior approval, {2} the ward manager is notified by the end of the shift. {3}",
+    "These changes are intended to help us control costs without {4} patient safety."],
+  qs: [
+    ["voc", null, ["approved", "improved", "proved", "removed"], 0, "approved = อนุมัติ · improved = ปรับปรุง · proved = พิสูจน์ · removed = นำออก → in advance by the manager = อนุมัติล่วงหน้า", "All overtime must be ___ in advance by the ward manager."],
+    ["fill", "cond", ["provided that", "unless", "despite", "even though"], 0, "ทำได้โดยมีเงื่อนไขว่าต้องแจ้ง → provided that", "Staff may work overtime without prior approval, ___ the ward manager is notified by the end of the shift."],
+    ["ins", null, ["Overtime that is not reported in this way will not be paid.", "The cafeteria will close early on Friday.", "Our hospital has 120 beds.", "Several nurses retired last year."], 0, "ผลของการไม่แจ้งตามขั้นตอน"],
+    ["voc", null, ["compromising", "complimenting", "completing", "composing"], 0, "compromise safety = ลดทอน/ทำให้ความปลอดภัยเสี่ยง · compliment = ชม · complete = ทำเสร็จ · compose = แต่ง ประกอบ", "These changes are intended to help us control costs without ___ patient safety."],
+  ]},
+{ id: "pharmacy-move", kind: "Notice", title: "Pharmacy relocation",
+  head: ["NOTICE: PHARMACY RELOCATION"],
+  body: ["From Monday, 4 November, the outpatient pharmacy will {1} to the ground floor of Building B. The new location is larger and offers more seating for patients {2} for their medicine.",
+    "{3} Signs will be posted throughout the hospital to help patients find the new pharmacy.",
+    "Opening hours will remain {4}: 8 a.m. to 8 p.m., Monday to Saturday."],
+  qs: [
+    ["voc", null, ["relocate", "renovate", "relax", "reduce"], 0, "relocate = ย้ายที่ตั้ง · renovate = ปรับปรุงอาคาร · relax = ผ่อนคลาย · reduce = ลด → to the ground floor of Building B บอกที่ใหม่", "The outpatient pharmacy will ___ to the ground floor of Building B."],
+    ["fill", "rel", ["wait", "waiting", "waited", "are waiting"], 1, "ผู้ป่วยรอเอง → reduced active V-ing", "The new location offers more seating for patients ___ for their medicine."],
+    ["ins", null, ["The old pharmacy counter in Building A will close on Saturday, 2 November.", "Building B was designed by a famous architect.", "Pharmacists must have a valid license.", "Most patients prefer generic drugs."], 0, "ต่อเรื่องการย้าย → บอกว่าที่เก่าปิดเมื่อไร"],
+    ["voc", null, ["unchanged", "unlimited", "unavailable", "uncertain"], 0, "remain unchanged = คงเดิม · unlimited = ไม่จำกัด · unavailable = ไม่มีให้ · uncertain = ไม่แน่นอน", "Opening hours will remain ___: 8 a.m. to 8 p.m., Monday to Saturday."],
+  ]},
+{ id: "forum-invite", kind: "Email", title: "Invitation to speak",
+  head: ["To: Dr. Anan W.", "From: Organizing Committee, Regional Health Insurance Forum", "Subject: Invitation to speak"],
+  body: ["Dear Dr. Anan,",
+    "On behalf of the organizing committee, I am pleased to invite you to speak at the Regional Health Insurance Forum, which will be held in Khon Kaen on 15–16 January. Given your {1} in claims auditing, we believe your insights would be extremely valuable to our participants.",
+    "We would like you to give a 30-minute presentation on reducing claim {2}. {3}",
+    "The committee will {4} your travel and accommodation expenses. Please confirm your participation by 30 November.",
+    "Yours sincerely,<br>Organizing Committee"],
+  qs: [
+    ["voc", null, ["expertise", "expense", "existence", "exception"], 0, "expertise = ความเชี่ยวชาญ · expense = ค่าใช้จ่าย · existence = การมีอยู่ · exception = ข้อยกเว้น", "Given your ___ in claims auditing, we believe your insights would be extremely valuable."],
+    ["voc", null, ["denials", "deliveries", "deposits", "designs"], 0, "claim denials = การปฏิเสธจ่ายเคลม · deliveries = การส่งของ · deposits = เงินมัดจำ · designs = การออกแบบ", "We would like you to give a 30-minute presentation on reducing claim ___."],
+    ["ins", null, ["This will be followed by a 15-minute question-and-answer session.", "Khon Kaen is known for its silk.", "The forum was cancelled last year.", "Please pay the registration fee in cash."], 0, "ต่อจากการบรรยาย 30 นาที → ช่วงถามตอบ"],
+    ["voc", null, ["cover", "recover", "discover", "uncover"], 0, "cover expenses = ออกค่าใช้จ่ายให้ · recover = ฟื้นตัว ได้คืน · discover = ค้นพบ · uncover = เปิดโปง", "The committee will ___ your travel and accommodation expenses."],
+  ]},
+{ id: "appointment", kind: "Letter", title: "Appointment reminder",
+  head: ["Ms. Wanida T.", "Re: Your appointment at the Diabetes Clinic"],
+  body: ["Dear Ms. Wanida,",
+    "This is a reminder that you have an appointment with Dr. Preecha at the Diabetes Clinic on Tuesday, 12 November, at 9:30 a.m.",
+    "Please {1} at least 30 minutes early to complete your blood test. Remember to bring your health insurance card and a list of all the medicines you are currently {2}.",
+    "{3} If you need to change your appointment, please call us at least two days in advance {4} we can offer your slot to another patient.",
+    "Sincerely,<br>Diabetes Clinic"],
+  qs: [
+    ["voc", null, ["arrive", "arise", "arrange", "approve"], 0, "arrive early = มาถึงก่อน · arise = เกิดขึ้น · arrange = จัดเตรียม · approve = อนุมัติ", "Please ___ at least 30 minutes early to complete your blood test."],
+    ["voc", null, ["taking", "making", "giving", "doing"], 0, "take medicine = กินยา (collocation)", "Bring a list of all the medicines you are currently ___."],
+    ["ins", null, ["Do not eat or drink anything except water after midnight.", "Dr. Preecha graduated in 1998.", "Our parking lot is free on Sundays.", "The clinic was renovated last year."], 0, "ต่อจากการเจาะเลือด → งดอาหาร"],
+    ["fill", "conj", ["so that", "because", "although", "unless"], 0, "บอกจุดประสงค์ + clause (can) → so that", "Please call us at least two days in advance ___ we can offer your slot to another patient."],
+  ]},
+{ id: "quotation", kind: "Email", title: "Request for quotation",
+  head: ["To: Sales Team, Vital Medical Co.", "From: Purchasing Unit", "Subject: Request for quotation – patient monitors"],
+  body: ["Dear Sales Team,",
+    "Our hospital is planning to {1} ten new patient monitors for the intensive care unit. We would be grateful if you could send us a quotation, {2} delivery and installation costs.",
+    "Please also let us know the length of the warranty and whether training for our nursing staff is {3}. {4}",
+    "Kind regards,<br>Purchasing Unit"],
+  qs: [
+    ["voc", null, ["purchase", "pursue", "propose", "produce"], 0, "purchase = ซื้อ · pursue = ไล่ตาม มุ่งมั่น · propose = เสนอ · produce = ผลิต", "Our hospital is planning to ___ ten new patient monitors."],
+    ["voc", null, ["including", "consisting", "depending", "resulting"], 0, "including = รวมถึง · consisting (of) = ประกอบด้วย · depending (on) = ขึ้นอยู่กับ · resulting (in) = ส่งผลให้", "We would be grateful if you could send us a quotation, ___ delivery and installation costs."],
+    ["voc", null, ["provided", "prevented", "protected", "predicted"], 0, "provided = จัดให้ · prevented = ป้องกัน · protected = ปกป้อง · predicted = ทำนาย", "Please let us know whether training for our nursing staff is ___."],
+    ["ins", null, ["We need to receive your quotation by 20 November in order to include it in our budget request.", "Patient monitors are used in many hospitals.", "Our ICU nurses work 12-hour shifts.", "We are not interested in your products."], 0, "ปิดท้ายคำขอใบเสนอราคา → บอกกำหนดส่ง"],
+  ]},
+{ id: "employee-month", kind: "Announcement", title: "Employee of the Month",
+  head: ["EMPLOYEE OF THE MONTH: MS. NATTHA S."],
+  body: ["We are proud to announce that Ms. Nattha S., a coding officer in the Health Insurance Unit, has been selected as Employee of the Month for October.",
+    "Over the past year, Ms. Nattha has {1} reduced the unit's claim rejection rate from 12% to 4%. Her colleagues describe her as {2} and always willing to help others. {3}",
+    "Please join us in congratulating Ms. Nattha {4} her outstanding achievement."],
+  qs: [
+    ["voc", null, ["significantly", "slightly", "rarely", "hardly"], 0, "จาก 12% เหลือ 4% = ลดลงมาก → significantly · slightly = เล็กน้อย · rarely = แทบไม่ · hardly = แทบจะไม่", "Ms. Nattha has ___ reduced the unit's claim rejection rate from 12% to 4%."],
+    ["voc", null, ["reliable", "reluctant", "relevant", "remote"], 0, "reliable = ไว้ใจได้ · reluctant = ไม่เต็มใจ · relevant = เกี่ยวข้อง · remote = ห่างไกล", "Her colleagues describe her as ___ and always willing to help others."],
+    ["ins", null, ["She will receive a certificate and a gift voucher at the staff meeting on Friday.", "The unit was founded in 2002.", "Claims must be submitted within 30 days.", "Many hospitals still use paper forms."], 0, "ประกาศรางวัล → บอกว่าจะได้รับอะไร เมื่อไร"],
+    ["fill", "prep", ["on", "for", "at", "with"], 0, "congratulate someone on something", "Please join us in congratulating Ms. Nattha ___ her outstanding achievement."],
+  ]},
+{ id: "record-audit", kind: "Email", title: "Internal medical record audit",
+  head: ["To: Medical records staff", "From: Quality Assurance Committee", "Subject: Internal medical record audit"],
+  body: ["The annual internal audit of medical records will {1} place from 18 to 22 November. Auditors will randomly select 200 inpatient records and check them for completeness and {2}.",
+    "{3} Please make sure that all records from July to September are complete and {4} signed by the attending physician."],
+  qs: [
+    ["voc", null, ["take", "make", "have", "give"], 0, "take place = จัดขึ้น (collocation)", "The annual internal audit of medical records will ___ place from 18 to 22 November."],
+    ["voc", null, ["accuracy", "accessory", "accident", "acquisition"], 0, "accuracy = ความถูกต้อง · accessory = อุปกรณ์เสริม · accident = อุบัติเหตุ · acquisition = การได้มา", "Auditors will check them for completeness and ___."],
+    ["ins", null, ["Records that do not meet the standards will be returned for correction.", "The hospital was built in 1975.", "Auditors prefer coffee to tea.", "Inpatient numbers rose in May."], 0, "ต่อจากการตรวจ → ผลของเวชระเบียนที่ไม่ผ่าน"],
+    ["fill", "word", ["proper", "properly", "property", "propriety"], 1, "ขยาย signed (V3) → adverb", "Please make sure that all records are complete and ___ signed by the attending physician."],
+  ]},
+);
+
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
@@ -4804,8 +4902,8 @@ L.forEach(l => {
   if (l.sets) l.sets.forEach((st, si) => st.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-s" + si + "-" + i, l.id, si, st.noMock))));
   else l.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-" + i, l.id, 0, false)));
 });
-function p6Q(p, i) { const q = p.qs[i]; return { id: "p6-" + p.id + "-" + i, lesson: q[1], set: -1, noMock: true, p6: p.id, n: i + 1, type: q[0] === "ins" ? "ins" : "fill", stem: q[0] === "ins" ? "ประโยคใดเหมาะกับตำแหน่ง [" + (i + 1) + "] ที่สุด" : q[5], opts: q[2], ans: q[3], exp: q[4] }; }
-P6.forEach(p => p.qs.forEach((q, i) => { if (q[0] === "fill") BANK.push(p6Q(p, i)); }));
+function p6Q(p, i) { const q = p.qs[i]; return { id: "p6-" + p.id + "-" + i, lesson: q[1], set: -1, noMock: true, p6: p.id, n: i + 1, type: q[0] === "ins" ? "ins" : q[0] === "voc" ? "voc" : "fill", stem: q[0] === "ins" ? "ประโยคใดเหมาะกับตำแหน่ง [" + (i + 1) + "] ที่สุด" : q[5], opts: q[2], ans: q[3], exp: q[4] }; }
+P6.forEach(p => p.qs.forEach((q, i) => { if (q[0] !== "ins") BANK.push(p6Q(p, i)); }));
 function segs(stem) { return [...stem.matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1]); }
 
 /* ===== Storage (per-viewer) ===== */
@@ -4843,9 +4941,9 @@ function pillFor(st) {
 function qCard(q, idx, opts = {}) {
   const picked = opts.picked, reveal = opts.reveal;
   return `<div class="q" data-qid="${q.id}">
-    <div class="head"><span>${opts.label || "ข้อ " + (idx + 1)} · ${q.type === "err" ? "หาจุดผิด" : q.type === "ins" ? "เลือกประโยค" : "เติมคำ"}</span>${opts.showLesson && q.lesson ? `<a href="#lesson-${q.lesson}" style="color:inherit">${esc(LESSON[q.lesson].title)}</a>` : ""}</div>
+    <div class="head"><span>${opts.label || "ข้อ " + (idx + 1)} · ${q.type === "err" ? "หาจุดผิด" : q.type === "ins" ? "เลือกประโยค" : q.type === "voc" ? "คำศัพท์" : "เติมคำ"}</span>${opts.showLesson && q.lesson ? `<a href="#lesson-${q.lesson}" style="color:inherit">${esc(LESSON[q.lesson].title)}</a>` : ""}</div>
     <div class="stem" lang="en">${stemHTML(q)}</div>
-    <div class="opts">${q.opts.map((o, j) => {
+    <div class="opts${q.type === "ins" ? " one" : ""}">${q.opts.map((o, j) => {
       let cls = "opt";
       if (reveal) { if (j === q.ans) cls += " ok"; else if (j === picked) cls += " no"; }
       else if (j === picked) cls += " picked";
@@ -5007,7 +5105,7 @@ function viewTest() {
   if (!test) return `<h1>ข้อสอบจำลอง</h1>
     <p class="sub">สุ่มจากคลังข้อสอบ ${BANK.filter(q => !q.noMock).length} ข้อ (ไม่รวมแบบฝึกพื้นฐาน) ส่งแล้วได้เฉลยพร้อมคำอธิบาย และดูได้ว่าพลาดบทไหน · TOEIC Part 5 มีเวลาราว 20–30 วินาทีต่อข้อ</p>
     ${reviewCard()}
-    <a class="review-cta p6-cta" href="#part6"><span><b>Part 6 · เติมคำในเนื้อเรื่อง</b><span class="note">อีเมล บันทึก ประกาศ ${P6.length} เรื่อง รวมข้อเลือกประโยคแทรก</span></span><span class="pill">${Object.keys(S.p6).length}/${P6.length} เรื่อง</span></a>
+    <a class="review-cta p6-cta" href="#part6"><span><b>Part 6 · เติมคำในเนื้อเรื่อง</b><span class="note">อีเมล บันทึก ประกาศ ${P6.length} เรื่อง รวมข้อคำศัพท์และข้อเลือกประโยคแทรก</span></span><span class="pill">${Object.keys(S.p6).length}/${P6.length} เรื่อง</span></a>
     <div class="panel">
       <div class="row"><label for="tN" class="note">จำนวนข้อ</label>
         <select id="tN"><option value="10">10 ข้อ (~5 นาที)</option><option value="20" selected>20 ข้อ (~10 นาที)</option><option value="40">40 ข้อ (~20 นาที)</option></select></div>
@@ -5112,12 +5210,12 @@ function viewPart6() {
   if (!key) {
     return `<a class="note" href="#test" style="color:var(--muted)">‹ ข้อสอบ</a>
       <h1 style="margin-top:10px">Part 6 · เติมคำในเนื้อเรื่อง</h1>
-      <p class="sub">ข้อสอบ TOEIC Part 6 มี 4 เรื่อง เรื่องละ 4 ข้อ รวม 16 ข้อ เนื้อเรื่องเป็นอีเมล บันทึก ประกาศ แต่ละเรื่องมีข้อเลือกประโยคแทรก 1 ข้อ ต้องอ่านประโยคก่อนและหลังช่องว่าง ไม่ใช่ดูแค่ประโยคเดียว · เวลาที่แนะนำราว 2 นาทีต่อเรื่อง</p>
+      <p class="sub">ข้อสอบ TOEIC Part 6 มี 4 เรื่อง เรื่องละ 4 ข้อ รวม 16 ข้อ เนื้อเรื่องเป็นอีเมล บันทึก ประกาศ แต่ละเรื่องมีข้อเลือกประโยคแทรก 1 ข้อ และมีข้อคำศัพท์ที่ตัวเลือกเป็นคำชนิดเดียวกันทั้งหมด ต้องเลือกตามความหมายและคำที่มักใช้คู่กัน (collocation) ต้องอ่านประโยคก่อนและหลังช่องว่าง ไม่ใช่ดูแค่ประโยคเดียว · เวลาที่แนะนำราว 2 นาทีต่อเรื่อง</p>
       <div class="panel"><div class="row" style="justify-content:space-between"><div><h3 style="margin:0">ชุดจำลอง 4 เรื่อง</h3><div class="note">สุ่ม 4 จาก ${P6.length} เรื่อง · 16 ข้อ · จับเวลา (เป้าหมาย 8 นาที)</div></div>
         <a class="btn primary" href="#part6-set">เริ่มทำ</a></div></div>
       <div class="block"><h2>ฝึกทีละเรื่อง</h2><div class="lessons">${P6.map((p, i) => { const r = S.p6[p.id];
         return `<a class="li" href="#part6-${p.id}" style="text-decoration:none;color:inherit"><span class="n">${String(i + 1).padStart(2, "0")}</span>
-          <span style="min-width:0"><span class="t" lang="en">${esc(p.title)}</span><span class="d">${esc(p.kind)} · 4 ข้อ</span></span>
+          <span style="min-width:0"><span class="t" lang="en">${esc(p.title)}</span><span class="d">${esc(p.kind)} · 4 ข้อ${p.qs.some(q => q[0] === "voc") ? " · คำศัพท์ " + p.qs.filter(q => q[0] === "voc").length + " ข้อ" : ""}</span></span>
           <span class="pill${r ? (r.best === 4 ? " good" : r.best <= 2 ? " weak" : "") : ""}">${r ? "ดีที่สุด " + r.best + "/4" : "ยังไม่ทำ"}</span></a>`; }).join("")}</div></div>`;
   }
   if (!p6 || p6.key !== key) p6Start(key);
@@ -5212,7 +5310,7 @@ document.addEventListener("click", e => {
     case "p6Check": {
       p6.checked = true; p6.end = Date.now();
       p6.pids.forEach(pid => { const p = P6BY[pid]; let c = 0;
-        p.qs.forEach((q, i) => { const id = "p6-" + pid + "-" + i, ok = p6.picks[id] === q[3]; if (ok) c++; if (q[0] === "fill") record(id, ok); });
+        p.qs.forEach((q, i) => { const id = "p6-" + pid + "-" + i, ok = p6.picks[id] === q[3]; if (ok) c++; if (q[0] !== "ins") record(id, ok); });
         const r = S.p6[pid] || { best: 0 }; S.p6[pid] = { best: Math.max(r.best, c), last: c }; });
       save(); render(); window.scrollTo(0, 0); break; }
     case "p6Again": p6 = null; render(); window.scrollTo(0, 0); break;
