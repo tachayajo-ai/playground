@@ -164,6 +164,22 @@ select { font: inherit; color: var(--ink); background: var(--surface); border: 1
 .review-cta > span:first-child { display: grid; gap: 2px; min-width: 0; }
 .review-cta b { color: var(--bad); }
 .review-cta:hover { border-color: var(--bad); }
+.doc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-family: var(--f-display); font-size: 16px; line-height: 1.75; }
+.doc-kind { font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 8px; }
+.doc-head { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.doc-body p { margin: 0 0 12px; }
+.doc-body p:last-child { margin-bottom: 0; }
+.p6b { display: inline-flex; align-items: baseline; gap: 4px; min-width: 88px; border-bottom: 2px solid var(--accent); padding: 0 4px; }
+.p6b.filled { background: var(--accent-soft); }
+.p6b.ok { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.p6b.no { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); text-decoration: line-through; }
+.p6n { font-family: var(--f-mono); font-size: 11px; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 0 4px; text-decoration: none; display: inline-block; }
+.p6sent { font-style: italic; margin-left: 4px; background: var(--accent-soft); padding: 0 4px; border-radius: 4px; }
+.p6sent.ok { background: var(--ok-soft); color: var(--ok); }
+.p6sent.no { background: var(--bad-soft); color: var(--bad); text-decoration: line-through; }
+.p6-cta { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.p6-cta b { color: var(--accent); }
+.p6-cta:hover { border-color: var(--accent); }
 .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
 @media (max-width: 420px) { .bar .col { flex-wrap: nowrap; gap: 8px; } .logo { font-size: 17px; } .seg a { padding: 6px 8px; font-size: 13px; } .bar .theme-btn { width: 36px; height: 36px; } h1 { font-size: 24px; } }
 .theme-btn { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; padding: 0; }
@@ -4653,6 +4669,133 @@ const STRATEGY = [
   "ตัดตัวเลือกที่ผิดโครงสร้างทิ้งก่อน แล้วค่อยเลือกตามความหมาย",
 ];
 
+
+/* ===== Part 6: Text Completion =====
+   Body paragraphs use {1}..{4} for blanks. Question: [kind, lesson|null, [opts], ans, explanation, ctx]
+   kind: "fill" = word/grammar blank, "ins" = sentence insertion. ctx = the sentence with ___ (used in review mode). */
+const P6 = [
+{ id: "claim-training", kind: "Email", title: "Training on the new claim system",
+  head: ["To: All ward managers", "From: Finance Department", "Date: 3 March", "Subject: Training on the new claim system"],
+  body: ["Dear colleagues,",
+    "Starting next month, all claims {1} through the new electronic system. To help staff prepare, the Finance Department will hold three training sessions in Meeting Room 2. {2} Each session lasts about two hours and covers the most common coding errors.",
+    "Please register by 15 March {3} the online form on the intranet. Seats are limited, so we recommend {4} early.",
+    "Best regards,<br>Napat S., Finance Department"],
+  qs: [
+    ["fill", "passive", ["submitted", "will be submitted", "were submitted", "are submitting"], 1, "next month + claims ถูกส่ง → will be + V3", "Starting next month, all claims ___ through the new electronic system."],
+    ["ins", null, ["The sessions will be held on 20, 22, and 25 March.", "The old system was introduced in 2015.", "Please return the completed forms to the pharmacy.", "Patients have welcomed the new parking area."], 0, "ประโยคก่อนพูดถึง 3 sessions ประโยคหลังพูดถึง Each session → ต้องบอกวันของ sessions"],
+    ["fill", "gerinf", ["use", "using", "used", "to using"], 1, "register ... using the online form (ใช้วิธีไหน) → V-ing", "Please register by 15 March ___ the online form on the intranet."],
+    ["fill", "gerinf", ["register", "to register", "registering", "registered"], 2, "recommend + V-ing", "Seats are limited, so we recommend ___ early."],
+  ]},
+{ id: "holiday-hours", kind: "Memo", title: "Office hours during the Songkran holiday",
+  head: ["MEMO", "To: All staff", "From: Human Resources", "Re: Office hours during the Songkran holiday"],
+  body: ["Please note that the outpatient department will be closed from 13 to 15 April. {1} this period, the emergency department will remain open 24 hours a day.",
+    "Staff who {2} to work during the holiday will receive double pay. If you wish to volunteer, please inform your supervisor no later than 5 April. {3}",
+    "We thank you for your {4} and wish you a safe and happy holiday."],
+  qs: [
+    ["fill", "conj", ["While", "During", "Although", "Since"], 1, "ตามด้วยนาม (this period) → During", "___ this period, the emergency department will remain open 24 hours a day."],
+    ["fill", "agree", ["agree", "agrees", "agreeing", "agreement"], 0, "who ขยาย Staff (พหูพจน์) → agree", "Staff who ___ to work during the holiday will receive double pay."],
+    ["ins", null, ["A duty schedule will be posted on the staff notice board by 8 April.", "The new wing opened last year.", "Patients should bring their ID cards.", "The budget was approved by the board."], 0, "ต่อจากการสมัครอาสา → แจ้งว่าจะประกาศตารางเวร"],
+    ["fill", "word", ["cooperate", "cooperative", "cooperation", "cooperatively"], 2, "your ___ → นาม", "We thank you for your ___ and wish you a safe and happy holiday."],
+  ]},
+{ id: "parking", kind: "Notice", title: "Notice to all visitors",
+  head: ["NOTICE TO ALL VISITORS"],
+  body: ["Due to construction of the new outpatient building, the main parking lot will be closed {1} further notice. Visitors are asked to use the temporary parking area {2} behind the pharmacy. A free shuttle bus runs every 15 minutes between the temporary lot and the main entrance.",
+    "{3} Patients with mobility problems may be dropped off at the main entrance, but vehicles must not remain there for more than five minutes.",
+    "We apologize for any inconvenience and appreciate your {4}."],
+  qs: [
+    ["fill", "prep", ["by", "until", "since", "within"], 1, "ปิดต่อเนื่องไปจนถึง → until further notice", "The main parking lot will be closed ___ further notice."],
+    ["fill", "rel", ["locate", "locating", "located", "location"], 2, "พื้นที่ถูกตั้งอยู่ → reduced passive V3", "Visitors are asked to use the temporary parking area ___ behind the pharmacy."],
+    ["ins", null, ["Parking near the main entrance is not permitted during this period.", "The pharmacy is open until 8 p.m.", "Construction began two years ago.", "Visitors may park anywhere they like."], 0, "ประโยคหลังเป็นข้อยกเว้น (ส่งผู้ป่วยที่ทางเข้าได้) → ต้องมีกฎห้ามจอดก่อน"],
+    ["fill", "word", ["patient", "patience", "patiently", "patients"], 1, "your ___ → นาม patience (ความอดทน)", "We apologize for any inconvenience and appreciate your ___."],
+  ]},
+{ id: "glove-delay", kind: "Email", title: "Delay in your glove order",
+  head: ["To: Kanya P., Purchasing Unit", "From: Med Supply Co., Ltd.", "Subject: Your order #4471"],
+  body: ["Dear Ms. Kanya,",
+    "Thank you for your order of 200 boxes of surgical gloves. Unfortunately, {1} to a shortage of raw materials, we are unable to deliver the full order by 10 May as agreed. We can send 120 boxes immediately, and the remaining 80 boxes {2} by 25 May.",
+    "{3} As an apology, we will cover the shipping cost for this order.",
+    "Please let us know {4} this arrangement is acceptable.",
+    "Sincerely,<br>Customer Service, Med Supply Co., Ltd."],
+  qs: [
+    ["fill", "conj", ["because", "due", "although", "despite"], 1, "due to + นาม (มี to อยู่แล้ว)", "Unfortunately, ___ to a shortage of raw materials, we are unable to deliver the full order."],
+    ["fill", "passive", ["deliver", "will deliver", "will be delivered", "delivering"], 2, "กล่องถูกส่ง + อนาคต", "The remaining 80 boxes ___ by 25 May."],
+    ["ins", null, ["We understand that this delay may cause difficulties for your hospital.", "Our factory was founded in 1998.", "Please pay the invoice within 30 days.", "Gloves are available in three sizes."], 0, "ตามด้วย As an apology → ก่อนหน้าต้องยอมรับว่าสร้างปัญหา"],
+    ["fill", "report", ["that", "whether", "what", "which"], 1, "ใช่หรือไม่ (yes/no) → whether", "Please let us know ___ this arrangement is acceptable."],
+  ]},
+{ id: "job-offer", kind: "Letter", title: "Offer of employment",
+  head: ["Siriporn K.", "Re: Offer of employment – Registered Nurse, ICU"],
+  body: ["Dear Ms. Siriporn,",
+    "We are pleased to offer you the position of Registered Nurse in our Intensive Care Unit. Your experience in critical care and your {1} to patient safety impressed the interview panel.",
+    "Your employment will begin on 1 June. {2} the first three months, you will complete an orientation program under the supervision of a senior nurse. {3}",
+    "Please sign and return the enclosed contract by 20 May. Should you {4} any questions, please contact the HR office at extension 214.",
+    "Yours sincerely,<br>Human Resources Department"],
+  qs: [
+    ["fill", "word", ["commit", "committed", "commitment", "committing"], 2, "your ___ to → นาม commitment to", "Your experience in critical care and your ___ to patient safety impressed the panel."],
+    ["fill", "prep", ["While", "During", "Since", "Until"], 1, "+ นาม (ช่วงเวลา) → During", "___ the first three months, you will complete an orientation program."],
+    ["ins", null, ["This program is designed to familiarize you with our procedures.", "The hospital cafeteria serves lunch from 11 a.m.", "We regret that we cannot offer you the position.", "Please submit your claim within 30 days."], 0, "อธิบายต่อเรื่อง orientation program"],
+    ["fill", "cond", ["have", "having", "had", "will have"], 0, "Should + S + V1 = If you have", "Should you ___ any questions, please contact the HR office."],
+  ]},
+{ id: "screening", kind: "Announcement", title: "Free health screening for UC members",
+  head: ["FREE HEALTH SCREENING FOR UC MEMBERS"],
+  body: ["The Provincial Health Office, in cooperation with 21 district hospitals, is organizing a free screening campaign for diabetes and hypertension from 1 to 30 September. Each of the participating hospitals {1} a dedicated screening team.",
+    "All UC members aged 35 and over are eligible. Participants are advised {2} for eight hours before the blood test. {3}",
+    "Screening is available at all district hospitals on weekdays. For more {4}, please call the hotline at 1330."],
+  qs: [
+    ["fill", "agree", ["have", "has", "are having", "were"], 1, "Each of → เอกพจน์", "Each of the participating hospitals ___ a dedicated screening team."],
+    ["fill", "gerinf", ["fast", "to fast", "fasting", "fasted"], 1, "be advised + to V", "Participants are advised ___ for eight hours before the blood test."],
+    ["ins", null, ["Results will be available within three working days.", "The hotline was closed last year.", "Hypertension was first described in 1896.", "Most staff prefer morning shifts."], 0, "ต่อจากการตรวจเลือด → บอกเวลาที่ได้ผล"],
+    ["fill", "word", ["inform", "informative", "information", "informed"], 2, "more + นาม", "For more ___, please call the hotline at 1330."],
+  ]},
+{ id: "budget-meeting", kind: "Email", title: "Budget meeting moved to Friday",
+  head: ["To: Department heads", "From: Pim T., Director's Office", "Subject: Change of meeting date"],
+  body: ["Dear team,",
+    "The quarterly budget meeting, {1} was scheduled for Thursday, has been moved to Friday at 2 p.m. The director has to attend an urgent meeting at the Ministry on Thursday.",
+    "Please bring a copy of your department's spending report. {2}, we will discuss the proposal to purchase new monitors for the ICU.",
+    "If you cannot attend, please ask a colleague to {3} you. {4}",
+    "Thank you,<br>Pim"],
+  qs: [
+    ["fill", "rel", ["that", "which", "who", "what"], 1, "มี comma (non-defining) + สิ่งของ → which", "The quarterly budget meeting, ___ was scheduled for Thursday, has been moved to Friday."],
+    ["fill", "conj", ["However", "In addition", "Otherwise", "Instead"], 1, "เพิ่มวาระ → In addition", "___, we will discuss the proposal to purchase new monitors for the ICU."],
+    ["fill", "gerinf", ["represent", "representing", "represented", "representative"], 0, "ask + O + to V1", "If you cannot attend, please ask a colleague to ___ you."],
+    ["ins", null, ["The meeting is expected to last about two hours.", "The monitors were delivered last month.", "The director retired last year.", "Please submit your leave request by Monday."], 0, "ปิดท้ายด้วยข้อมูลการประชุม (ตัวเลือก B ขัดกับการขออนุมัติซื้อ)"],
+  ]},
+{ id: "maintenance", kind: "Notice", title: "System maintenance",
+  head: ["SYSTEM MAINTENANCE NOTICE", "IT Department"],
+  body: ["The hospital information system will be unavailable on Saturday, 12 October, from 10 p.m. to 4 a.m. During this time, the IT team will install important security updates.",
+    "{1} the system is offline, staff should record all patient information on paper forms. These forms must be entered into the system {2} it is restored.",
+    "{3} We strongly recommend that all staff {4} their work before 10 p.m. to avoid losing any data."],
+  qs: [
+    ["fill", "conj", ["During", "While", "Despite", "Because of"], 1, "+ clause → While", "___ the system is offline, staff should record all patient information on paper forms."],
+    ["fill", "tense", ["as soon as", "during", "until", "by"], 0, "+ clause + กรอกทันทีหลังระบบกลับมา → as soon as", "These forms must be entered into the system ___ it is restored."],
+    ["ins", null, ["Paper forms are available at every nursing station.", "The system was installed in 2010.", "Security updates are never necessary.", "Patients may not enter the building on Saturday."], 0, "ต่อจากการใช้กระดาษ → บอกว่าหาฟอร์มได้ที่ไหน"],
+    ["fill", "adv", ["saves", "save", "saved", "saving"], 1, "recommend that + S + V1 (subjunctive)", "We strongly recommend that all staff ___ their work before 10 p.m."],
+  ]},
+{ id: "hand-hygiene", kind: "Memo", title: "Updated hand hygiene policy",
+  head: ["MEMO", "To: All clinical staff", "From: Infection Control Committee", "Subject: Updated hand hygiene policy"],
+  body: ["Following a recent audit, the committee has found that hand hygiene compliance in some wards is {1} than the national target of 90%. As a result, the following changes take effect on 1 November.",
+    "First, alcohol hand rub will be placed at the entrance to every patient room. Second, each ward will appoint a hand hygiene champion {2} role is to observe and coach colleagues. {3}",
+    "We are confident that these measures will help us {4} the national target by the end of the year."],
+  qs: [
+    ["fill", "comp", ["low", "lower", "lowest", "more low"], 1, "than → ขั้นกว่า", "Hand hygiene compliance in some wards is ___ than the national target of 90%."],
+    ["fill", "rel", ["who", "whose", "which", "whom"], 1, "role ของ champion → whose", "Each ward will appoint a hand hygiene champion ___ role is to observe and coach colleagues."],
+    ["ins", null, ["Compliance rates for each ward will be published monthly.", "The audit was cancelled.", "Alcohol is not allowed in hospitals.", "Most patients prefer private rooms."], 0, "มาตรการต่อเนื่อง (ข้อ B และ C ขัดกับเนื้อหา)"],
+    ["fill", "gerinf", ["reach", "to reaching", "reached", "reaches"], 0, "help + O + V1", "These measures will help us ___ the national target."],
+  ]},
+{ id: "complaint", kind: "Email", title: "Response to your complaint",
+  head: ["To: Somsak R.", "From: Patient Relations Unit", "Subject: Your visit on 2 July"],
+  body: ["Dear Mr. Somsak,",
+    "Thank you for contacting us about your recent visit to our outpatient clinic. We are sorry to hear that you {1} for more than three hours before seeing a doctor.",
+    "We have reviewed your case. On that day, two doctors were absent because of illness, and the clinic received far more patients than usual. {2}, we should have informed waiting patients about the delay.",
+    "{3} We have also introduced a text message system that notifies patients when their turn is approaching.",
+    "We hope you will give us another opportunity {4} you.",
+    "Yours sincerely,<br>Patient Relations Unit"],
+  qs: [
+    ["fill", "tense", ["wait", "waits", "had waited", "will wait"], 2, "รอก่อนพบแพทย์ (อดีตของอดีต) → had waited", "We are sorry to hear that you ___ for more than three hours before seeing a doctor."],
+    ["fill", "conj", ["Therefore", "Nevertheless", "Moreover", "For example"], 1, "แม้มีเหตุผล แต่ก็ควรแจ้ง → ขัดแย้ง", "___, we should have informed waiting patients about the delay."],
+    ["ins", null, ["To prevent this from happening again, we have hired two additional doctors.", "Our clinic opened in 1995.", "Unfortunately, we cannot accept complaints by email.", "Please pay your bill at the cashier."], 0, "ประโยคถัดไปมี also → ก่อนหน้าต้องเป็นมาตรการแก้ไขอีกข้อ"],
+    ["fill", "gerinf", ["serve", "to serve", "serving", "served"], 1, "opportunity + to V", "We hope you will give us another opportunity ___ you."],
+  ]},
+];
+
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
@@ -4661,12 +4804,15 @@ L.forEach(l => {
   if (l.sets) l.sets.forEach((st, si) => st.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-s" + si + "-" + i, l.id, si, st.noMock))));
   else l.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-" + i, l.id, 0, false)));
 });
+function p6Q(p, i) { const q = p.qs[i]; return { id: "p6-" + p.id + "-" + i, lesson: q[1], set: -1, noMock: true, p6: p.id, n: i + 1, type: q[0] === "ins" ? "ins" : "fill", stem: q[0] === "ins" ? "ประโยคใดเหมาะกับตำแหน่ง [" + (i + 1) + "] ที่สุด" : q[5], opts: q[2], ans: q[3], exp: q[4] }; }
+P6.forEach(p => p.qs.forEach((q, i) => { if (q[0] === "fill") BANK.push(p6Q(p, i)); }));
 function segs(stem) { return [...stem.matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1]); }
 
 /* ===== Storage (per-viewer) ===== */
 const KEY = "grammar-lab-v1";
-let S = { ans: {}, tests: [], plain: false };
+let S = { ans: {}, tests: [], plain: false, p6: {} };
 try { const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); } catch (e) {}
+if (!S.p6) S.p6 = {};
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 function streakOf(a) { return a.streak != null ? a.streak : (a.last === 1 ? 1 : 0); }
 function record(qid, ok) { const a = S.ans[qid] || { n: 0, c: 0 }; const st = streakOf(a); a.n++; if (ok) a.c++; a.last = ok ? 1 : 0; a.streak = ok ? st + 1 : 0; S.ans[qid] = a; save(); }
@@ -4697,7 +4843,7 @@ function pillFor(st) {
 function qCard(q, idx, opts = {}) {
   const picked = opts.picked, reveal = opts.reveal;
   return `<div class="q" data-qid="${q.id}">
-    <div class="head"><span>${opts.label || "ข้อ " + (idx + 1)} · ${q.type === "err" ? "หาจุดผิด" : "เติมคำ"}</span>${opts.showLesson ? `<a href="#lesson-${q.lesson}" style="color:inherit">${esc(LESSON[q.lesson].title)}</a>` : ""}</div>
+    <div class="head"><span>${opts.label || "ข้อ " + (idx + 1)} · ${q.type === "err" ? "หาจุดผิด" : q.type === "ins" ? "เลือกประโยค" : "เติมคำ"}</span>${opts.showLesson && q.lesson ? `<a href="#lesson-${q.lesson}" style="color:inherit">${esc(LESSON[q.lesson].title)}</a>` : ""}</div>
     <div class="stem" lang="en">${stemHTML(q)}</div>
     <div class="opts">${q.opts.map((o, j) => {
       let cls = "opt";
@@ -4861,6 +5007,7 @@ function viewTest() {
   if (!test) return `<h1>ข้อสอบจำลอง</h1>
     <p class="sub">สุ่มจากคลังข้อสอบ ${BANK.filter(q => !q.noMock).length} ข้อ (ไม่รวมแบบฝึกพื้นฐาน) ส่งแล้วได้เฉลยพร้อมคำอธิบาย และดูได้ว่าพลาดบทไหน · TOEIC Part 5 มีเวลาราว 20–30 วินาทีต่อข้อ</p>
     ${reviewCard()}
+    <a class="review-cta p6-cta" href="#part6"><span><b>Part 6 · เติมคำในเนื้อเรื่อง</b><span class="note">อีเมล บันทึก ประกาศ ${P6.length} เรื่อง รวมข้อเลือกประโยคแทรก</span></span><span class="pill">${Object.keys(S.p6).length}/${P6.length} เรื่อง</span></a>
     <div class="panel">
       <div class="row"><label for="tN" class="note">จำนวนข้อ</label>
         <select id="tN"><option value="10">10 ข้อ (~5 นาที)</option><option value="20" selected>20 ข้อ (~10 นาที)</option><option value="40">40 ข้อ (~20 นาที)</option></select></div>
@@ -4932,6 +5079,64 @@ function viewReview() {
         <button class="btn primary" id="rvNext">${review.i + 1 < n ? "ข้อต่อไป" : "ดูผลรอบนี้"}</button></div>` : ""}`;
 }
 
+/* ===== Part 6 ===== */
+let p6 = null;   // { key, pids, picks:{qid:pick}, checked, start, end, timed }
+const P6BY = Object.fromEntries(P6.map(p => [p.id, p]));
+function p6Start(key) {
+  let pids;
+  if (key === "set") { pids = P6.map(p => p.id); for (let i = pids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pids[i], pids[j]] = [pids[j], pids[i]]; } pids = pids.slice(0, 4); }
+  else pids = [key];
+  p6 = { key, pids, picks: {}, checked: false, start: Date.now(), end: 0, timed: key === "set" };
+}
+function p6Doc(p, label) {
+  const qs = p.qs.map((_, i) => p6Q(p, i));
+  const blank = n => {
+    const q = qs[n - 1], pk = p6.picks[q.id], chk = p6.checked;
+    if (q.type === "ins") {
+      const txt = pk != null ? `<em class="p6sent${chk ? (pk === q.ans ? " ok" : " no") : ""}">${esc(q.opts[pk])}</em>` : "";
+      const fix = chk && pk !== q.ans ? ` <em class="p6sent ok">${esc(q.opts[q.ans])}</em>` : "";
+      return `<span class="p6n">[${n}]</span>${txt}${fix}`;
+    }
+    const cls = chk ? (pk === q.ans ? " ok" : " no") : pk != null ? " filled" : "";
+    const word = pk != null ? esc(q.opts[pk]) : "&nbsp;";
+    const fix = chk && pk !== q.ans ? ` <span class="p6b ok">${esc(q.opts[q.ans])}</span>` : "";
+    return `<span class="p6b${cls}"><span class="p6n">${n}</span>${word}</span>${fix}`;
+  };
+  const body = p.body.map(par => `<p>${par.replace(/\{(\d)\}/g, (_, n) => blank(+n))}</p>`).join("");
+  return `<article class="doc" lang="en"><div class="doc-kind">${label ? esc(label) + " · " : ""}${esc(p.kind)}</div>
+    <div class="doc-head">${p.head.map(h => `<div>${esc(h)}</div>`).join("")}</div><div class="doc-body">${body}</div></article>
+    <div class="qs" style="margin-top:12px">${qs.map((q, i) => qCard(Object.assign({}, q, { stem: q.type === "ins" ? q.stem : "ช่องที่ " + (i + 1) }), i, { picked: p6.picks[q.id], reveal: p6.checked, showLesson: true, label: "ข้อ " + (i + 1) })).join("")}</div>`;
+}
+function viewPart6() {
+  const key = route.p6;
+  if (!key) {
+    return `<a class="note" href="#test" style="color:var(--muted)">‹ ข้อสอบ</a>
+      <h1 style="margin-top:10px">Part 6 · เติมคำในเนื้อเรื่อง</h1>
+      <p class="sub">ข้อสอบ TOEIC Part 6 มี 4 เรื่อง เรื่องละ 4 ข้อ รวม 16 ข้อ เนื้อเรื่องเป็นอีเมล บันทึก ประกาศ แต่ละเรื่องมีข้อเลือกประโยคแทรก 1 ข้อ ต้องอ่านประโยคก่อนและหลังช่องว่าง ไม่ใช่ดูแค่ประโยคเดียว · เวลาที่แนะนำราว 2 นาทีต่อเรื่อง</p>
+      <div class="panel"><div class="row" style="justify-content:space-between"><div><h3 style="margin:0">ชุดจำลอง 4 เรื่อง</h3><div class="note">สุ่ม 4 จาก ${P6.length} เรื่อง · 16 ข้อ · จับเวลา (เป้าหมาย 8 นาที)</div></div>
+        <a class="btn primary" href="#part6-set">เริ่มทำ</a></div></div>
+      <div class="block"><h2>ฝึกทีละเรื่อง</h2><div class="lessons">${P6.map((p, i) => { const r = S.p6[p.id];
+        return `<a class="li" href="#part6-${p.id}" style="text-decoration:none;color:inherit"><span class="n">${String(i + 1).padStart(2, "0")}</span>
+          <span style="min-width:0"><span class="t" lang="en">${esc(p.title)}</span><span class="d">${esc(p.kind)} · 4 ข้อ</span></span>
+          <span class="pill${r ? (r.best === 4 ? " good" : r.best <= 2 ? " weak" : "") : ""}">${r ? "ดีที่สุด " + r.best + "/4" : "ยังไม่ทำ"}</span></a>`; }).join("")}</div></div>`;
+  }
+  if (!p6 || p6.key !== key) p6Start(key);
+  const all = p6.pids.flatMap(pid => P6BY[pid].qs.map((_, i) => "p6-" + pid + "-" + i));
+  const ansOf = id => { const k = id.lastIndexOf("-"); return P6BY[id.slice(3, k)].qs[+id.slice(k + 1)][3]; };
+  const answered = all.filter(id => p6.picks[id] != null).length;
+  const correct = all.filter(id => p6.picks[id] === ansOf(id)).length;
+  const bar = p6.checked ? "" : `<div class="testbar"><span>ตอบแล้ว ${answered}/${all.length}</span><div class="progress"><i style="width:${answered / all.length * 100}%"></i></div>${p6.timed ? `<span id="clock6">${fmt(Date.now() - p6.start)}</span>` : "<span></span>"}</div>`;
+  const result = p6.checked ? `<div class="panel" style="margin-bottom:16px"><div class="eyebrow">ผลลัพธ์</div>
+      <div class="row" style="align-items:baseline;gap:14px"><span class="big">${correct}/${all.length}</span><span class="note">${Math.round(correct / all.length * 100)}%${p6.timed ? " · ใช้เวลา " + fmt(p6.end - p6.start) : ""}</span></div>
+      <div class="row">${reviewIds().length ? `<a class="btn" href="#review">ทบทวนข้อที่ผิด (${reviewIds().length})</a>` : ""}<button class="btn primary" id="p6Again">${p6.timed ? "สุ่มชุดใหม่" : "ทำเรื่องนี้ใหม่"}</button><a class="btn" href="#part6">เรื่องอื่น</a></div></div>` : "";
+  const docs = p6.pids.map((pid, k) => `<section class="block" style="margin-top:${k ? 28 : 0}px">${p6Doc(P6BY[pid], p6.timed ? "เรื่องที่ " + (k + 1) : "")}</section>`).join("");
+  return `<a class="note" href="#part6" style="color:var(--muted)">‹ Part 6</a>
+    <h1 style="margin-top:10px">${p6.timed ? "ชุดจำลอง Part 6" : esc(P6BY[p6.pids[0]].title)}</h1>
+    <p class="sub">${p6.timed ? "4 เรื่อง 16 ข้อ ทำให้ครบแล้วกดตรวจคำตอบ" : "อ่านทั้งเรื่องก่อนตอบ แล้วกดตรวจคำตอบ"}</p>
+    ${result}${bar}${docs}
+    ${p6.checked ? "" : `<div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn primary" id="p6Check">${answered < all.length ? "ตรวจคำตอบ (ยังเหลือ " + (all.length - answered) + " ข้อ)" : "ตรวจคำตอบ"}</button></div>`}`;
+}
+
 function viewStats() {
   const tried = Object.keys(S.ans).length;
   const totals = Object.values(S.ans).reduce((a, x) => ({ n: a.n + x.n, c: a.c + x.c }), { n: 0, c: 0 });
@@ -4961,16 +5166,18 @@ function parse() {
   if (h.startsWith("lesson-") && LESSON[h.slice(7)]) return { tab: "lessons", lesson: h.slice(7) };
   if (h === "test" || h === "stats") return { tab: h, lesson: null };
   if (h === "review") return { tab: "review", lesson: null };
+  if (h === "part6") return { tab: "part6", lesson: null, p6: null };
+  if (h === "part6-set" || (h.startsWith("part6-") && P6BY[h.slice(6)])) return { tab: "part6", lesson: null, p6: h.slice(6) };
   if (h.startsWith("review-") && LESSON[h.slice(7)]) return { tab: "review", lesson: h.slice(7) };
   return { tab: "lessons", lesson: null };
 }
 function render(keepScroll) {
   const y = window.scrollY;
-  document.querySelectorAll(".seg a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === (route.tab === "review" ? "test" : route.tab) ? "page" : "false"));
-  $v.innerHTML = route.tab === "review" ? viewReview() : route.tab === "test" ? viewTest() : route.tab === "stats" ? viewStats() : route.lesson ? viewLesson(route.lesson) : viewLessons();
+  document.querySelectorAll(".seg a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === (route.tab === "review" || route.tab === "part6" ? "test" : route.tab) ? "page" : "false"));
+  $v.innerHTML = route.tab === "part6" ? viewPart6() : route.tab === "review" ? viewReview() : route.tab === "test" ? viewTest() : route.tab === "stats" ? viewStats() : route.lesson ? viewLesson(route.lesson) : viewLessons();
   if (keepScroll) window.scrollTo(0, y);
 }
-window.addEventListener("hashchange", () => { route = parse(); resetArmed = false; if (route.tab === "review") review = null; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { route = parse(); resetArmed = false; if (route.tab === "review") review = null; if (route.tab === "part6") p6 = null; render(); window.scrollTo(0, 0); });
 
 /* ===== Events ===== */
 document.addEventListener("click", e => {
@@ -4978,7 +5185,9 @@ document.addEventListener("click", e => {
   if (b.dataset.jump) { const t = document.getElementById(b.dataset.jump); if (t) t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
   if (b.dataset.go) { location.hash = b.dataset.go; return; }
   if (b.dataset.pick != null) {
-    const qid = b.closest(".q").dataset.qid, q = BANK.find(x => x.id === qid), pick = +b.dataset.pick;
+    const qid = b.closest(".q").dataset.qid, pick = +b.dataset.pick;
+    const q = BANK.find(x => x.id === qid) || (qid.startsWith("p6-") ? (() => { const k = qid.lastIndexOf("-"); return p6Q(P6BY[qid.slice(3, k)], +qid.slice(k + 1)); })() : null);
+    if (route.tab === "part6" && p6 && !p6.checked) { p6.picks[qid] = pick; render(true); return; }
     if (route.tab === "review" && review && review.picked == null) { review.picked = pick; const ok = pick === q.ans; record(qid, ok); if (ok) review.ok++; else review.bad++; render(true); return; }
     if (route.tab === "test" && test && !test.done) { test.picks[qid] = pick; render(true); return; }
     if (route.lesson && practiceState[qid] == null) { practiceState[qid] = pick; record(qid, pick === q.ans); render(true); }
@@ -5000,6 +5209,13 @@ document.addEventListener("click", e => {
     case "quitBtn": test = null; render(); window.scrollTo(0, 0); break;
     case "rvNext": if (review.i + 1 < review.queue.length) { review.i++; review.picked = null; } else review.done = true; render(); window.scrollTo(0, 0); break;
     case "rvAgain": review = null; render(); window.scrollTo(0, 0); break;
+    case "p6Check": {
+      p6.checked = true; p6.end = Date.now();
+      p6.pids.forEach(pid => { const p = P6BY[pid]; let c = 0;
+        p.qs.forEach((q, i) => { const id = "p6-" + pid + "-" + i, ok = p6.picks[id] === q[3]; if (ok) c++; if (q[0] === "fill") record(id, ok); });
+        const r = S.p6[pid] || { best: 0 }; S.p6[pid] = { best: Math.max(r.best, c), last: c }; });
+      save(); render(); window.scrollTo(0, 0); break; }
+    case "p6Again": p6 = null; render(); window.scrollTo(0, 0); break;
     case "resetBtn":
       if (!resetArmed) { resetArmed = true; render(true); setTimeout(() => { if (resetArmed) { resetArmed = false; if (route.tab === "stats") render(true); } }, 4000); }
       else { S.ans = {}; S.tests = []; save(); resetArmed = false; practiceState = {}; render(true); }
@@ -5009,6 +5225,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
   if (e.target.id === "rvScope") location.hash = e.target.value ? "review-" + e.target.value : "review";
 });
+setInterval(() => { const c6 = document.getElementById("clock6"); if (c6 && p6 && !p6.checked) c6.textContent = fmt(Date.now() - p6.start); }, 1000);
 setInterval(() => { const c = document.getElementById("clock"); if (c && test && !test.done) c.textContent = fmt(Date.now() - test.start); }, 1000);
 
 route = parse(); render();
