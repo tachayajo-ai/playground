@@ -160,6 +160,10 @@ select { font: inherit; color: var(--ink); background: var(--surface); border: 1
 .pw > span { border-bottom: 3px solid var(--c); padding: 0 1px; }
 .pw b { font-family: var(--f-mono); font-size: 10px; font-weight: 500; color: var(--c); }
 .pw.punct { margin-left: -4px; }
+.review-cta { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); background: var(--bad-soft); border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent); border-radius: 12px; padding: 12px 14px; margin-block: 14px; }
+.review-cta > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.review-cta b { color: var(--bad); }
+.review-cta:hover { border-color: var(--bad); }
 .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
 @media (max-width: 420px) { .bar .col { flex-wrap: nowrap; gap: 8px; } .logo { font-size: 17px; } .seg a { padding: 6px 8px; font-size: 13px; } .bar .theme-btn { width: 36px; height: 36px; } h1 { font-size: 24px; } }
 .theme-btn { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; padding: 0; }
@@ -4664,7 +4668,12 @@ const KEY = "grammar-lab-v1";
 let S = { ans: {}, tests: [], plain: false };
 try { const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-function record(qid, ok) { const a = S.ans[qid] || { n: 0, c: 0 }; a.n++; if (ok) a.c++; a.last = ok ? 1 : 0; S.ans[qid] = a; save(); }
+function streakOf(a) { return a.streak != null ? a.streak : (a.last === 1 ? 1 : 0); }
+function record(qid, ok) { const a = S.ans[qid] || { n: 0, c: 0 }; const st = streakOf(a); a.n++; if (ok) a.c++; a.last = ok ? 1 : 0; a.streak = ok ? st + 1 : 0; S.ans[qid] = a; save(); }
+/* Review list: answered wrong at least once and not yet answered right twice in a row since */
+const MASTER = 2;
+function needsReview(id) { const a = S.ans[id]; return !!a && a.n > a.c && streakOf(a) < MASTER; }
+function reviewIds(lessonId) { return BANK.filter(q => (!lessonId || q.lesson === lessonId) && needsReview(q.id)).map(q => q.id); }
 function lessonStat(id) {
   let n = 0, c = 0, seen = 0, total = 0;
   BANK.filter(q => q.lesson === id).forEach(q => { total++; const a = S.ans[q.id]; if (a) { seen++; n += a.n; c += a.c; } });
@@ -4714,6 +4723,7 @@ function viewLessons() {
   const done = L.filter(l => (lessonStat(l.id).pct || 0) >= 80).length;
   return `<h1>Grammar สำหรับข้อสอบ</h1>
     <p class="sub">15 บท เรียงจากโครงสร้างพื้นฐานไปขั้นสูง ครอบคลุมจุดที่ออกบ่อยใน TOEIC Part 5–6, CU-TEP, TU-GET และภาษาอังกฤษ ก.พ. · ผ่านแล้ว ${done}/${L.length} บท (ทำถูก 80% ขึ้นไป)</p>
+    ${reviewCard()}
     <section class="strategy">
       <h2>4 ขั้นทำข้อเติมคำ</h2>
       <ol class="steps">${STRATEGY.map(s => `<li><span>${esc(s)}</span></li>`).join("")}</ol>
@@ -4768,7 +4778,7 @@ function viewBook(l) {
       ${l.book.map((s, k) => `<li><button data-jump="sec-${k}"><span class="tn">${n}.${k + 1}</span>${esc(s.h)}</button></li>`).join("")}
       <li><button data-jump="sum"><span class="tn">${n}.${l.book.length + 1}</span>สรุปท้ายบทและกับดัก</button></li>
       ${l.sets.map((st, si) => `<li><button data-jump="set-${si}"><span class="tn">✎</span>${esc(st.t)}</button></li>`).join("")}
-    </ol><button class="btn toggle" id="plainBtn" aria-pressed="${!S.plain}" style="margin-top:8px">${S.plain ? "แสดงแผนผังประโยค" : "ซ่อนแผนผังประโยค"}</button></nav>
+    </ol>${reviewCard(l.id)}<button class="btn toggle" id="plainBtn" aria-pressed="${!S.plain}" style="margin-top:8px">${S.plain ? "แสดงแผนผังประโยค" : "ซ่อนแผนผังประโยค"}</button></nav>
     ${l.book.map((s, k) => `<section class="block chapter" id="sec-${k}">
       <h2><span class="tn">${n}.${k + 1}</span>${esc(s.h)}</h2>
       ${(() => { const ks = Object.keys(s), tFirst = s.table && s.p && ks.indexOf("table") < ks.indexOf("p");
@@ -4850,6 +4860,7 @@ function newTest(n, scope) {
 function viewTest() {
   if (!test) return `<h1>ข้อสอบจำลอง</h1>
     <p class="sub">สุ่มจากคลังข้อสอบ ${BANK.filter(q => !q.noMock).length} ข้อ (ไม่รวมแบบฝึกพื้นฐาน) ส่งแล้วได้เฉลยพร้อมคำอธิบาย และดูได้ว่าพลาดบทไหน · TOEIC Part 5 มีเวลาราว 20–30 วินาทีต่อข้อ</p>
+    ${reviewCard()}
     <div class="panel">
       <div class="row"><label for="tN" class="note">จำนวนข้อ</label>
         <select id="tN"><option value="10">10 ข้อ (~5 นาที)</option><option value="20" selected>20 ข้อ (~10 นาที)</option><option value="40">40 ข้อ (~20 นาที)</option></select></div>
@@ -4873,10 +4884,52 @@ function viewTest() {
       <div class="eyebrow">ผลสอบ</div>
       <div class="row" style="align-items:baseline;gap:14px"><span class="big">${correct}/${n}</span><span class="note">${pct}% · ใช้เวลา ${fmt(test.end - test.start)} · เฉลี่ย ${Math.round((test.end - test.start) / 1000 / n)} วินาที/ข้อ</span></div>
       ${weak.length ? `<div><h3>บทที่ควรทบทวน</h3><div class="row">${weak.map(([id, b]) => `<a class="btn" href="#lesson-${id}"><span lang="en">${esc(LESSON[id].title)}</span> <span class="pill weak">${b.c}/${b.n}</span></a>`).join("")}</div></div>` : `<p style="margin:0">ถูกทุกข้อ</p>`}
-      <div class="row"><button class="btn primary" id="againBtn">ทำชุดใหม่</button><button class="btn" id="quitBtn">กลับหน้าตั้งค่า</button></div>
+      <div class="row">${reviewIds().length ? `<a class="btn primary" href="#review">ทบทวนข้อที่ผิด (${reviewIds().length})</a>` : ""}<button class="btn${reviewIds().length ? "" : " primary"}" id="againBtn">ทำชุดใหม่</button><button class="btn" id="quitBtn">กลับหน้าตั้งค่า</button></div>
     </div>
     <h2 class="block">เฉลยทุกข้อ</h2>
     <div class="qs">${test.qs.map((q, i) => qCard(q, i, { picked: test.picks[q.id], reveal: true, showLesson: true })).join("")}</div>`;
+}
+
+let review = null;   // { scope, queue:[ids], i, picked, ok, bad, done }
+function startReview(scope) {
+  const ids = reviewIds(scope || null);
+  const wrongs = id => { const a = S.ans[id]; return a.n - a.c; };
+  ids.sort((x, y) => wrongs(y) - wrongs(x) || Math.random() - 0.5);
+  review = { scope: scope || "", queue: ids.slice(0, 30), i: 0, picked: null, ok: 0, bad: 0, done: false };
+}
+function reviewCard(lessonId) {
+  const n = reviewIds(lessonId).length;
+  if (!n) return "";
+  const href = "#review" + (lessonId ? "-" + lessonId : "");
+  return `<a class="review-cta" href="${href}"><span><b>ทบทวนข้อที่เคยตอบผิด</b><span class="note">${lessonId ? "เฉพาะบทนี้" : "ทุกบท"} · ตอบถูกติดกัน ${MASTER} ครั้งจึงออกจากรายการ</span></span><span class="pill weak">${n} ข้อ</span></a>`;
+}
+function viewReview() {
+  const scope = route.lesson || "";
+  if (!review || review.scope !== scope) startReview(scope);
+  const counts = L.map(l => [l, reviewIds(l.id).length]).filter(x => x[1]);
+  const total = reviewIds().length;
+  const head = `<h1>ทบทวนข้อที่ตอบผิด</h1>
+    <p class="sub">ข้อที่เคยตอบผิดจะอยู่ในรายการนี้จนกว่าจะตอบถูกติดกัน ${MASTER} ครั้ง ทำทีละข้อ เฉลยทันที ข้อที่ผิดบ่อยที่สุดขึ้นก่อน</p>
+    <div class="row" style="margin-bottom:14px"><label for="rvScope" class="note">ขอบเขต</label>
+      <select id="rvScope"><option value="">ทุกบท (${total} ข้อ)</option>${counts.map(([l, c]) => `<option value="${l.id}"${l.id === scope ? " selected" : ""}>${esc(l.title)} (${c})</option>`).join("")}</select></div>`;
+  if (!review.queue.length) return head + `<div class="panel"><div class="eyebrow">ไม่มีข้อค้าง</div>
+      <p style="margin:0">${scope ? "บทนี้ไม่มีข้อที่ต้องทบทวนแล้ว" : "ยังไม่มีข้อที่ต้องทบทวน"} ข้อที่ตอบผิดจากแบบฝึกหัดท้ายบทหรือข้อสอบจำลองจะมาอยู่ที่นี่อัตโนมัติ</p>
+      <div class="row"><a class="btn primary" href="#test">ไปทำข้อสอบจำลอง</a>${scope ? `<a class="btn" href="#lesson-${scope}">กลับไปบทเรียน</a>` : `<a class="btn" href="#lessons">ไปที่บทเรียน</a>`}</div></div>`;
+  const n = review.queue.length;
+  if (review.done) {
+    const left = reviewIds(scope || null).length;
+    return head + `<div class="panel"><div class="eyebrow">จบรอบทบทวน</div>
+      <div class="row" style="align-items:baseline;gap:14px"><span class="big">${review.ok}/${n}</span><span class="note">ตอบถูกรอบนี้ · ยังเหลือในรายการ ${left} ข้อ</span></div>
+      <div class="row">${left ? `<button class="btn primary" id="rvAgain">ทบทวนรอบใหม่</button>` : ""}<a class="btn" href="#test">ไปทำข้อสอบจำลอง</a></div></div>`;
+  }
+  const q = BANK.find(x => x.id === review.queue[review.i]), a = S.ans[q.id] || { n: 0, c: 0 };
+  const answered = review.picked != null;
+  const st = streakOf(a), need = Math.max(0, MASTER - st);
+  return head + `<div class="testbar"><span>ข้อ ${review.i + 1}/${n}</span><div class="progress"><i style="width:${(review.i + (answered ? 1 : 0)) / n * 100}%"></i></div><span>ถูก ${review.ok} · ผิด ${review.bad}</span></div>
+    ${qCard(q, review.i, { picked: review.picked, reveal: answered, showLesson: true, label: "ผิดมาแล้ว " + (a.n - a.c) + " ครั้ง" })}
+    ${answered ? `<div class="row" style="margin-top:12px;justify-content:space-between">
+        <span class="note">${need ? `ต้องตอบถูกติดกันอีก ${need} ครั้งจึงออกจากรายการ` : "ออกจากรายการแล้ว"}</span>
+        <button class="btn primary" id="rvNext">${review.i + 1 < n ? "ข้อต่อไป" : "ดูผลรอบนี้"}</button></div>` : ""}`;
 }
 
 function viewStats() {
@@ -4885,6 +4938,7 @@ function viewStats() {
   const rows = L.map(l => ({ l, st: lessonStat(l.id) }));
   const weakest = rows.filter(r => r.st.pct != null).sort((a, b) => a.st.pct - b.st.pct).slice(0, 3);
   return `<h1>สถิติ</h1><p class="sub">เก็บในเบราว์เซอร์นี้เท่านั้น นับทั้งข้อสอบท้ายบทและข้อสอบจำลอง</p>
+    ${reviewCard()}
     <div class="panel"><div class="row" style="gap:28px">
       <div><div class="big">${tried}<span class="note" style="font-size:16px">/${BANK.length}</span></div><div class="note">ข้อที่เคยทำ</div></div>
       <div><div class="big">${totals.n ? Math.round(totals.c / totals.n * 100) + "%" : "–"}</div><div class="note">ความแม่นยำรวม</div></div>
@@ -4906,15 +4960,17 @@ function parse() {
   const h = location.hash.slice(1);
   if (h.startsWith("lesson-") && LESSON[h.slice(7)]) return { tab: "lessons", lesson: h.slice(7) };
   if (h === "test" || h === "stats") return { tab: h, lesson: null };
+  if (h === "review") return { tab: "review", lesson: null };
+  if (h.startsWith("review-") && LESSON[h.slice(7)]) return { tab: "review", lesson: h.slice(7) };
   return { tab: "lessons", lesson: null };
 }
 function render(keepScroll) {
   const y = window.scrollY;
-  document.querySelectorAll(".seg a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === route.tab ? "page" : "false"));
-  $v.innerHTML = route.tab === "test" ? viewTest() : route.tab === "stats" ? viewStats() : route.lesson ? viewLesson(route.lesson) : viewLessons();
+  document.querySelectorAll(".seg a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === (route.tab === "review" ? "test" : route.tab) ? "page" : "false"));
+  $v.innerHTML = route.tab === "review" ? viewReview() : route.tab === "test" ? viewTest() : route.tab === "stats" ? viewStats() : route.lesson ? viewLesson(route.lesson) : viewLessons();
   if (keepScroll) window.scrollTo(0, y);
 }
-window.addEventListener("hashchange", () => { route = parse(); resetArmed = false; render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { route = parse(); resetArmed = false; if (route.tab === "review") review = null; render(); window.scrollTo(0, 0); });
 
 /* ===== Events ===== */
 document.addEventListener("click", e => {
@@ -4923,6 +4979,7 @@ document.addEventListener("click", e => {
   if (b.dataset.go) { location.hash = b.dataset.go; return; }
   if (b.dataset.pick != null) {
     const qid = b.closest(".q").dataset.qid, q = BANK.find(x => x.id === qid), pick = +b.dataset.pick;
+    if (route.tab === "review" && review && review.picked == null) { review.picked = pick; const ok = pick === q.ans; record(qid, ok); if (ok) review.ok++; else review.bad++; render(true); return; }
     if (route.tab === "test" && test && !test.done) { test.picks[qid] = pick; render(true); return; }
     if (route.lesson && practiceState[qid] == null) { practiceState[qid] = pick; record(qid, pick === q.ans); render(true); }
     return;
@@ -4941,11 +4998,16 @@ document.addEventListener("click", e => {
     }
     case "againBtn": newTest(test.qs.length, "all"); render(); window.scrollTo(0, 0); break;
     case "quitBtn": test = null; render(); window.scrollTo(0, 0); break;
+    case "rvNext": if (review.i + 1 < review.queue.length) { review.i++; review.picked = null; } else review.done = true; render(); window.scrollTo(0, 0); break;
+    case "rvAgain": review = null; render(); window.scrollTo(0, 0); break;
     case "resetBtn":
       if (!resetArmed) { resetArmed = true; render(true); setTimeout(() => { if (resetArmed) { resetArmed = false; if (route.tab === "stats") render(true); } }, 4000); }
       else { S.ans = {}; S.tests = []; save(); resetArmed = false; practiceState = {}; render(true); }
       break;
   }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "rvScope") location.hash = e.target.value ? "review-" + e.target.value : "review";
 });
 setInterval(() => { const c = document.getElementById("clock"); if (c && test && !test.done) c.textContent = fmt(Date.now() - test.start); }, 1000);
 
