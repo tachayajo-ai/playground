@@ -13,10 +13,10 @@ Branch: `claude/serene-meitner-hs4lf2`
 - Part 6: 28 เรื่อง 112 ข้อ (fill / voc / ins)
 - สลับตำแหน่งตัวเลือกแบบคงที่ต่อข้อ (`seededOrder`) ทั้งบทเรียนและ Part 6
 - ตรวจเนื้อหาครบทุกข้อแล้ว แก้ 17 ข้อ
-- คำอธิบายรายตัวเลือก (NOTES): **บท 1–4 เสร็จ (222 ข้อ)**
+- คำอธิบายรายตัวเลือก (NOTES): **บท 1–5 เสร็จ (284 ข้อ)**
 
 ## งานที่เหลือ: คำอธิบายรายตัวเลือก
-- บท 5–15 (passive, modal, cond, rel, conj, gerinf, comp, article, prep, report, adv) = 686 ข้อ
+- บท 6–15 (modal, cond, rel, conj, gerinf, comp, article, prep, report, adv) = 624 ข้อ
 - Part 6 (ข้อ fill/voc ที่ยังไม่มี NOTES) ทำตอนท้าย
 
 ## วิธีทำต่อ (ต่อบท)
@@ -30,3 +30,8 @@ Branch: `claude/serene-meitner-hs4lf2`
 ## ข้อตกลงกับผู้ใช้
 - ตอบภาษาไทย กระชับ ใช้ตาราง
 - ทำทีละบทแล้วรายงานผล ถามก่อนทำบทถัดไป
+
+## สคริปต์ตรวจ (สร้างใหม่ใน scratchpad ถ้าหาย)
+- dump: เปิด index.html แล้วพิมพ์ `L.find(id).sets[*].qs` ตามลำดับต้นฉบับ
+- check: ทุกข้อใน BANK ของบทมี `q.notes`, โน้ตข้อถูกว่าง, ข้อผิดไม่ว่าง
+- ui: เรียก `qCard(q,0,{picked:j,reveal:true})` ทุกตัวเลือกผิด ตรวจว่า `.optwhy li` = จำนวนตัวเลือก−1 และไม่มี pageerror
