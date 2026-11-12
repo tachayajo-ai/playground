@@ -4756,7 +4756,7 @@ const P6 = [
     ["fill", "rel", ["that", "which", "who", "what"], 1, "มี comma (non-defining) + สิ่งของ → which", "The quarterly budget meeting, ___ was scheduled for Thursday, has been moved to Friday."],
     ["fill", "conj", ["However", "In addition", "Otherwise", "Instead"], 1, "เพิ่มวาระ → In addition", "___, we will discuss the proposal to purchase new monitors for the ICU."],
     ["fill", "gerinf", ["represent", "representing", "represented", "representative"], 0, "ask + O + to V1", "If you cannot attend, please ask a colleague to ___ you."],
-    ["ins", null, ["The meeting is expected to last about two hours.", "The monitors were delivered last month.", "The director retired last year.", "Please submit your leave request by Monday."], 0, "ปิดท้ายด้วยข้อมูลการประชุม (ตัวเลือก B ขัดกับการขออนุมัติซื้อ)"],
+    ["ins", null, ["The meeting is expected to last about two hours.", "The monitors were delivered last month.", "The director retired last year.", "Please submit your leave request by Monday."], 0, "ปิดท้ายด้วยข้อมูลการประชุม (ประโยคที่บอกว่า monitor ส่งมาแล้วขัดกับการขออนุมัติซื้อ)"],
   ]},
 { id: "maintenance", kind: "Notice", title: "System maintenance",
   head: ["SYSTEM MAINTENANCE NOTICE", "IT Department"],
@@ -4777,7 +4777,7 @@ const P6 = [
   qs: [
     ["fill", "comp", ["low", "lower", "lowest", "more low"], 1, "than → ขั้นกว่า", "Hand hygiene compliance in some wards is ___ than the national target of 90%."],
     ["fill", "rel", ["who", "whose", "which", "whom"], 1, "role ของ champion → whose", "Each ward will appoint a hand hygiene champion ___ role is to observe and coach colleagues."],
-    ["ins", null, ["Compliance rates for each ward will be published monthly.", "The audit was cancelled.", "Alcohol is not allowed in hospitals.", "Most patients prefer private rooms."], 0, "มาตรการต่อเนื่อง (ข้อ B และ C ขัดกับเนื้อหา)"],
+    ["ins", null, ["Compliance rates for each ward will be published monthly.", "The audit was cancelled.", "Alcohol is not allowed in hospitals.", "Most patients prefer private rooms."], 0, "มาตรการต่อเนื่อง (ประโยคว่า audit ถูกยกเลิก หรือห้ามใช้แอลกอฮอล์ ขัดกับเนื้อหา)"],
     ["fill", "gerinf", ["reach", "to reaching", "reached", "reaches"], 0, "help + O + V1", "These measures will help us ___ the national target."],
   ]},
 { id: "complaint", kind: "Email", title: "Response to your complaint",
@@ -4893,10 +4893,155 @@ P6.push(
   ]},
 );
 
+/* Part 6 batch 3: general office and business passages */
+P6.push(
+{ id: "welcome", kind: "Email", title: "Welcome to the team",
+  head: ["To: Jirawat K.", "From: Human Resources, Udon Health Center", "Subject: Welcome to Udon Health Center"],
+  body: ["Dear Mr. Jirawat,",
+    "Welcome to Udon Health Center! We are delighted that you have {1} our offer to join the team as a claims officer.",
+    "At 8:30 a.m. on Monday, 2 December, please report to the Human Resources office on the second floor, {2} you will receive your staff ID card and laptop. {3}",
+    "During your first week, you will {4} several training sessions on our claims software and data privacy rules.",
+    "We look forward to working with you.<br>Human Resources"],
+  qs: [
+    ["voc", null, ["accepted", "excepted", "expected", "accessed"], 0, "accept an offer = รับข้อเสนอ · except = ยกเว้น · expect = คาดหวัง · access = เข้าถึง", "We are delighted that you have ___ our offer to join the team."],
+    ["fill", "rel", ["which", "where", "who", "whose"], 1, "สถานที่ + clause ครบ (you will receive ...) → where", "Please report to the Human Resources office on the second floor, ___ you will receive your staff ID card."],
+    ["ins", null, ["Please bring your national ID card and a copy of your bank book for salary payments.", "Our cafeteria serves Japanese food on Fridays.", "Claims officers were first hired in 2002.", "You will be paid in cash every day."], 0, "ต่อจากการรายงานตัววันแรก → สิ่งที่ต้องเตรียมมา"],
+    ["voc", null, ["attend", "attain", "attach", "attract"], 0, "attend a session = เข้าร่วม · attain = บรรลุ · attach = แนบ · attract = ดึงดูด", "During your first week, you will ___ several training sessions."],
+  ]},
+{ id: "elevator", kind: "Notice", title: "Elevator maintenance",
+  head: ["NOTICE: ELEVATOR MAINTENANCE"],
+  body: ["Elevator No. 2 in Building A will be out of {1} from 9 to 13 December while new safety equipment is installed.",
+    "During this period, patients {2} wheelchairs or stretchers should use Elevator No. 1 or the ramp near the east entrance. {3}",
+    "Porters will be available in the main lobby to {4} patients who need help. We apologize for any inconvenience."],
+  qs: [
+    ["voc", null, ["service", "duty", "date", "stock"], 0, "out of service = งดให้บริการ · out of date = ล้าสมัย · out of stock = สินค้าหมด · (off duty = ออกเวร)", "Elevator No. 2 in Building A will be out of ___ from 9 to 13 December."],
+    ["fill", "rel", ["use", "using", "used", "to use"], 1, "ผู้ป่วยใช้รถเข็นเอง → reduced active V-ing", "During this period, patients ___ wheelchairs or stretchers should use Elevator No. 1."],
+    ["ins", null, ["Staff are asked to use the stairs whenever possible to reduce waiting times for Elevator No. 1.", "The building opened in 1990.", "Elevator No. 2 was made by a Japanese company.", "Elevators are not safe for patients."], 0, "ลิฟต์เหลือตัวเดียว → ขอให้เจ้าหน้าที่ใช้บันได"],
+    ["voc", null, ["assist", "insist", "resist", "consist"], 0, "assist = ช่วยเหลือ · insist = ยืนกราน · resist = ต่อต้าน · consist = ประกอบด้วย", "Porters will be available in the main lobby to ___ patients who need help."],
+  ]},
+{ id: "paperless", kind: "Memo", title: "Moving to paperless records",
+  head: ["MEMO", "To: All administrative staff", "From: Director's Office", "Subject: Moving to paperless records"],
+  body: ["As part of our plan to reduce costs and protect the environment, the office will {1} paper forms with electronic documents starting 1 January. All leave requests, purchase orders, and meeting minutes must be submitted through the document management system.",
+    "{2} the first month, IT staff will be on hand to answer questions. {3}",
+    "We believe this change will make our work more {4} and save more than 200,000 baht a year."],
+  qs: [
+    ["voc", null, ["replace", "repair", "repeat", "report"], 0, "replace A with B = แทนที่ A ด้วย B · repair = ซ่อม · repeat = ทำซ้ำ · report = รายงาน", "The office will ___ paper forms with electronic documents starting 1 January."],
+    ["fill", "prep", ["While", "During", "Since", "Until"], 1, "+ นาม (ช่วงเวลา) → During", "___ the first month, IT staff will be on hand to answer questions."],
+    ["ins", null, ["A short user guide is also available on the intranet.", "Printers were invented centuries ago.", "Leave requests are approved by HR.", "The director will retire in June."], 0, "ความช่วยเหลือเพิ่มเติม (also) ต่อจากเจ้าหน้าที่ IT"],
+    ["fill", "word", ["efficient", "efficiency", "efficiently", "efficiencies"], 0, "make + O + more + adj", "We believe this change will make our work more ___."],
+  ]},
+{ id: "refund", kind: "Email", title: "Your refund request",
+  head: ["To: Ratana L.", "From: Customer Care, HealthMart Online", "Subject: Your refund request #20931"],
+  body: ["Dear Mrs. Ratana,",
+    "Thank you for contacting us about the digital blood pressure monitor you ordered on 3 May. We are sorry that the device {1} damaged.",
+    "We have {2} your request for a full refund. The amount of 1,890 baht will be returned to your credit card within seven business days. {3}",
+    "You do not need to return the damaged item. {4}, please dispose of it safely.",
+    "Best regards,<br>Customer Care"],
+  qs: [
+    ["fill", "tense", ["arrives", "arrived", "will arrive", "arriving"], 1, "ของมาถึงแล้วในอดีต → arrived", "We are sorry that the device ___ damaged."],
+    ["voc", null, ["processed", "proceeded", "produced", "progressed"], 0, "process a request = ดำเนินการตามคำขอ · proceed = ดำเนินต่อ (ไม่มีกรรม) · produce = ผลิต · progress = คืบหน้า", "We have ___ your request for a full refund."],
+    ["ins", null, ["Please note that the exact timing depends on your bank.", "Blood pressure monitors are popular among older adults.", "Our warehouse is in Bangkok.", "Please send us the original box and receipt."], 0, "ต่อจากระยะเวลาคืนเงิน (ประโยคที่ขอให้ส่งกล่องคืนขัดกับประโยคถัดไป)"],
+    ["fill", "conj", ["Instead", "Otherwise", "Moreover", "For example"], 0, "ไม่ต้องส่งคืน → แทนที่จะส่งคืน ให้ทิ้ง", "You do not need to return the damaged item. ___, please dispose of it safely."],
+  ]},
+{ id: "blood-drive", kind: "Announcement", title: "Blood donation drive",
+  head: ["BLOOD DONATION DRIVE"],
+  body: ["The Thai Red Cross mobile unit will visit our hospital on Friday, 20 December, from 9 a.m. to 3 p.m. All staff, patients' relatives, and members of the public are {1} to donate.",
+    "Donors must be between 17 and 70 years old, weigh at least 45 kilograms, and be in good health. {2} you have taken antibiotics in the past seven days, please do not donate. {3}",
+    "Each donor will receive a free health check and a small gift as a token of {4}."],
+  qs: [
+    ["voc", null, ["encouraged", "discouraged", "enforced", "endangered"], 0, "be encouraged to = ได้รับการเชิญชวนให้ · discouraged = ไม่สนับสนุน · enforced = บังคับใช้ · endangered = ใกล้สูญพันธุ์", "All staff and members of the public are ___ to donate."],
+    ["fill", "cond", ["If", "Unless", "Although", "Whether"], 0, "เงื่อนไข: ถ้ากินยาปฏิชีวนะ → ห้ามบริจาค", "___ you have taken antibiotics in the past seven days, please do not donate."],
+    ["ins", null, ["Donors are also advised to eat a light meal and drink plenty of water beforehand.", "The Thai Red Cross was founded in 1893.", "Blood types were discovered in 1901.", "The hospital cafeteria is closed on Fridays."], 0, "ต่อจากคุณสมบัติผู้บริจาค → คำแนะนำเพิ่มเติม (also)"],
+    ["voc", null, ["appreciation", "application", "approximation", "appearance"], 0, "a token of appreciation = เป็นการแสดงความขอบคุณ · application = ใบสมัคร · approximation = การประมาณ · appearance = รูปลักษณ์", "Each donor will receive a small gift as a token of ___."],
+  ]},
+{ id: "lease", kind: "Letter", title: "Lease renewal",
+  head: ["Dr. Somchai P., Somchai Family Clinic", "Re: Renewal of lease – 45 Udon Dutsadi Road"],
+  body: ["Dear Dr. Somchai,",
+    "Your current lease for the clinic space at 45 Udon Dutsadi Road will {1} on 31 January. We would be pleased to renew the lease for another two years.",
+    "Please note that the monthly rent will increase {2} 5%, from 20,000 baht to 21,000 baht, to reflect rising maintenance costs. All other terms will remain the same. {3}",
+    "If you wish to renew, please sign the enclosed agreement and return it {4} 15 January.",
+    "Sincerely,<br>Property Management Office"],
+  qs: [
+    ["voc", null, ["expire", "inspire", "acquire", "require"], 0, "expire = หมดอายุ · inspire = สร้างแรงบันดาลใจ · acquire = ได้มา · require = ต้องการ", "Your current lease for the clinic space will ___ on 31 January."],
+    ["fill", "prep", ["by", "to", "at", "of"], 0, "เพิ่มขึ้นเท่าไร → increase by 5%", "The monthly rent will increase ___ 5%, from 20,000 baht to 21,000 baht."],
+    ["ins", null, ["We have greatly valued you as a tenant over the past six years.", "Rent in Bangkok is much higher.", "The building was painted last year.", "Please vacate the space by 31 January."], 0, "ก่อนปิดจดหมายต่อสัญญา → ขอบคุณผู้เช่า (ประโยคที่ให้ย้ายออกขัดกับการต่อสัญญา)"],
+    ["fill", "prep", ["by", "until", "since", "during"], 0, "กำหนดส่ง → by", "Please sign the enclosed agreement and return it ___ 15 January."],
+  ]},
+{ id: "software-renewal", kind: "Email", title: "Subscription renewal",
+  head: ["To: IT Manager, Udon Provincial Hospital", "From: CodeAssist Pro", "Subject: Your subscription is ending soon"],
+  body: ["Dear Customer,",
+    "Your annual subscription to CodeAssist Pro, the medical coding software used by your hospital, {1} on 28 February. To avoid any interruption in service, we recommend {2} your subscription before this date.",
+    "Customers who renew before 31 January will receive a 10% discount. {3}",
+    "To renew, simply log in to your account and click \"Renew Now\". If you have any questions, our support team is {4} 24 hours a day."],
+  qs: [
+    ["fill", "tense", ["expires", "expired", "has expired", "had expired"], 0, "วันหมดอายุที่กำหนดแน่นอน (ตารางเวลา) → present simple", "Your annual subscription to CodeAssist Pro ___ on 28 February."],
+    ["fill", "gerinf", ["renew", "to renew", "renewing", "renewed"], 2, "recommend + V-ing", "To avoid any interruption in service, we recommend ___ your subscription before this date."],
+    ["ins", null, ["In addition, the new version includes the latest ICD-10-TM code updates.", "Our company was founded in Singapore.", "Medical coding is a difficult job.", "Subscriptions cannot be renewed online."], 0, "เพิ่มเหตุผลให้ต่ออายุ (ประโยคว่าต่ออายุออนไลน์ไม่ได้ ขัดกับวิธีต่อในย่อหน้าถัดไป)"],
+    ["voc", null, ["available", "valuable", "variable", "avoidable"], 0, "available = พร้อมให้บริการ · valuable = มีค่า · variable = ผันแปร · avoidable = หลีกเลี่ยงได้", "Our support team is ___ 24 hours a day."],
+  ]},
+{ id: "fire-drill", kind: "Notice", title: "Fire drill",
+  head: ["FIRE DRILL NOTICE", "Safety Committee"],
+  body: ["A fire drill will be {1} on Wednesday, 15 January, at 10:00 a.m. in Buildings A and B. When the alarm sounds, all staff who are not caring for critically ill patients must leave the building {2} the nearest emergency exit.",
+    "{3} Do not use the elevators under any circumstances.",
+    "Ward managers are responsible for ensuring that all staff in their area {4} the assembly point within five minutes."],
+  qs: [
+    ["voc", null, ["conducted", "consulted", "constructed", "contributed"], 0, "conduct a drill = จัดการซ้อม · consult = ปรึกษา · construct = ก่อสร้าง · contribute = มีส่วนร่วม", "A fire drill will be ___ on Wednesday, 15 January, at 10:00 a.m."],
+    ["fill", "prep", ["through", "across", "along", "above"], 0, "ออกทาง (ผ่าน) ประตูหนีไฟ → through", "All staff must leave the building ___ the nearest emergency exit."],
+    ["ins", null, ["Patients in the ICU and operating rooms will not be evacuated during the drill.", "Fires are more common in the dry season.", "The fire station is located on Pho Si Road.", "Please bring your lunch to the assembly point."], 0, "ต่อจากข้อยกเว้นผู้ดูแลผู้ป่วยหนัก → ผู้ป่วยกลุ่มนี้ไม่ต้องอพยพ"],
+    ["fill", "pattern", ["reach", "arrive", "approach to", "get"], 0, "reach มีกรรมตรง · arrive ต้องมี at · approach ไม่มี to · get ต้องมี to", "Ward managers must ensure that all staff in their area ___ the assembly point within five minutes."],
+  ]},
+{ id: "survey-results", kind: "Email", title: "Patient satisfaction survey results",
+  head: ["To: All outpatient staff", "From: Quality Improvement Team", "Subject: Patient satisfaction survey results"],
+  body: ["Thank you to everyone who helped {1} our patient satisfaction questionnaire in October. A total of 1,200 patients completed it.",
+    "Overall satisfaction rose to 87%, {2} is the highest score in five years. Patients were especially pleased with the friendliness of our staff. {3}",
+    "To address this issue, we will {4} an online queue system in March."],
+  qs: [
+    ["voc", null, ["distribute", "contribute", "attribute", "dispute"], 0, "distribute = แจกจ่าย · contribute = มีส่วนช่วย · attribute = ระบุว่าเกิดจาก · dispute = โต้แย้ง", "Thank you to everyone who helped ___ our patient satisfaction questionnaire."],
+    ["fill", "rel", ["which", "that", "what", "it"], 0, ", which ขยายทั้งข้อความข้างหน้า (ใช้ that หลัง comma ไม่ได้)", "Overall satisfaction rose to 87%, ___ is the highest score in five years."],
+    ["ins", null, ["However, many respondents complained about long waiting times at the pharmacy.", "The questionnaire was printed in color.", "October is usually a busy month.", "Most staff live near the hospital."], 0, "ประโยคถัดไปพูดถึง this issue → ต้องมีปัญหาก่อน"],
+    ["voc", null, ["introduce", "produce", "reduce", "deduce"], 0, "introduce a system = นำระบบมาใช้ · produce = ผลิต · reduce = ลด · deduce = อนุมาน", "To address this issue, we will ___ an online queue system in March."],
+  ]},
+{ id: "id-cards", kind: "Memo", title: "New staff ID cards",
+  head: ["MEMO", "To: All staff", "From: Security Office", "Subject: New staff ID cards"],
+  body: ["From 1 February, all staff will be required to use new electronic ID cards to enter restricted areas such as the pharmacy store and the medical records room. The old cards will no longer be {1}.",
+    "New cards can be collected from the Security Office on the ground floor. Staff must {2} their old cards when collecting the new ones. {3}",
+    "Lost cards should be reported {4} so that they can be deactivated."],
+  qs: [
+    ["voc", null, ["valid", "solid", "vivid", "rigid"], 0, "valid = ใช้ได้ มีผล · solid = แข็ง มั่นคง · vivid = สดใส ชัดเจน · rigid = เข้มงวด แข็งทื่อ", "The old cards will no longer be ___."],
+    ["voc", null, ["return", "retain", "retire", "retrieve"], 0, "return = ส่งคืน · retain = เก็บไว้ · retire = เกษียณ · retrieve = เอากลับมา", "Staff must ___ their old cards when collecting the new ones."],
+    ["ins", null, ["Please bring a form of photo identification, such as your national ID card.", "The Security Office was renovated in 2015.", "Restricted areas are open to the public.", "Most staff prefer paper records."], 0, "สิ่งที่ต้องนำมาตอนรับบัตร (ประโยคว่าเปิดให้บุคคลทั่วไปเข้าได้ ขัดกับคำว่า restricted)"],
+    ["fill", "word", ["immediate", "immediately", "immediacy", "immediateness"], 1, "ขยายกริยา be reported → adverb", "Lost cards should be reported ___ so that they can be deactivated."],
+  ]},
+);
+
+/* Shuffle each Part 6 question's options with a fixed seed (from passage id + question number),
+   so answer letters are spread out but stay the same on every visit. */
+(function () {
+  const seedOf = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const rng = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  P6.forEach(p => p.qs.forEach((q, i) => {
+    const r = rng(seedOf(p.id + ":" + i)), idx = q[2].map((_, k) => k);
+    for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+    const right = q[2][q[3]]; q[2] = idx.map(k => q[2][k]); q[3] = q[2].indexOf(right);
+  }));
+})();
+
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
-function mkQ(q, id, lesson, set, noMock) { return { id, lesson, set, noMock: !!noMock, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] }; }
+function seededOrder(key, n) {
+  let h = 2166136261; for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let a = h >>> 0; const r = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const idx = Array.from({ length: n }, (_, k) => k);
+  for (let k = n - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+  return idx;
+}
+function mkQ(q, id, lesson, set, noMock) {
+  const o = { id, lesson, set, noMock: !!noMock, type: q[0], stem: q[1], opts: q[0] === "fill" ? q[2] : segs(q[1]), ans: q[0] === "fill" ? q[3] : q[2], exp: q[0] === "fill" ? q[4] : q[3] };
+  /* Spread answer letters: fixed shuffle per question for exam-style fill items (not label sets, not error-ID) */
+  if (o.type === "fill" && !o.noMock && o.opts.length === 4) { const idx = seededOrder(id, 4), right = o.opts[o.ans]; o.opts = idx.map(k => o.opts[k]); o.ans = o.opts.indexOf(right); }
+  return o;
+}
 L.forEach(l => {
   if (l.sets) l.sets.forEach((st, si) => st.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-s" + si + "-" + i, l.id, si, st.noMock))));
   else l.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-" + i, l.id, 0, false)));
