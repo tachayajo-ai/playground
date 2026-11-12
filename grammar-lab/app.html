@@ -5029,7 +5029,7 @@ P6.push(
   P6.forEach(p => p.qs.forEach((q, i) => {
     const r = rng(seedOf(p.id + ":" + i)), idx = q[2].map((_, k) => k);
     for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
-    const right = q[2][q[3]]; q[2] = idx.map(k => q[2][k]); q[3] = q[2].indexOf(right);
+    const right = q[2][q[3]]; q[2] = idx.map(k => q[2][k]); q[3] = q[2].indexOf(right); q.perm = idx; /* perm[shown] = original index */
   }));
 })();
 
@@ -6152,6 +6152,121 @@ Object.assign(NOTES, {
   "adv-s6-9": ["Not only ถูกต้อง", "", "also ถูกต้อง", "presented ถูกต้อง"],
 });
 
+Object.assign(NOTES, {
+  /* ----- Part 6 ----- */
+  "p6-claim-training-0": ["submitted เดี่ยวๆ เป็น active past: เคลมส่งตัวเองไม่ได้ และขัดกับ next month", "", "were submitted เป็นอดีต ขัดกับ Starting next month", "are submitting เป็น active: เคลมเป็นผู้ถูกส่ง"],
+  "p6-claim-training-2": ["use เป็น V1 ทำให้ประโยคมีกริยาแท้ 2 ตัว (register, use)", "", "used = ถูกใช้ ความหมายผิด (คนเป็นผู้ใช้แบบฟอร์ม)", "to using ✗ ต้องเป็น to use หรือ using"],
+  "p6-claim-training-3": ["recommend ไม่ตามด้วย V1", "recommend ไม่ตามด้วย to V (ถ้าไม่มีกรรมคน)", "", "recommend ไม่ตามด้วย V3"],
+
+  "p6-holiday-hours-0": ["While ตามด้วย clause แต่ this period เป็นนาม", "", "Although = แม้ว่า ตามด้วย clause และความหมายไม่ใช่ช่วงเวลา", "Since ใช้กับจุดเริ่มต้นและ perfect tense"],
+  "p6-holiday-hours-1": ["", "agrees เป็นเอกพจน์ แต่ who แทน Staff (พหูพจน์)", "agreeing ไม่ใช่กริยาแท้ ใช้หลัง who ไม่ได้", "agreement เป็นนาม"],
+  "p6-holiday-hours-3": ["cooperate เป็นกริยา ตามหลัง your ไม่ได้", "cooperative เป็น adjective ต้องมีนามตามหลัง", "", "cooperatively เป็น adverb"],
+
+  "p6-parking-0": ["by further notice ✗ by ใช้กับกำหนดเสร็จ ไม่ใช่การปิดต่อเนื่อง", "", "since ใช้กับจุดเริ่มต้นในอดีต", "within ตามด้วยระยะเวลา"],
+  "p6-parking-1": ["locate เป็นกริยาแท้ ประโยคมี are asked แล้ว", "locating = เป็นผู้หาตำแหน่ง แต่พื้นที่ถูกตั้งอยู่", "", "location เป็นนาม"],
+  "p6-parking-3": ["patient เป็น adjective/นาม (ผู้ป่วย) ไม่ใช่ความอดทน", "", "patiently เป็น adverb", "patients = ผู้ป่วยหลายคน ความหมายผิด"],
+
+  "p6-glove-delay-0": ["because to ✗ ใช้ because of + นาม", "", "although to ✗ although ตามด้วย clause", "despite to ✗ despite ตามด้วยนามเลย ไม่มี to"],
+  "p6-glove-delay-1": ["deliver เป็น active และไม่มี will ขัดกับ by 25 May", "will deliver เป็น active: กล่องส่งตัวเองไม่ได้", "", "delivering ไม่ใช่กริยาแท้"],
+  "p6-glove-delay-3": ["that ใช้กับข้อเท็จจริง แต่ let us know ถามว่ารับได้หรือไม่", "", "what ใช้เมื่อขาดประธาน/กรรม แต่ clause ครบแล้ว", "which ต้องมีนามนำหน้า"],
+
+  "p6-job-offer-0": ["commit เป็นกริยา ตามหลัง your ไม่ได้", "committed เป็น adjective/V3", "", "committing ไม่ใช่นามที่ใช้คู่กับ to แบบนี้"],
+  "p6-job-offer-1": ["While ตามด้วย clause แต่ the first three months เป็นนาม", "", "Since ใช้กับจุดเริ่มต้นและ perfect tense", "Until = จนถึง ขัดกับความหมาย (ทำระหว่าง 3 เดือน)"],
+  "p6-job-offer-3": ["", "Should + S ตามด้วย V1 ไม่ใช่ V-ing", "Should + S ตามด้วย V1 ไม่ใช่ V2", "Should + S ไม่ตามด้วย will"],
+
+  "p6-screening-0": ["have เป็นพหูพจน์ แต่ Each of ใช้เอกพจน์", "", "are having เป็นพหูพจน์ และ have (มี) ไม่ใช้ continuous", "were เป็นพหูพจน์และอดีต"],
+  "p6-screening-1": ["be advised ตามด้วย to V ไม่ใช่ V1", "", "be advised ไม่ตามด้วย V-ing", "be advised ไม่ตามด้วย V3"],
+  "p6-screening-3": ["inform เป็นกริยา ตามหลัง more แบบนี้ไม่ได้", "informative เป็น adjective (ให้ความรู้)", "", "informed เป็น adjective/V3"],
+
+  "p6-budget-meeting-0": ["that ใช้หลัง comma ไม่ได้", "", "who ใช้กับคน", "what ไม่ใช้หลังนาม"],
+  "p6-budget-meeting-1": ["However = อย่างไรก็ตาม แต่ประโยคเพิ่มวาระ ไม่ขัดแย้ง", "", "Otherwise = มิฉะนั้น ไม่เข้ากับความหมาย", "Instead = แทนที่จะ ไม่เข้ากับความหมาย"],
+  "p6-budget-meeting-2": ["", "to representing ✗ หลัง to ใช้ V1", "to represented ✗ หลัง to ใช้ V1", "representative เป็นนาม"],
+
+  "p6-maintenance-0": ["During ตามด้วยนาม แต่ the system is offline เป็น clause", "", "Despite ตามด้วยนาม และความหมายขัดแย้ง", "Because of ตามด้วยนาม"],
+  "p6-maintenance-1": ["", "during ตามด้วยนาม แต่ it is restored เป็น clause", "until = จนกว่า ความหมายกลับ (กรอกจนกว่าระบบกลับมา)", "by ตามด้วยจุดเวลา ไม่ใช่ clause"],
+  "p6-maintenance-3": ["saves ✗ หลัง recommend that ใช้ V1 ไม่เติม s", "", "saved ✗ หลัง recommend that ใช้ V1", "saving ไม่ใช่กริยาแท้"],
+
+  "p6-hand-hygiene-0": ["low เป็นรูปปกติ ใช้กับ than ไม่ได้", "", "lowest เป็นขั้นสุด ใช้กับ than ไม่ได้", "more low ✗ คำพยางค์เดียวใช้ -er"],
+  "p6-hand-hygiene-1": ["who ใช้แทนประธาน แต่หลังช่องว่างเป็นนาม role", "", "which ใช้กับสิ่งของ และไม่บอกความเป็นเจ้าของ", "whom ใช้แทนกรรม แต่หลังช่องว่างเป็นนาม role"],
+  "p6-hand-hygiene-3": ["", "to reaching ✗ help + O ตามด้วย V1 หรือ to V", "reached ✗ help + O ไม่ตามด้วย V3", "reaches ✗ help + O ไม่ตามด้วยกริยาเติม s"],
+
+  "p6-complaint-0": ["wait เป็น present ขัดกับเหตุการณ์ที่เกิดไปแล้ว", "waits เป็นเอกพจน์และ present", "", "will wait เป็นอนาคต ขัดกับการขอโทษเรื่องที่เกิดแล้ว"],
+  "p6-complaint-1": ["Therefore = ดังนั้น แต่ประโยคหลังขัดกับเหตุผลข้างหน้า", "", "Moreover = นอกจากนี้ ใช้เพิ่มข้อมูลทิศทางเดียวกัน", "For example = ตัวอย่างเช่น ไม่เข้ากับความหมาย"],
+  "p6-complaint-3": ["opportunity ตามด้วย to V ไม่ใช่ V1", "", "opportunity serving ✗ ใช้ to V หรือ of + V-ing", "opportunity ไม่ตามด้วย V3"],
+
+  "p6-reimbursement-0": ["", "reviewed = ทบทวน ตรวจสอบ แต่ประโยคถัดไปพูดถึงอัตราใหม่", "resigned = ลาออก ใช้กับคน", "reserved = จองไว้ ไม่เข้ากับอัตราจ่าย"],
+  "p6-reimbursement-1": ["", "responsible for = รับผิดชอบ ใช้กับคน ไม่ใช่เคลม", "capable of = สามารถ ใช้คู่กับ of ไม่ใช่ for", "available for payment ไม่ใช่สำนวนเรื่องสิทธิ์รับเงิน"],
+  "p6-reimbursement-3": ["attach เป็น V1 ใช้หลัง is ไม่ได้", "attaching = กำลังแนบ (active) แต่ตารางถูกแนบ", "", "attachment เป็นนาม ตามด้วย to this email แบบนี้ไม่ได้"],
+
+  "p6-overtime-0": ["", "improved = ปรับปรุง ไม่ใช่อนุมัติ", "proved = พิสูจน์ ไม่เข้ากับ in advance by the manager", "removed = นำออก ไม่เข้ากับความหมาย"],
+  "p6-overtime-1": ["", "unless = ถ้าไม่ ความหมายกลับ (ทำได้ถ้าไม่แจ้ง)", "despite ตามด้วยนาม ไม่ใช่ clause", "even though = แม้ว่า ไม่ใช่เงื่อนไข"],
+  "p6-overtime-3": ["", "complimenting = ชมเชย ไม่เข้ากับ safety", "completing = ทำให้เสร็จ ไม่เข้ากับ safety", "composing = แต่ง ประกอบ ไม่เข้ากับ safety"],
+
+  "p6-pharmacy-move-0": ["", "renovate = ปรับปรุงอาคาร ไม่ใช่ย้ายไปที่อื่น", "relax = ผ่อนคลาย ไม่เข้ากับความหมาย", "reduce = ลด ไม่เข้ากับ to the ground floor"],
+  "p6-pharmacy-move-1": ["wait เป็นกริยาแท้ ประโยคมี offers แล้ว", "", "waited = ถูกรอ แต่ wait ไม่มีกรรม", "are waiting เป็นกริยาแท้ ใช้ได้ต่อเมื่อมี who นำหน้า"],
+  "p6-pharmacy-move-3": ["", "unlimited = ไม่จำกัด ขัดกับเวลาที่ระบุ 8–20 น.", "unavailable = ไม่มีให้ ขัดกับเวลาที่ระบุ", "uncertain = ไม่แน่นอน ขัดกับเวลาที่ระบุชัด"],
+
+  "p6-forum-invite-0": ["", "expense = ค่าใช้จ่าย ไม่เข้ากับ in claims auditing", "existence = การมีอยู่ ไม่เข้ากับความหมาย", "exception = ข้อยกเว้น ไม่เข้ากับความหมาย"],
+  "p6-forum-invite-1": ["", "deliveries = การส่งของ ไม่ใช่ปัญหาของเคลม", "deposits = เงินมัดจำ ไม่เข้ากับ claim", "designs = การออกแบบ ไม่เข้ากับ reducing claim"],
+  "p6-forum-invite-3": ["", "recover = ฟื้นตัว ได้คืน ไม่ใช่ออกค่าใช้จ่ายให้", "discover = ค้นพบ ไม่เข้ากับ expenses", "uncover = เปิดโปง ไม่เข้ากับ expenses"],
+
+  "p6-appointment-0": ["", "arise = เกิดขึ้น ใช้กับปัญหา ไม่ใช่คนมาถึง", "arrange = จัดเตรียม ต้องมีกรรม", "approve = อนุมัติ ไม่เข้ากับ early"],
+  "p6-appointment-1": ["", "make medicine = ผลิตยา ไม่ใช่กินยา", "give medicine = ให้ยา (แพทย์/พยาบาลทำ) ไม่ใช่ผู้ป่วย", "do medicine ✗ ไม่ใช่ collocation"],
+  "p6-appointment-3": ["", "because = เพราะ แต่ประโยคหลังเป็นจุดประสงค์", "although = แม้ว่า ความหมายขัดแย้ง", "unless = ถ้าไม่ ความหมายผิด"],
+
+  "p6-quotation-0": ["", "pursue = ไล่ตาม มุ่งมั่น ไม่ใช่ซื้อ", "propose = เสนอ ไม่ใช่ซื้อ", "produce = ผลิต โรงพยาบาลไม่ผลิตเครื่อง"],
+  "p6-quotation-1": ["", "consisting ต้องมี of และไม่ใช่รวมถึง", "depending ต้องมี on", "resulting ต้องมี in และความหมายไม่ตรง"],
+  "p6-quotation-2": ["", "prevented = ป้องกัน ไม่เข้ากับ training", "protected = ปกป้อง ไม่เข้ากับ training", "predicted = ทำนาย ไม่เข้ากับ training"],
+
+  "p6-employee-month-0": ["", "slightly = เล็กน้อย ขัดกับ 12% → 4%", "rarely = แทบไม่ ขัดกับผลที่เกิดจริง", "hardly = แทบจะไม่ ขัดกับผลที่เกิดจริง"],
+  "p6-employee-month-1": ["", "reluctant = ไม่เต็มใจ ขัดกับ always willing to help", "relevant = เกี่ยวข้อง ไม่ใช้บรรยายนิสัยคน", "remote = ห่างไกล ไม่ใช้บรรยายนิสัยคน"],
+  "p6-employee-month-3": ["", "congratulate for ไม่ใช่คู่คำมาตรฐาน ใช้ on", "congratulate at ✗ ไม่ใช่คู่คำ", "congratulate with ✗ ไม่ใช่คู่คำ"],
+
+  "p6-record-audit-0": ["", "make place ✗ ไม่ใช่ collocation (take place = จัดขึ้น)", "have place ✗ ไม่ใช่ collocation", "give place ✗ ไม่ใช่ collocation"],
+  "p6-record-audit-1": ["", "accessory = อุปกรณ์เสริม ไม่ใช่คุณสมบัติของเวชระเบียน", "accident = อุบัติเหตุ ไม่เข้ากับ completeness", "acquisition = การได้มา ไม่เข้ากับ completeness"],
+  "p6-record-audit-3": ["proper เป็น adjective ขยาย signed (V3) ไม่ได้", "", "property = ทรัพย์สิน เป็นนาม", "propriety = ความเหมาะสม เป็นนาม"],
+
+  "p6-welcome-0": ["", "excepted = ยกเว้น ไม่ใช่รับข้อเสนอ", "expected = คาดหวัง ไม่เข้ากับ our offer to join", "accessed = เข้าถึง ไม่เข้ากับ offer"],
+  "p6-welcome-1": ["which ใช้เมื่อ clause ขาดประธาน/กรรม แต่ you will receive ... ครบแล้ว", "", "who ใช้กับคน", "whose ต้องตามด้วยนาม"],
+  "p6-welcome-3": ["", "attain = บรรลุ ใช้กับเป้าหมาย ไม่ใช่การอบรม", "attach = แนบ ไม่เข้ากับ training sessions", "attract = ดึงดูด ไม่เข้ากับความหมาย"],
+
+  "p6-elevator-0": ["", "out of duty ✗ ใช้ off duty กับคนออกเวร", "out of date = ล้าสมัย ไม่ใช่งดให้บริการช่วงซ่อม", "out of stock = สินค้าหมด ไม่ใช้กับลิฟต์"],
+  "p6-elevator-1": ["use เป็นกริยาแท้ ประโยคมี should use แล้ว", "", "used = ถูกใช้ แต่ผู้ป่วยเป็นผู้ใช้รถเข็น", "to use = เพื่อใช้ ความหมายผิด (ผู้ป่วยที่ใช้รถเข็นอยู่)"],
+  "p6-elevator-3": ["", "insist = ยืนกราน ไม่ใช่ช่วยเหลือ", "resist = ต่อต้าน ความหมายตรงข้าม", "consist = ประกอบด้วย ต้องมี of"],
+
+  "p6-paperless-0": ["", "repair = ซ่อม ไม่ใช้กับ with electronic documents", "repeat = ทำซ้ำ ไม่เข้ากับความหมาย", "report = รายงาน ไม่เข้ากับความหมาย"],
+  "p6-paperless-1": ["While ตามด้วย clause แต่ the first month เป็นนาม", "", "Since ใช้กับจุดเริ่มต้นและ perfect tense", "Until = จนถึง ขัดกับความหมาย (ช่วยตลอดเดือนแรก)"],
+  "p6-paperless-3": ["", "efficiency เป็นนาม ตามหลัง more ในโครงสร้าง make + O + adj ไม่ได้", "efficiently เป็น adverb", "efficiencies เป็นนามพหูพจน์"],
+
+  "p6-refund-0": ["arrives เป็น present ขัดกับเรื่องที่เกิดไปแล้ว", "", "will arrive เป็นอนาคต ขัดกับการขอโทษ", "arriving ไม่ใช่กริยาแท้"],
+  "p6-refund-1": ["", "proceeded = ดำเนินต่อ ไม่มีกรรม (ต้องเป็น proceeded with)", "produced = ผลิต ไม่เข้ากับ request", "progressed = คืบหน้า ไม่มีกรรม"],
+  "p6-refund-3": ["", "Otherwise = มิฉะนั้น ความหมายผิด", "Moreover = นอกจากนี้ ไม่ใช่การบอกสิ่งที่ให้ทำแทน", "For example = ตัวอย่างเช่น ไม่เข้ากับความหมาย"],
+
+  "p6-blood-drive-0": ["", "discouraged = ไม่สนับสนุน ความหมายตรงข้ามกับการเชิญชวน", "enforced = บังคับใช้ ใช้กับกฎ ไม่ใช่คน", "endangered = ใกล้สูญพันธุ์ ไม่เข้ากับความหมาย"],
+  "p6-blood-drive-1": ["", "Unless = ถ้าไม่ ความหมายกลับ (ห้ามบริจาคถ้าไม่ได้กินยา)", "Although = แม้ว่า ความหมายขัดแย้ง ไม่ใช่เงื่อนไข", "Whether ไม่ใช้นำเงื่อนไขแบบนี้"],
+  "p6-blood-drive-3": ["", "application = ใบสมัคร ไม่เข้ากับ a token of", "approximation = การประมาณ ไม่เข้ากับความหมาย", "appearance = รูปลักษณ์ ไม่เข้ากับความหมาย"],
+
+  "p6-lease-0": ["", "inspire = สร้างแรงบันดาลใจ ไม่ใช้กับสัญญาเช่า", "acquire = ได้มา ต้องมีกรรม", "require = ต้องการ ต้องมีกรรม"],
+  "p6-lease-1": ["", "increase to = เพิ่มขึ้นเป็น ต้องตามด้วยยอดสุดท้าย ไม่ใช่ 5%", "increase at ✗ ไม่ใช่คู่คำ", "increase of ใช้กับนาม (an increase of 5%) ไม่ใช่กริยา"],
+  "p6-lease-3": ["", "until = ทำต่อเนื่องจนถึง ไม่ใช่กำหนดส่ง", "since ใช้กับจุดเริ่มต้นในอดีต", "during = ระหว่าง ตามด้วยช่วงเวลา"],
+
+  "p6-software-renewal-0": ["", "expired เป็นอดีต แต่ยังไม่ถึงวันหมดอายุ", "has expired = หมดอายุแล้ว ขัดกับ before this date", "had expired เป็น past perfect ไม่เข้ากับบริบท"],
+  "p6-software-renewal-1": ["recommend ไม่ตามด้วย V1", "recommend ไม่ตามด้วย to V (ถ้าไม่มีกรรมคน)", "", "recommend ไม่ตามด้วย V3"],
+  "p6-software-renewal-3": ["", "valuable = มีค่า ไม่เข้ากับ 24 hours a day", "variable = ผันแปร ไม่เข้ากับความหมาย", "avoidable = หลีกเลี่ยงได้ ไม่เข้ากับความหมาย"],
+
+  "p6-fire-drill-0": ["", "consulted = ปรึกษา ไม่ใช้กับ drill", "constructed = ก่อสร้าง ใช้กับอาคาร", "contributed = มีส่วนร่วม ไม่ใช้กับ drill"],
+  "p6-fire-drill-1": ["", "across = ข้าม (จากฝั่งหนึ่งไปอีกฝั่ง) ไม่ใช่ออกทางประตู", "along = ไปตาม ใช้กับทางเดินยาว ไม่ใช่ประตู", "above = เหนือ ไม่เข้ากับความหมาย"],
+  "p6-fire-drill-3": ["", "arrive ต้องมี at (arrive at the assembly point)", "approach to ✗ approach ตามด้วยกรรมเลย ไม่มี to", "get ต้องมี to (get to the assembly point)"],
+
+  "p6-survey-results-0": ["", "contribute = มีส่วนช่วย ต้องเป็น contribute to", "attribute = ระบุว่าเกิดจาก ไม่เข้ากับ questionnaire", "dispute = โต้แย้ง ไม่เข้ากับความหมาย"],
+  "p6-survey-results-1": ["", "that ใช้หลัง comma ไม่ได้", "what ไม่ใช้ขยายประโยคข้างหน้า", "it ทำให้เป็น 2 ประโยคต่อกันด้วย comma โดยไม่มีคำเชื่อม"],
+  "p6-survey-results-3": ["", "produce = ผลิต ไม่ใช่นำระบบมาใช้", "reduce = ลด ขัดกับการแก้ปัญหาด้วยระบบใหม่", "deduce = อนุมาน ไม่เข้ากับ system"],
+
+  "p6-id-cards-0": ["", "solid = แข็ง มั่นคง ไม่ใช้กับการใช้ได้ของบัตร", "vivid = สดใส ชัดเจน ไม่เข้ากับความหมาย", "rigid = เข้มงวด แข็งทื่อ ไม่เข้ากับความหมาย"],
+  "p6-id-cards-1": ["", "retain = เก็บไว้ ความหมายตรงข้าม", "retire = เกษียณ ไม่ใช้กับบัตร", "retrieve = เอากลับมา ความหมายตรงข้าม (พนักงานต้องส่งคืน)"],
+  "p6-id-cards-3": ["immediate เป็น adjective ขยายกริยา be reported ไม่ได้", "", "immediacy เป็นนาม", "immediateness เป็นนาม"],
+});
+
 /* ===== Derived ===== */
 const LESSON = Object.fromEntries(L.map(l => [l.id, l]));
 const BANK = [];
@@ -6173,7 +6288,8 @@ L.forEach(l => {
   if (l.sets) l.sets.forEach((st, si) => st.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-s" + si + "-" + i, l.id, si, st.noMock))));
   else l.qs.forEach((q, i) => BANK.push(mkQ(q, l.id + "-" + i, l.id, 0, false)));
 });
-function p6Q(p, i) { const q = p.qs[i]; return { id: "p6-" + p.id + "-" + i, lesson: q[1], set: -1, noMock: true, p6: p.id, n: i + 1, type: q[0] === "ins" ? "ins" : q[0] === "voc" ? "voc" : "fill", stem: q[0] === "ins" ? "ประโยคใดเหมาะกับตำแหน่ง [" + (i + 1) + "] ที่สุด" : q[5], opts: q[2], ans: q[3], exp: q[4] }; }
+function p6Q(p, i) { const q = p.qs[i]; return { id: "p6-" + p.id + "-" + i, lesson: q[1], set: -1, noMock: true, p6: p.id, n: i + 1, type: q[0] === "ins" ? "ins" : q[0] === "voc" ? "voc" : "fill", stem: q[0] === "ins" ? "ประโยคใดเหมาะกับตำแหน่ง [" + (i + 1) + "] ที่สุด" : q[5], opts: q[2], ans: q[3], exp: q[4], notes: p6Notes(p, i) }; }
+function p6Notes(p, i) { const q = p.qs[i], n = NOTES["p6-" + p.id + "-" + i]; if (!n || n.length !== q[2].length) return null; return q.perm ? q.perm.map(k => n[k]) : n.slice(); }
 P6.forEach(p => p.qs.forEach((q, i) => { if (q[0] !== "ins") BANK.push(p6Q(p, i)); }));
 function segs(stem) { return [...stem.matchAll(/\[\[(.+?)\]\]/g)].map(m => m[1]); }
 
