@@ -141,7 +141,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* ================= World ================= */
 const W = 480, H = 300, GROUND = 262, NET_X = 240, NET_TOP = 172, NET_HALF = 3;
 const CR = 23, BR = 11;                       // character / ball radius
-const G_BALL = 0.21, G_CHAR = 0.42, JUMP_V = -8.7, RUN = 3.7, MAXV = 14;
+const G_BALL = 0.21, G_CHAR = 0.42, JUMP_V = -8.7, RUN = 4.7, MAXV = 14;
 const KINDS = [
   { id: "cat", name: "ส้มจี๊ด", sub: "แมวส้ม" },
   { id: "peng", name: "ปิงกุ", sub: "เพนกวิน" },
@@ -658,6 +658,28 @@ function drawHUD() {
   const tgt = opt.target, mp = (a, b) => a >= tgt - 1 && a >= b;
   if (!demo && state === "serve" && (mp(score[0], score[1]) || mp(score[1], score[0]))) txt(score[0] === score[1] ? "ดิวซ์!" : "แมตช์พอยต์!", 240, 60, 16, "#FFC24B", "center");
 }
+/* ball above the top of the screen: marker at the top edge shows where it will come down */
+function drawOffscreen() {
+  if (ball.y > -BR + 1 || state === "serve") return;
+  const h = -ball.y, near = Math.max(0, Math.min(1, 1 - h / 220));
+  const x = Math.max(14, Math.min(W - 14, ball.x)), pulse = 1 + Math.sin(T * 0.3) * 0.06;
+  const mine = ball.x < NET_X, col = mine ? "#FF7A59" : "#3BA4E6";
+  ctx.save(); ctx.translate(x, 0); ctx.scale(pulse, pulse);
+  ctx.globalAlpha = 0.55 + near * 0.45;
+  /* bubble with a mini ball */
+  const r = 8 + near * 3;
+  ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(0, 14, r + 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.save(); ctx.translate(0, 14); ctx.rotate(ball.rot);
+  ["#FF6B6B", "#4DABF7", "#FFD43B"].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, i * 2 * Math.PI / 3, (i * 2 + 1) * Math.PI / 3); ctx.fill(); });
+  ctx.restore();
+  /* arrow pointing down, bigger as it gets closer */
+  const a = 6 + near * 4, ay = 14 + r + 6 + Math.sin(T * 0.3) * 2;
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-a, ay); ctx.lineTo(a, ay); ctx.lineTo(0, ay + a * 1.1); ctx.fill();
+  /* horizontal drift hint */
+  if (Math.abs(ball.vx) > 1.2) { const d = Math.sign(ball.vx); ctx.beginPath(); ctx.moveTo(d * (r + 6), 10); ctx.lineTo(d * (r + 12), 14); ctx.lineTo(d * (r + 6), 18); ctx.fill(); }
+  ctx.restore();
+}
 function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
   drawScene();
@@ -670,6 +692,7 @@ function render() {
   ctx.globalAlpha = 1;
   if (flash) { ctx.fillStyle = `rgba(255,250,220,${flash * 0.05})`; ctx.fillRect(0, 0, W, H); }
   drawHUD();
+  drawOffscreen();
 }
 
 /* ================= Loop ================= */
