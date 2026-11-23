@@ -80,6 +80,14 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
         <div class="row2"><button class="go alt" id="quitBtn">เมนู</button><button class="go" id="resumeBtn">เล่นต่อ</button></div></div>
     </div>
 
+    <div class="ov" id="contOv" hidden>
+      <div class="card"><h2>ยานถูกยิงตก</h2><p class="stat">เล่นต่อจากจุดเดิมไหม?</p>
+        <div class="big" id="contNum" aria-live="polite">9</div>
+        <p class="stat" id="contNote"></p>
+        <div class="row2"><button class="go alt" id="giveUpBtn">ยอมแพ้</button><button class="go" id="contBtn"><span class="blink">▶</span> เล่นต่อ</button></div>
+        <p class="stat" id="contLeft" style="margin-top:12px"></p></div>
+    </div>
+
     <div class="ov" id="endOv" hidden>
       <div class="card"><h2 id="endTitle"></h2><div class="big" id="endScore"></div><p class="stat" id="endNote"></p>
         <div class="row2"><button class="go alt" id="menuBtn">เมนู</button><button class="go" id="againBtn">เล่นอีกครั้ง</button></div></div>
@@ -280,7 +288,7 @@ let shake = 0, flash = 0, banner = null, starBoost = 0;
 function newGame() {
   booms.length = 0; pb.length = eb.length = enemies.length = items.length = parts.length = rings.length = pops.length = 0;
   P = { x: W / 2, y: H - 90, tx: W / 2, ty: H - 90, vx: 0, vy: 0, hp: 3, maxHp: 5, shield: 1, maxShield: 3, power: 1, inv: 90, fireT: 0, missT: 0, trail: [], alive: true, tilt: 0 };
-  game = { state: "play", score: 0, wave: 0, queue: [], boss: null, waveT: 120, kills: 0, shots: 0, hits: 0, t: 0, dead: 0, laser: null };
+  game = { state: "play", score: 0, wave: 0, queue: [], boss: null, waveT: 120, kills: 0, shots: 0, hits: 0, t: 0, dead: 0, laser: null, continues: 0, cont: 0 };
   showBanner("ด่าน 1", "เตรียมรับมือ!", 110);
 }
 function showBanner(a, b, t, col) { banner = { a, b, t, max: t, col: col || "#46E6FF" }; }
@@ -357,6 +365,7 @@ function playerFire() {
 function update() {
   T++;
   if (!game) return stepBgOnly();
+  if (game.state === "continue") return stepContinue();
   game.t++;
   const g = game;
   /* queue */
@@ -421,9 +430,11 @@ function update() {
   }
   /* enemy bullets */
   for (let i = eb.length - 1; i >= 0; i--) {
-    const b = eb[i]; b.x += b.vx; b.y += b.vy;
+    const b = eb[i]; if (!b) continue;
+    b.x += b.vx; b.y += b.vy;
     if (b.y > H + 20 || b.y < -40 || b.x < -20 || b.x > W + 20) { eb.splice(i, 1); continue; }
-    if (P.alive && (g.state === "play") && (b.x - P.x) ** 2 + (b.y - P.y) ** 2 < (b.r + 3) ** 2) { eb.splice(i, 1); hurtPlayer(); }
+    /* hurtPlayer() may clear or splice eb, so stop iterating after a hit */
+    if (P.alive && (g.state === "play") && (b.x - P.x) ** 2 + (b.y - P.y) ** 2 < (b.r + 3) ** 2) { eb.splice(i, 1); hurtPlayer(); break; }
   }
   /* items */
   for (let i = items.length - 1; i >= 0; i--) {
@@ -441,7 +452,7 @@ function update() {
   if (banner && --banner.t <= 0) banner = null;
   if (shake > 0) shake *= 0.86; if (shake < 0.3) shake = 0; if (flash > 0) flash--;
   stepStars();
-  if (g.state === "dying") { if (--g.dead <= 0) endGame(false); }
+  if (g.state === "dying") { if (--g.dead <= 0) askContinue(); }
   if (g.state === "clearing") { if (--g.clearT <= 0) endGame(true); }
 }
 function stepBgOnly() { stepStars(); for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; if (--p.life <= 0) parts.splice(i, 1); } }
@@ -807,27 +818,59 @@ function renderTitleShip() {
 /* ================= Loop & flow ================= */
 let last = performance.now(), acc = 0, paused = false;
 function frame(now) {
+  requestAnimationFrame(frame);   // schedule first: an error below can never stop the game loop
   const dt = Math.min(100, now - last); last = now;
-  if (!paused) { acc += dt; while (acc >= 1000 / 60) { update(); acc -= 1000 / 60; } }
-  render(); requestAnimationFrame(frame);
+  try {
+    if (!paused) { acc += dt; while (acc >= 1000 / 60) { update(); acc -= 1000 / 60; } }
+    render();
+  } catch (e) { acc = 0; console.error(e); }
 }
 const $menu = document.getElementById("menu"), $pause = document.getElementById("pauseOv"), $end = document.getElementById("endOv"), $pauseBtn = document.getElementById("pauseBtn");
-function start() { audio(); $menu.hidden = true; $end.hidden = true; newGame(); $pauseBtn.hidden = false; playMusic("stage"); }
+function start() { audio(); $menu.hidden = true; $end.hidden = true; $cont.hidden = true; newGame(); $pauseBtn.hidden = false; playMusic("stage"); }
 document.getElementById("startBtn").onclick = start;
 document.getElementById("againBtn").onclick = start;
-function toMenu() { stopMusic(); game = null; P = null; parts.length = 0; $end.hidden = true; $pause.hidden = true; paused = false; $pauseBtn.hidden = true; $menu.hidden = false; showHi(); }
+function toMenu() { stopMusic(); $cont.hidden = true; game = null; P = null; parts.length = 0; $end.hidden = true; $pause.hidden = true; paused = false; $pauseBtn.hidden = true; $menu.hidden = false; showHi(); }
 document.getElementById("menuBtn").onclick = toMenu; document.getElementById("quitBtn").onclick = toMenu;
 function pauseGame() { if (paused || !game || game.state !== "play") return; paused = true; document.getElementById("pauseScore").textContent = "คะแนน " + game.score; $pause.hidden = false; document.getElementById("resumeBtn").focus(); }
 $pauseBtn.onclick = pauseGame;
 document.getElementById("resumeBtn").onclick = () => { paused = false; $pause.hidden = true; last = performance.now(); };
 document.addEventListener("visibilitychange", () => { if (document.hidden) pauseGame(); });
-function endGame(win) {
-  game.state = "over"; $pauseBtn.hidden = true; stopMusic(); if (!win) SFX.lose();
+/* ----- after death: 10-second CONTINUE countdown, up to 3 continues, respawn on the spot ----- */
+const MAX_CONT = 3, $cont = document.getElementById("contOv");
+function askContinue() {
+  if (game.continues >= MAX_CONT) return endGame(false);
+  game.state = "continue"; game.cont = 600; $pauseBtn.hidden = true; SFX.lose();
+  const b = game.boss;
+  document.getElementById("contNote").textContent = b ? `บอสเหลือพลังชีวิต ${Math.max(1, Math.round(b.hp / b.max * 100))}%${b.hp / b.max < 0.4 ? " อีกนิดเดียว!" : ""}` : game.bossIncoming ? "บอสกำลังมา" : `ระลอก ${Math.min(game.wave, WAVES.length)}/${WAVES.length}`;
+  document.getElementById("contLeft").textContent = `เล่นต่อได้อีก ${MAX_CONT - game.continues} ครั้ง · กลับมาพร้อม ♥3 เกราะ 1 ชั้น`;
+  document.getElementById("contNum").textContent = "9";
+  $cont.hidden = false; document.getElementById("contBtn").focus();
+}
+function stepContinue() {
+  stepStars();
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; if (--p.life <= 0) parts.splice(i, 1); }
+  game.cont--;
+  if (game.cont % 60 === 0) { const n = Math.floor(game.cont / 60); document.getElementById("contNum").textContent = n; if (n > 0) tone(n <= 3 ? 660 : 440, 0.08, "p25", 0.05); }
+  if (game.cont <= 0) { $cont.hidden = true; endGame(false, true); }
+}
+function doContinue() {
+  if (!game || game.state !== "continue") return;
+  $cont.hidden = true; game.continues++;
+  Object.assign(P, { hp: 3, shield: 1, power: Math.max(2, P.power), alive: true, x: W / 2, y: H - 40, tx: W / 2, ty: H - 120, vx: 0, vy: 0, inv: 200, trail: [], fireT: 20 });
+  eb.length = 0; game.laser = null; game.state = "play"; flash = 0; shake = 0;
+  ring(P.x, P.y, "#46E6FF", 60); ring(P.x, P.y, "#FFD25A", 40);
+  showBanner("กลับมาสู้ต่อ!", `ใช้เล่นต่อแล้ว ${game.continues}/${MAX_CONT} ครั้ง`, 100, "#FFD25A");
+  playMusic(game.boss || game.bossIncoming ? "boss" : "stage"); $pauseBtn.hidden = false;
+}
+document.getElementById("contBtn").onclick = doContinue;
+document.getElementById("giveUpBtn").onclick = () => { if (game && game.state === "continue") { $cont.hidden = true; endGame(false, true); } };
+function endGame(win, quiet) {
+  game.state = "over"; $pauseBtn.hidden = true; stopMusic(); if (!win && !quiet) SFX.lose();
   if (win) game.score += P.hp * 2000 + P.shield * 1000;
   const newHi = game.score > opt.hi; if (newHi) { opt.hi = game.score; saveOpt(); }
   document.getElementById("endTitle").textContent = win ? "ภารกิจสำเร็จ! 🚀" : "ยานถูกยิงตก";
   document.getElementById("endScore").textContent = game.score.toLocaleString();
-  document.getElementById("endNote").innerHTML = (win ? `โบนัสชีวิตและเกราะที่เหลือรวมแล้ว<br>` : `ถึงระลอก ${Math.min(game.wave, WAVES.length)}${game.boss || game.bossIncoming ? " (บอส)" : ""}<br>`) + `ยิงเอเลี่ยนตก ${game.kills} ตัว` + (newHi ? "<br><b style='color:#FFD25A'>สถิติใหม่!</b>" : "");
+  document.getElementById("endNote").innerHTML = (win ? `โบนัสชีวิตและเกราะที่เหลือรวมแล้ว<br>` : `ถึงระลอก ${Math.min(game.wave, WAVES.length)}${game.boss || game.bossIncoming ? " (บอส)" : ""}<br>`) + `ยิงเอเลี่ยนตก ${game.kills} ตัว` + (game.continues ? ` · เล่นต่อ ${game.continues} ครั้ง` : "") + (newHi ? "<br><b style='color:#FFD25A'>สถิติใหม่!</b>" : "");
   $end.hidden = false; document.getElementById("againBtn").focus();
 }
 function showHi() { document.getElementById("hiText").textContent = opt.hi ? "คะแนนสูงสุด " + opt.hi.toLocaleString() : ""; }
