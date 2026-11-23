@@ -56,25 +56,6 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
       <button class="cb" id="pauseBtn" aria-label="หยุดเกม" hidden>II</button>
     </div>
 
-    <div class="ov" id="menu">
-      <div class="card">
-        <h1 class="logo">พายุดารา</h1>
-        <p class="sub">ด่าน 1 · ฝ่าฝูงเอเลี่ยน 5 ระลอก<br>แล้วโค่นยานแม่ยักษ์</p>
-        <div class="items">
-          <div><canvas data-icon="life" width="10" height="10"></canvas>เพิ่มชีวิต</div>
-          <div><canvas data-icon="shield" width="10" height="10"></canvas>เพิ่มเกราะ</div>
-          <div><canvas data-icon="power" width="10" height="10"></canvas>อัปพลังปืน</div>
-        </div>
-        <button class="go" id="startBtn"><span class="blink">▶</span> เริ่มภารกิจ</button>
-        <div class="help">
-          <b>มือถือ</b> แตะค้างตรงไหนก็ได้แล้วลาก ยานเลื่อนตามนิ้ว (นิ้วไม่บังยาน) ยิงอัตโนมัติ<br>
-          <b>คีย์บอร์ด</b> ลูกศร / WASD · P หยุดเกม<br>
-          <b>จุดโดน</b> คือจุดขาวกลางยานเท่านั้น
-        </div>
-        <p class="stat" id="hiText" style="margin-top:10px"></p>
-      </div>
-    </div>
-
     <div class="ov" id="pauseOv" hidden>
       <div class="card"><h2>พักเกม</h2><p class="stat" id="pauseScore"></p>
         <div class="row2"><button class="go alt" id="quitBtn">เมนู</button><button class="go" id="resumeBtn">เล่นต่อ</button></div></div>
@@ -173,12 +154,18 @@ const SFX = {
   item: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.07, "p25", 0.06, null, i * 0.06)),
   warn: () => { for (let i = 0; i < 4; i++) { tone(660, 0.22, "p50", 0.05, null, i * 0.5); tone(440, 0.22, "p50", 0.05, null, i * 0.5 + 0.25); } },
   laser: () => tone(220, 0.8, "p12", 0.07, 55),
+  roar: () => { noise(1.1, 0.4, 420); tone(150, 1.0, "p50", 0.07, 45); tone(98, 1.1, "triangle", 0.2, 33); },
   win: () => [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, i === 5 ? 0.5 : 0.12, "p25", 0.07, null, i * 0.13)),
   lose: () => [392, 370, 349, 330].forEach((f, i) => tone(f, i === 3 ? 0.6 : 0.2, "p50", 0.06, null, i * 0.22)),
 };
 
 /* ----- original chiptune: stage + boss loops (MIDI note numbers, 0 = rest, one value per 8th note) ----- */
 const SONGS = {
+  title: { bpm: 112,
+    lead: [62,0,62,64, 66,0,69,0,  71,69,66,0, 64,0,0,0,  62,0,62,64, 66,0,74,0,  73,71,69,0, 0,0,0,0,
+           71,0,71,69, 67,0,66,0,  64,66,67,0, 62,0,0,0,  64,0,66,67, 69,0,71,73, 74,0,0,0, 74,0,0,0],
+    bass: [38,50,38,50, 38,50,38,50,  43,55,43,55, 45,57,45,57,  38,50,38,50, 47,59,47,59,  43,55,43,55, 45,57,45,57],
+    drum: [2,0,0,0, 1,0,0,0] },
   stage: { bpm: 144,
     lead: [69,72,76,81, 79,76,72,74,  77,76,74,72, 74,0,72,0,  74,71,67,71, 74,79,77,76,  76,0,76,74, 72,71,68,71,
            69,72,76,81, 83,81,79,76,  77,79,81,77, 76,0,74,0,  74,76,77,79, 81,79,77,74,  76,0,0,0, 76,77,79,80],
@@ -218,6 +205,7 @@ function scheduleMusic() {
 /* ================= Input ================= */
 const keys = {};
 window.addEventListener("keydown", e => {
+  if (!game && (e.code === "Enter" || e.code === "Space")) { e.preventDefault(); advanceIntro(); return; }
   if (e.code === "KeyP" || e.code === "Escape") { if (game && game.state === "play") pauseGame(); return; }
   if (/Arrow|Key[WASD]/.test(e.code) && game && game.state === "play") e.preventDefault();
   keys[e.code] = true;
@@ -226,7 +214,7 @@ window.addEventListener("keyup", e => (keys[e.code] = false));
 window.addEventListener("blur", () => { for (const k in keys) keys[k] = false; if (game && game.state === "play") pauseGame(); });
 let drag = null;
 cv.addEventListener("pointerdown", e => {
-  audio(); if (!game || game.state !== "play") return;
+  audio(); if (!game) { advanceIntro(); return; } if (game.state !== "play") return;
   e.preventDefault(); cv.setPointerCapture(e.pointerId);
   drag = { id: e.pointerId, px: e.clientX, py: e.clientY, sx: P.tx, sy: P.ty };
 });
@@ -309,7 +297,7 @@ const WAVES = [
 function nextWave() {
   game.wave++;
   if (game.wave <= WAVES.length) { showBanner(`ระลอก ${game.wave}/${WAVES.length}`, ["ฝูงแรกมาแล้ว", "ระวังตัวพุ่ง!", "ยานหุ้มเกราะ", "ฝูงใหญ่", "ด่านสุดท้ายก่อนบอส"][game.wave - 1], 90); WAVES[game.wave - 1](); }
-  else { showBanner("⚠ คำเตือน ⚠", "ยานแม่เอเลี่ยนกำลังเข้ามา", 170, "#FF4F6A"); SFX.warn(); playMusic("boss"); starBoost = 1; game.queue.push({ at: game.t + 170, fn: spawnBoss }); game.bossIncoming = true; }
+  else { showBanner("⚠ คำเตือน ⚠", "ราชินีโคลอสกำลังเข้ามา", 170, "#FF4F6A"); SFX.warn(); playMusic("boss"); starBoost = 1; game.queue.push({ at: game.t + 170, fn: spawnBoss }); game.bossIncoming = true; }
 }
 
 /* ----- boss ----- */
@@ -323,15 +311,16 @@ function stepBoss(b) {
     b.dying++; b.y += 0.25;
     if (b.dying % 6 === 0) { explode(b.x + rand(-80, 80), b.y + rand(-40, 50), 1.2, b.dying % 12 ? "#FF7AD9" : "#FFD25A"); SFX.pop(); shake = 6; }
     if (b.dying === 120) { explode(b.x, b.y, 4, "#FFFFFF"); flash = 18; shake = 16; SFX.boom(); game.score += 10000; pops.push({ x: b.x, y: b.y, s: "+10000", t: 90, c: "#FFD25A" }); }
-    if (b.dying > 125) { game.boss = null; eb.length = 0; game.state = "clearing"; game.clearT = 150; stopMusic(); showBanner("ภารกิจสำเร็จ!", "โค่นยานแม่ได้แล้ว", 150, "#FFD25A"); SFX.win(); }
+    if (b.dying > 125) { game.boss = null; eb.length = 0; game.state = "clearing"; game.clearT = 150; stopMusic(); showBanner("ภารกิจสำเร็จ!", "โค่นราชินีโคลอสได้แล้ว", 150, "#FFD25A"); SFX.win(); }
     return;
   }
-  if (!b.entered) { b.y += 1.2; if (b.y >= 130) { b.entered = true; starBoost = 0; } return; }
+  if (!b.entered) { b.y += 1.2; if (b.y >= 176) { b.entered = true; starBoost = 0; b.mouth = 70; SFX.roar(); shake = 10; } return; }
   if (P.alive && ((P.x - b.x) / 92) ** 2 + ((P.y - b.y) / 52) ** 2 < 1) hurtPlayer();
-  const ph = bossPhase(b);
-  if (ph !== b.phase) { b.phase = ph; showBanner(ph === 2 ? "ยานแม่โกรธแล้ว!" : "ยานแม่คลั่ง!", ph === 2 ? "เรียกลูกสมุนมาช่วย" : "กระสุนเกลียว + เลเซอร์", 90, "#FF4F6A"); shake = 10; ring(b.x, b.y, "#FF4F6A", 140); }
+  const ph = bossPhase(b), n0 = eb.length;
+  if (b.mouth > 0) b.mouth--;
+  if (ph !== b.phase) { b.phase = ph; showBanner(ph === 2 ? "ราชินีโกรธแล้ว!" : "ราชินีคลั่ง!", ph === 2 ? "เรียกลูกสมุนมาช่วย" : "กระสุนเกลียว + เลเซอร์", 90, "#FF4F6A"); shake = 10; ring(b.x, b.y, "#FF4F6A", 140); b.mouth = 60; SFX.roar(); }
   b.x += b.dir * (ph === 3 ? 1.1 : 0.7); if (b.x < 110 || b.x > W - 110) b.dir *= -1;
-  b.y = 130 + Math.sin(b.t * 0.02) * 12;
+  b.y = 176 + Math.sin(b.t * 0.02) * 12;
   const aim = (x, y) => Math.atan2(P.y - y, P.x - x);
   b.fireT--;
   if (ph === 1) {
@@ -346,6 +335,7 @@ function stepBoss(b) {
     if (b.fireT <= 0) { b.fireT = 320; game.laser = { x: P.x, t: 0 }; }
     if (b.t % 90 === 0) for (let i = -2; i <= 2; i++) shoot(b.x, b.y + 40, aim(b.x, b.y + 40) + i * 0.12, 3.2, "#FFB84F");
   }
+  if (eb.length > n0) b.mouth = Math.max(b.mouth, 14);
 }
 
 /* ----- shooting ----- */
@@ -455,7 +445,7 @@ function update() {
   if (g.state === "dying") { if (--g.dead <= 0) askContinue(); }
   if (g.state === "clearing") { if (--g.clearT <= 0) endGame(true); }
 }
-function stepBgOnly() { stepStars(); for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; if (--p.life <= 0) parts.splice(i, 1); } }
+function stepBgOnly() { stepStars(); stepIntro(); for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.x += p.vx; p.y += p.vy; if (--p.life <= 0) parts.splice(i, 1); } }
 function stepStars() { const boost = 1 + starBoost * 4 + (game && game.state === "clearing" ? 5 : 0); stars.forEach((L, l) => L.forEach(s => { s.y += [0.3, 0.7, 1.4][l] * boost; if (s.y > H) { s.y = -2; s.x = Math.random() * W; } })); }
 function nearestTarget(x, y) {
   let best = null, bd = 1e9;
@@ -678,43 +668,85 @@ function drawEnemy(e) {
     if (e.hp < e.max) { const x = X(e.x) - 9; g.fillStyle = C.black; g.fillRect(x - 1, X(e.y) - 12, 20, 3); g.fillStyle = C.yellow; g.fillRect(x, X(e.y) - 11, Math.ceil(18 * e.hp / e.max), 1); }
   }
 }
+/* ----- Boss: "Queen Kolos", a horned three-eyed space monster ----- */
+function thick(x0, y0, x1, y1, col, w) { for (let o = -Math.floor(w / 2); o <= Math.floor((w - 1) / 2); o++) { pline(x0 + o, y0, x1 + o, y1, col); pline(x0, y0 + o, x1, y1 + o, col); } }
 function drawBoss(b) {
-  const bx = X(b.x), by = X(b.y), fl = b.flash > 0, rage = b.phase === 3;
+  const bx = X(b.x), by = X(b.y), fl = b.flash > 0 && T % 4 === 0, rage = b.phase === 3;   // brief palette flash, not a solid white blob
   if (b.flash) b.flash--;
-  const pal = fl ? [C.white, C.white, C.white, C.white, C.white] : rage ? [C.pink, C.rose, C.mag, C.plum, C.dred] : [C.lilac, C.lav, C.purple, C.vio, C.navy];
-  /* tentacles: chains of 3x3 blocks */
+  const W8 = c => (fl ? C.white : c);
+  const skin = rage ? [C.rose, C.red, C.dred, C.brown] : [C.lav, C.purple, C.vio, C.navy];
+  const bone = [W8(C.white), W8(C.lgray), W8(C.gray)];
+  const open = Math.max(b.mouth || 0, game.laser && game.laser.t > 30 ? 14 : 0) > 0;
+  /* --- horns: thick curved bone, light on the outer edge --- */
+  [-1, 1].forEach(s => {
+    const pts = [[22, -16], [33, -23], [40, -31], [40, -39], [35, -44]];
+    for (let i = 0; i < pts.length - 1; i++) { const w = 5 - i; thick(bx + s * pts[i][0], by + pts[i][1], bx + s * pts[i + 1][0], by + pts[i + 1][1], bone[1], w); }
+    for (let i = 0; i < pts.length - 1; i++) pline(bx + s * (pts[i][0] + 1), by + pts[i][1], bx + s * (pts[i + 1][0] + 1), by + pts[i + 1][1], bone[0]);
+    for (let i = 0; i < 3; i++) { g.fillStyle = bone[2]; g.fillRect(bx + s * (26 + i * 6) - 1, by - 20 - i * 7, 3, 1); }   // ridges
+  });
+  /* --- arms: segmented, spiked, ending in pincers that hold the cannon orbs --- */
+  const tipsX = [-35, -14, 14, 35], tipsY = [25, 32, 32, 25];
   for (let i = 0; i < 4; i++) {
-    const base = -66 + i * 44, sway = Math.sin(T * 0.05 + i) * 10;
-    for (let j = 0; j <= 10; j++) {
-      const t = j / 10, wx = (1 - t) * (1 - t) * base * 0.8 + 2 * (1 - t) * t * (base + sway) + t * t * (base + sway * 1.5), wy = (1 - t) * (1 - t) * 20 + 2 * (1 - t) * t * 50 + t * t * 70;
-      const x = bx + Math.round(wx / 2), y = by + Math.round(wy / 2);
-      g.fillStyle = fl ? C.white : C.vio; g.fillRect(x - 2, y - 1, 4, 3); g.fillStyle = fl ? C.white : pal[1]; g.fillRect(x - 1, y - 1, 2, 1);
-    }
-    const tx = bx + Math.round((base + sway * 1.5) / 2), ty = by + 36;
-    pdisk(g, tx, ty, 3, (T >> 3) % 2 ? (rage ? C.red : C.rose) : C.white); g.fillStyle = C.dred; g.fillRect(tx - 1, ty + 1, 2, 1);
+    const s = tipsX[i] < 0 ? -1 : 1, sway = Math.round(Math.sin(T * 0.05 + i) * 4);
+    const ax = bx + Math.round(tipsX[i] * 0.7), ay = by + 14, ex = bx + Math.round(tipsX[i] * 1.12) + sway, ey = by + 20, tx = bx + tipsX[i] + Math.round(sway * 1.5), ty = by + tipsY[i];
+    thick(ax, ay, ex, ey, W8(skin[3]), 4); thick(ex, ey, tx, ty - 3, W8(skin[3]), 3);
+    pline(ax, ay - 1, ex, ey - 1, W8(skin[1])); pline(ex, ey - 1, tx, ty - 4, W8(skin[1]));
+    g.fillStyle = bone[0]; g.fillRect(ex - 1, ey - 4, 1, 2); g.fillRect(ex, ey - 5, 1, 2);   // elbow spike
+    const pinch = (T >> 4) % 2 ? 1 : 0;
+    g.fillStyle = bone[1]; g.fillRect(tx - 4 - pinch, ty - 3, 2, 5); g.fillRect(tx + 3 + pinch, ty - 3, 2, 5); g.fillRect(tx - 3 - pinch, ty + 2, 1, 1); g.fillRect(tx + 3 + pinch, ty + 2, 1, 1);
+    pdisk(g, tx, ty, 2, fl ? C.white : (T >> 3) % 2 ? (rage ? C.yellow : C.lime) : C.white);
   }
-  /* hull: scanline-filled ellipse with dithered colour bands */
-  for (let dy = -24; dy <= 24; dy++) {
-    const hw = Math.round(46 * Math.sqrt(1 - (dy / 24) ** 2));
-    const band = dy < -13 ? 0.5 : dy < -4 ? 1.5 : dy < 9 ? 2.5 : 3.5, lowI = Math.floor(band), frac = band - lowI;
+  /* --- back spines along the skull --- */
+  for (let i = -4; i <= 4; i++) {
+    const sx = bx + i * 9, top = by - Math.round(24 * Math.sqrt(Math.max(0, 1 - (i * 9 / 46) ** 2)));
+    const h = 4 + (i % 2 ? 0 : 3);
+    for (let k = 0; k < h; k++) { const half = Math.floor(k / 2); g.fillStyle = k < 2 ? bone[0] : W8(skin[3]); g.fillRect(sx - half, top - h + k + 1, half * 2 + 1, 1); }
+  }
+  /* --- head: skull dome tapering into a jaw, dithered flesh bands --- */
+  for (let dy = -24; dy <= 22; dy++) {
+    const hw = dy < 0 ? Math.round(46 * Math.sqrt(1 - (dy / 24) ** 2)) : Math.round(46 - dy * 1.3);
+    const band = dy < -14 ? 0 : dy < -4 ? 0.5 : dy < 6 ? 1.5 : dy < 14 ? 2 : 2.5;
     for (let dx = -hw; dx <= hw; dx++) {
-      let col = pal[Math.min(4, lowI + ((frac > 0.4 && (dx + dy) % 2 === 0) ? 1 : 0))];
-      if (dx === -hw || dx === hw) col = pal[4];
-      g.fillStyle = col; g.fillRect(bx + dx, by + dy, 1, 1);
+      let i = Math.floor(band) + ((band % 1) && (dx + dy) % 2 === 0 ? 1 : 0);
+      if (Math.abs(dx) > hw - 3 && (dx + dy) % 2 === 0) i = Math.min(3, i + 1);   // rim shading
+      g.fillStyle = W8(Math.abs(dx) >= hw - 0 ? skin[3] : skin[Math.min(3, i)]); g.fillRect(bx + dx, by + dy, 1, 1);
     }
   }
-  /* glass dome (checker dither) */
-  for (let dy = -21; dy <= -6; dy++) { const hw = Math.round(26 * Math.sqrt(Math.max(0, 1 - ((dy + 6) / 15) ** 2))); for (let dx = -hw; dx <= hw; dx++) if ((dx + dy) % 2 === 0) { g.fillStyle = fl ? C.white : C.lilac; g.fillRect(bx + dx, by + dy, 1, 1); } }
-  /* rim lights */
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, on = (i + (T >> 3)) % 3 === 0; g.fillStyle = on ? C.cyan : C.navy; g.fillRect(bx + Math.round(Math.cos(a) * 40) - 1, by + Math.round(Math.sin(a) * 19) + 1, 2, 2); }
-  /* side eyes */
-  [-1, 1].forEach(s => { const ex = bx + s * 25, ey = by + 3; g.fillStyle = C.yellow; g.fillRect(ex - 3, ey - 1, 7, 3); g.fillRect(ex - 2, ey - 2, 5, 5); g.fillStyle = C.black; g.fillRect(ex + clamp(Math.round((P.x - b.x) / 60), -2, 2), ey - 2, 1, 5); });
-  /* core eye */
-  const pulse = (T >> (rage ? 2 : 3)) % 2, a = Math.atan2(P.y - b.y, P.x - b.x);
-  pdisk(g, bx, by + 4, 11 + pulse, fl ? C.white : C.dred); pdisk(g, bx, by + 4, 9 + pulse, fl ? C.white : C.red); pdisk(g, bx, by + 4, 6, fl ? C.white : C.rose); pdisk(g, bx, by + 4, 3, C.white);
-  g.fillStyle = C.black; g.fillRect(bx + Math.round(Math.cos(a) * 3) - 1, by + 4 + Math.round(Math.sin(a) * 2) - 4, 2, 8);
-  if (b.phase >= 2 && !fl) { pline(bx - 20, by - 10, bx - 14, by - 4, C.red); pline(bx - 14, by - 4, bx - 17, by + 2, C.red); pline(bx + 22, by - 7, bx + 15, by - 1, C.red); if (rage) { pline(bx + 5, by - 19, bx + 2, by - 11, C.yellow); pline(bx + 2, by - 11, bx + 7, by - 7, C.yellow); } }
+  /* veins that pulse */
+  if (!fl) { const v = (T >> 3) % 2 ? C.rose : C.red; [[-40, -6, -30, 0], [-30, 0, -33, 8], [40, -6, 31, -1], [31, -1, 34, 7], [-20, -20, -12, -15], [20, -20, 12, -15]].forEach(([a, b2, c, d]) => pline(bx + a, by + b2, bx + c, by + d, v)); }
+  /* bone forehead plate (chevron) */
+  for (let r = 0; r < 8; r++) { const w = 12 - r; for (let dx = -w; dx <= w; dx++) if (Math.abs(dx) > r - 2 || r < 3) { g.fillStyle = (dx + r) % 2 === 0 ? bone[0] : bone[1]; g.fillRect(bx + dx, by - 22 + r, 1, 1); } }
+  /* glowing egg sacs on the cheeks */
+  [-1, 1].forEach(s => { pdisk(g, bx + s * 34, by + 2, 4, W8(skin[3])); pdisk(g, bx + s * 34, by + 2, 3, fl ? C.white : (T >> 4) % 2 ? C.lime : C.lgreen); g.fillStyle = C.white; g.fillRect(bx + s * 34 - 1, by, 1, 1); });
+  /* --- eyes: three slit-pupil eyes under angry brows, blinking sometimes --- */
+  const blink = (b.t % 200) < 6, ang = Math.atan2(P.y - b.y, P.x - b.x);
+  [[0, -7, 6], [-18, -4, 4], [18, -4, 4]].forEach(([ex, ey, r]) => {
+    const x = bx + ex, y = by + ey;
+    thick(x - r - 2, y - r - 3 + (ex < 0 ? -1 : ex > 0 ? 1 : 0), x + r + 2, y - r - 3 + (ex < 0 ? 1 : ex > 0 ? -1 : 0), W8(C.black), 2);   // brow
+    if (ex === 0) { thick(x - r - 2, y - r - 4, x, y - r, W8(C.black), 2); thick(x + r + 2, y - r - 4, x, y - r, W8(C.black), 2); }
+    pdisk(g, x, y, r + 1, W8(rage ? C.dred : C.black));
+    if (blink) { g.fillStyle = W8(skin[2]); g.fillRect(x - r, y, r * 2 + 1, 1); return; }
+    pdisk(g, x, y, r, fl ? C.white : rage ? C.red : C.yellow); pdisk(g, x, y, Math.max(1, r - 2), fl ? C.white : rage ? C.yellow : C.lyellow);
+    const px = x + Math.round(Math.cos(ang) * (r - 2)), py = y + Math.round(Math.sin(ang) * (r - 3));
+    g.fillStyle = C.black; g.fillRect(px, py - r + 1, 1, r * 2 - 1); if (r > 4) g.fillRect(px - 1, py - 2, 3, 5);
+    g.fillStyle = C.white; g.fillRect(x - Math.floor(r / 2), y - Math.floor(r / 2), 1, 1);
+  });
+  /* --- mouth: jagged teeth; gapes open while it fires --- */
+  const my = by + 11, mw = 18;
+  if (open) {
+    const gape = 7 + ((T >> 2) % 2);
+    for (let dy = 0; dy <= gape; dy++) { const w = Math.round(mw * Math.sqrt(1 - (dy / (gape + 1)) ** 2 * 0.4)); g.fillStyle = W8(dy > gape - 2 ? C.dred : C.black); g.fillRect(bx - w, my + dy, w * 2 + 1, 1); }
+    pdisk(g, bx, my + gape - 1, 3, fl ? C.white : C.rose);   // tongue
+    for (let dx = -mw + 1; dx < mw; dx += 4) { g.fillStyle = bone[0]; g.fillRect(bx + dx, my, 3, 1); g.fillRect(bx + dx + 1, my + 1, 1, 2); g.fillRect(bx + dx, my + gape, 3, 1); g.fillRect(bx + dx + 1, my + gape - 2, 1, 2); }
+    if (!fl && rage) { g.fillStyle = C.lime; g.fillRect(bx - 9, my + gape + 1, 1, 2 + ((T >> 3) % 3)); g.fillRect(bx + 7, my + gape + 1, 1, 1 + ((T >> 2) % 3)); }   // drool
+  } else {
+    g.fillStyle = W8(C.black); g.fillRect(bx - mw, my, mw * 2 + 1, 2);
+    for (let dx = -mw + 1; dx < mw; dx += 4) { g.fillStyle = bone[0]; g.fillRect(bx + dx, my - 1, 2, 2); g.fillRect(bx + dx + 2, my + 1, 2, 2); }
+  }
+  /* rage: glowing cracks */
+  if (b.phase >= 2 && !fl) { const c = rage ? C.yellow : C.red; pline(bx - 30, by - 14, bx - 24, by - 9, c); pline(bx - 24, by - 9, bx - 27, by - 3, c); pline(bx + 28, by - 12, bx + 23, by - 6, c); if (rage) { pline(bx + 6, by - 15, bx + 3, by - 11, c); pline(bx - 6, by + 4, bx - 2, by + 7, c); } }
 }
+
 function drawItem(it) {
   const bob = Math.round(Math.sin(it.t * 0.1) * 1.5), x = X(it.x), y = X(it.y) + bob;
   if ((it.t >> 3) % 2 === 0) { g.fillStyle = it.kind === "life" ? C.dred : it.kind === "shield" ? C.navy : C.brown; g.fillRect(x - 6, y - 6, 12, 12); }   // blinking backing plate
@@ -745,7 +777,6 @@ function drawHUD() {
     g.fillStyle = C.white; g.fillRect(x - 2, y - 2, bw + 4, 7); g.fillStyle = C.black; g.fillRect(x - 1, y - 1, bw + 2, 5);
     const w = Math.ceil(bw * b.hp / b.max); for (let i = 0; i < w; i++) { g.fillStyle = i % 4 === 0 ? C.dred : b.phase === 3 ? C.red : C.rose; g.fillRect(x + i, y, 1, 3); }
     g.fillStyle = C.white; [1 / 3, 2 / 3].forEach(f => g.fillRect(x + Math.round(bw * f), y, 1, 3));
-    ptext("ยานแม่เอเลี่ยน", LW / 2, y + 11, 11, C.pink, "center");
   }
 }
 let flashPat = null;
@@ -758,7 +789,7 @@ function render() {
   /* stars: 1px, twinkle by colour swap, streak when warping */
   const boost = 1 + starBoost * 4 + (game && game.state === "clearing" ? 5 : 0);
   stars.forEach((L, l) => L.forEach(s => { const tw = (T + s.tw) % 60 < 6; g.fillStyle = tw ? C.white : [C.gray, C.lgray, C.white][l]; g.fillRect(X(s.x), X(s.y), 1, 1 + (boost > 1 ? Math.round(l * boost * 0.6) : 0)); }));
-  if (!game) { renderTitleShip(); return composite(0, 0); }
+  if (!game) { renderIntro(); return composite(0, 0); }
   items.forEach(drawItem);
   if (game.boss) drawBoss(game.boss);
   enemies.forEach(drawEnemy);
@@ -804,15 +835,154 @@ function composite(ox, oy) {
   ctx.fillStyle = C.black; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.drawImage(lo, ox * k, oy * k, cv.width, cv.height);
 }
-/* title screen: ship cruising */
-const titleShip = { t: 0 };
-function renderTitleShip() {
-  titleShip.t++;
-  const x = W / 2 + Math.sin(titleShip.t * 0.02) * 60, y = H - 140 + Math.sin(titleShip.t * 0.033) * 10;
-  if (!P) P = { x, y, vx: 0, vy: -1, tilt: 0, trail: [], shield: 0, inv: 0, alive: true, hp: 3, maxHp: 5, maxShield: 3, power: 1 };
-  P.vx = x - P.x; P.vy = -3; P.x = x; P.y = y; P.tilt = clamp(Math.cos(titleShip.t * 0.02) * 1.2, -1, 1);
-  P.trail.push({ x, y, tilt: P.tilt }); if (P.trail.length > 7) P.trail.shift();
-  drawPlayer();
+/* ================= Title logo + story crawl ================= */
+const F5 = {
+  S: [" ####", "#    ", "#    ", " ### ", "    #", "    #", "#### "], T: ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  "],
+  A: [" ### ", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"], R: ["#### ", "#   #", "#   #", "#### ", "# #  ", "#  # ", "#   #"],
+  O: [" ### ", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "], M: ["#   #", "## ##", "# # #", "# # #", "#   #", "#   #", "#   #"],
+  I: ["###", " # ", " # ", " # ", " # ", " # ", "###"], H: ["#   #", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"], " ": ["  ", "  ", "  ", "  ", "  ", "  ", "  "],
+};
+/* chunky Latin text with per-row colour bands and a hard drop shadow */
+function bigLatin(str, cx, y, s, bands, shadow) {
+  const width = [...str].reduce((w, ch) => w + (F5[ch] ? F5[ch][0].length + 1 : 3), -1) * s;
+  let x = Math.round(cx - width / 2);
+  for (const ch of str) {
+    const f = F5[ch]; if (!f) { x += 3 * s; continue; }
+    for (let r = 0; r < 7; r++) for (let c = 0; c < f[r].length; c++) if (f[r][c] === "#") {
+      g.fillStyle = shadow; g.fillRect(x + c * s + s, y + r * s + s, s, s);
+      g.fillStyle = bands[Math.min(bands.length - 1, Math.floor(r / 7 * bands.length))]; g.fillRect(x + c * s, y + r * s, s, s);
+    }
+    x += (f[0].length + 1) * s;
+  }
+}
+/* Thai logo: rasterise, threshold, then paint NES colour bands + outline + 2px shadow */
+let LOGO = null;
+function buildLogo() {
+  const size = 34, m = document.createElement("canvas").getContext("2d");
+  m.font = `900 ${size}px ${FONT}`;
+  const w = Math.ceil(m.measureText("พายุดารา").width) + 8, h = Math.ceil(size * 1.7);
+  const t = document.createElement("canvas"); t.width = w; t.height = h; const tc = t.getContext("2d");
+  tc.font = m.font; tc.textBaseline = "middle"; tc.fillStyle = "#fff"; tc.fillText("พายุดารา", 4, h / 2);
+  const a = tc.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) mask[i] = a[i * 4 + 3] > 100 ? 1 : 0;
+  let top = h, bot = 0; for (let i = 0; i < w * h; i++) if (mask[i]) { const y = Math.floor(i / w); top = Math.min(top, y); bot = Math.max(bot, y); }
+  const W2 = w + 6, H2 = h + 6, c = document.createElement("canvas"); c.width = W2; c.height = H2; const o = c.getContext("2d");
+  const at = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x];
+  const near = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(x + dx, y + dy)) return true; return false; };
+  const bands = [C.white, C.lyellow, C.yellow, C.yellow, C.lorange, C.orange, C.red];
+  for (let y = -2; y < h + 2; y++) for (let x = -2; x < w + 2; x++) { if (near(x - 3, y - 3) || at(x - 3, y - 3)) { o.fillStyle = C.navy; o.fillRect(x + 2, y + 2, 1, 1); } }   // shadow
+  for (let y = -2; y < h + 2; y++) for (let x = -2; x < w + 2; x++) { if (!at(x, y) && near(x, y)) { o.fillStyle = C.dred; o.fillRect(x + 2, y + 2, 1, 1); } }   // outline
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (at(x, y)) {
+    const f = (y - top) / Math.max(1, bot - top), bi = f * (bands.length - 1), lo2 = Math.floor(bi);
+    let col = bands[Math.min(bands.length - 1, lo2 + ((bi - lo2 > 0.5 && (x + y) % 2 === 0) ? 1 : 0))];
+    if (!at(x, y - 1)) col = C.white;   // top highlight on every stroke
+    o.fillStyle = col; o.fillRect(x + 2, y + 2, 1, 1);
+  }
+  LOGO = { c, mask, w, h };
+}
+function drawLogo(cx, cy, s) {
+  if (!LOGO) buildLogo();
+  const L = LOGO, dw = Math.round(L.c.width * s), dh = Math.round(L.c.height * s);
+  if (dw < 2) return;
+  g.drawImage(L.c, Math.round(cx - dw / 2), Math.round(cy - dh / 2), dw, dh);
+  if (s === 1) {   // sweeping glint every 4 seconds
+    const ph = (T % 240) - 40;
+    if (ph >= 0 && ph < L.w + L.h) { g.fillStyle = C.white; const ox = Math.round(cx - L.c.width / 2) + 2, oy = Math.round(cy - L.c.height / 2) + 2; for (let y = 0; y < L.h; y++) for (let k = 0; k < 3; k++) { const x = ph - y + k; if (x >= 0 && x < L.w && L.mask[y * L.w + x]) g.fillRect(ox + x, oy + y, 1, 1); } }
+  }
+}
+
+/* story text for the crawl (original) */
+const CRAWL = [
+  ["ตอนที่ 1", 15, "big"], ["ราชินีโคลอสตื่นแล้ว", 15, "big"], ["", 8],
+  ["หลังสงบศึกมานานร้อยปี", 12], ["ฝูงเอเลี่ยน “โคลอส” คืบคลาน", 12], ["ออกมาจากรอยแยกมิติ", 12], ["ณ ขอบกาแล็กซี", 12], ["", 8],
+  ["พวกมันกลืนกินสถานีอวกาศ", 12], ["ทีละแห่ง ทีละดวงดาว", 12], ["จนเหลือเพียงฐานทัพสุดท้าย", 12], ["ของสหพันธ์ดารา", 12], ["", 8],
+  ["ใจกลางฝูงคือ “ราชินีโคลอส”", 12], ["สัตว์ประหลาดสามตาขนาดมหึมา", 12], ["ผู้ให้กำเนิดเอเลี่ยนนับล้าน", 12], ["", 8],
+  ["นักบินคนสุดท้ายที่เหลืออยู่", 12], ["ขึ้นยานรบต้นแบบ “สตาร์สตอร์ม”", 12], ["บุกตรงเข้าสู่รังของมัน....", 12], ["", 8],
+  ["ชะตาของดวงดาวทั้งมวล", 12], ["อยู่ในมือคุณแล้ว", 12],
+];
+let CRAWLC = null;
+function buildCrawl() {
+  const tw = 300, k = 1.75, lines = CRAWL.map(([s, sz, kind]) => ({ s, sz: Math.round(sz * k), kind })), lh = l => Math.round(l.sz * 1.5);
+  const th = lines.reduce((a, l) => a + lh(l), 0) + 20;
+  const c = document.createElement("canvas"); c.width = tw; c.height = th; const o = c.getContext("2d");
+  o.textAlign = "center"; o.textBaseline = "middle"; o.fillStyle = "#fff";
+  let y = 0;
+  lines.forEach(l => { if (l.s) { o.font = `${l.kind ? 900 : 700} ${l.sz}px ${FONT}`; o.fillText(l.s, tw / 2, y + lh(l) / 2); } y += lh(l); });
+  CRAWLC = { c, h: th, w: tw, layer: document.createElement("canvas") };
+  CRAWLC.layer.width = LW; CRAWLC.layer.height = LH;
+}
+
+/* ----- intro scenes: "title" -> "crawl" -> game ----- */
+const intro = { scene: "title", t: 0, scroll: 0 };
+/* crawl camera: vanishing point above the screen so lines stay readable most of the way up */
+const CR = { horizon: -200, F: 540800, zNear: 1040, F2: 614, endZ: 2400 };
+function stepIntro() {
+  intro.t++;
+  if (intro.scene === "crawl" && intro.t > 300) {
+    intro.scroll += 0.95;
+    if (!CRAWLC) buildCrawl();
+    intro.done = CR.zNear + intro.scroll - CRAWLC.h > CR.endZ;
+  }
+}
+function advanceIntro() {
+  audio();
+  if (intro.scene === "title") { intro.scene = "crawl"; intro.t = 0; intro.scroll = 0; intro.done = false; stopMusic(); }
+  else start();
+}
+function renderIntro() {
+  if (intro.scene === "title") return renderTitle();
+  const t = intro.t;
+  /* 1) opening lines (blue) */
+  if (t < 160) {
+    const vis = t > 20 && t < 140 && !((t < 32 || t > 128) && T % 2);
+    if (vis) { ptext("ปีดาราศักราช 2187", LW / 2, 140, 11, C.sky, "center"); ptext("ณ ขอบนอกของทางช้างเผือก....", LW / 2, 158, 11, C.sky, "center"); }
+  }
+  /* 2) logo flies away into the stars, music starts */
+  if (t === 160) playMusic("title");
+  if (t >= 160 && t < 330) { const k = (t - 160) / 170; drawLogo(LW / 2, 150, Math.max(0, 2.2 * Math.pow(1 - k, 2.2))); }
+  /* 3) perspective crawl */
+  if (t >= 300) {
+    if (!CRAWLC) buildCrawl();
+    /* screen row y sees the text plane at distance z = F/(y - horizon); text row u = scroll - (z - zNear) */
+    /* each screen row takes the band of text rows it covers, scaled smoothly, then snapped back to hard pixels */
+    const { horizon, F, zNear, F2 } = CR, L = CRAWLC.layer, lc = L.getContext("2d");
+    lc.clearRect(0, 0, LW, LH); lc.imageSmoothingEnabled = true;
+    for (let y = 30; y < LH; y++) {
+      const z = F / (y - horizon), z2 = F / (y + 1 - horizon), u = intro.scroll - (z - zNear), du = Math.max(1, z - z2);
+      if (u + du < 0 || u >= CRAWLC.h) continue;
+      const sc = F2 / z, dw = CRAWLC.w * sc;
+      lc.drawImage(CRAWLC.c, 0, Math.max(0, u), CRAWLC.w, Math.min(du, CRAWLC.h - Math.max(0, u)), LW / 2 - dw / 2, y, dw, 1);
+    }
+    const id = lc.getImageData(0, 0, LW, LH), d = id.data, cols = [C.lyellow, C.yellow, C.orange].map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
+    for (let y = 30; y < LH; y++) {
+      const band = y > 170 ? 0 : y > 90 ? 1 : 2, thr = y > 90 ? 96 : 70;
+      for (let x = 0; x < LW; x++) {
+        const i = (y * LW + x) * 4, on = d[i + 3] > thr && !(y < 70 && (x + y) % 2) && !(y < 46 && (y >> 1) % 2);
+        if (on) { d[i] = cols[band][0]; d[i + 1] = cols[band][1]; d[i + 2] = cols[band][2]; d[i + 3] = 255; } else d[i + 3] = 0;
+      }
+    }
+    lc.putImageData(id, 0, 0); g.drawImage(L, 0, 0);
+    if (intro.done && (T >> 4) % 2) ptext("▶ แตะเพื่อเริ่มภารกิจ", LW / 2, LH / 2, 13, C.white, "center", C.blue);
+  }
+  if (!intro.done && (T >> 5) % 2) ptext("แตะเพื่อข้าม ▶", 8, 14, 11, C.gray, "left");
+}
+function renderTitle() {
+  const t = intro.t;
+  bigLatin("STAR STORM", LW / 2, 34, 1, [C.pale, C.sky, C.sky, C.blue, C.blue, C.navy], C.black);
+  g.fillStyle = C.blue; g.fillRect(30, 45, 120, 1); g.fillStyle = C.navy; g.fillRect(40, 47, 100, 1);
+  drawLogo(LW / 2, 80, 1);
+  ptext("ตอนที่ 1 · ราชินีโคลอส", LW / 2, 116, 12, C.lilac, "center");
+  /* hero ship at 2x, banking left and right */
+  const sx = LW / 2 + Math.round(Math.sin(t * 0.02) * 22), sy = 170 + Math.round(Math.sin(t * 0.05) * 3), tilt = Math.cos(t * 0.02);
+  const fl = S.flameLong[(T >> 2) % 2], sh = (tilt < -0.5 ? S.shipL : tilt > 0.5 ? S.shipR : S.ship)[(T >> 4) % 2];
+  if (T % 2 === 0) { const gh = S.ghost[tilt < -0.5 ? 1 : tilt > 0.5 ? 2 : 0]; g.drawImage(gh, sx - Math.round(Math.sin(t * 0.02 - 0.3) * 6) - gh.width, sy + 8 - gh.height, gh.width * 2, gh.height * 2); }
+  g.drawImage(fl, sx - fl.width, sy + 14, fl.width * 2, fl.height * 2);
+  g.drawImage(sh, sx - sh.width, sy - sh.height, sh.width * 2, sh.height * 2);
+  if ((T >> 4) % 2) ptext("▶ แตะเพื่อเริ่ม", LW / 2, 224, 15, C.white, "center");
+  /* legend + controls */
+  [["life", "ชีวิต"], ["shield", "เกราะ"], ["power", "ปืน"]].forEach(([k, l], i) => { const x = 34 + i * 56; spr(S[k], x - 10, 252); ptext(l, x - 3, 252, 12, C.lgray, "left"); });
+  ptext("ลากนิ้วบังคับยาน · ยิงอัตโนมัติ", LW / 2, 276, 12, C.lgray, "center");
+  if (opt.hi) { bigLatin("HI", LW / 2 - 30, 300, 1, [C.yellow], C.brown); digits(String(opt.hi).padStart(6, "0"), LW / 2 + 10, 301, C.white, 1, C.blue); }
 }
 
 /* ================= Loop & flow ================= */
@@ -825,11 +995,10 @@ function frame(now) {
     render();
   } catch (e) { acc = 0; console.error(e); }
 }
-const $menu = document.getElementById("menu"), $pause = document.getElementById("pauseOv"), $end = document.getElementById("endOv"), $pauseBtn = document.getElementById("pauseBtn");
-function start() { audio(); $menu.hidden = true; $end.hidden = true; $cont.hidden = true; newGame(); $pauseBtn.hidden = false; playMusic("stage"); }
-document.getElementById("startBtn").onclick = start;
+const $pause = document.getElementById("pauseOv"), $end = document.getElementById("endOv"), $pauseBtn = document.getElementById("pauseBtn");
+function start() { audio(); $end.hidden = true; $cont.hidden = true; newGame(); $pauseBtn.hidden = false; playMusic("stage"); }
 document.getElementById("againBtn").onclick = start;
-function toMenu() { stopMusic(); $cont.hidden = true; game = null; P = null; parts.length = 0; $end.hidden = true; $pause.hidden = true; paused = false; $pauseBtn.hidden = true; $menu.hidden = false; showHi(); }
+function toMenu() { stopMusic(); $cont.hidden = true; game = null; P = null; parts.length = 0; $end.hidden = true; $pause.hidden = true; paused = false; $pauseBtn.hidden = true; intro.scene = "title"; intro.t = 0; }
 document.getElementById("menuBtn").onclick = toMenu; document.getElementById("quitBtn").onclick = toMenu;
 function pauseGame() { if (paused || !game || game.state !== "play") return; paused = true; document.getElementById("pauseScore").textContent = "คะแนน " + game.score; $pause.hidden = false; document.getElementById("resumeBtn").focus(); }
 $pauseBtn.onclick = pauseGame;
@@ -873,13 +1042,12 @@ function endGame(win, quiet) {
   document.getElementById("endNote").innerHTML = (win ? `โบนัสชีวิตและเกราะที่เหลือรวมแล้ว<br>` : `ถึงระลอก ${Math.min(game.wave, WAVES.length)}${game.boss || game.bossIncoming ? " (บอส)" : ""}<br>`) + `ยิงเอเลี่ยนตก ${game.kills} ตัว` + (game.continues ? ` · เล่นต่อ ${game.continues} ครั้ง` : "") + (newHi ? "<br><b style='color:#FFD25A'>สถิติใหม่!</b>" : "");
   $end.hidden = false; document.getElementById("againBtn").focus();
 }
-function showHi() { document.getElementById("hiText").textContent = opt.hi ? "คะแนนสูงสุด " + opt.hi.toLocaleString() : ""; }
 document.getElementById("soundBtn").onclick = e => { opt.sound = !opt.sound; saveOpt(); e.currentTarget.textContent = opt.sound ? "♪" : "×"; e.currentTarget.style.color = opt.sound ? "" : "#7C7C7C"; if (opt.sound) audio(); if (music.bus) music.bus.gain.setValueAtTime(opt.sound ? 1 : 0, ac.currentTime); };
 document.getElementById("soundBtn").textContent = opt.sound ? "♪" : "×";
 FONT = getComputedStyle(document.body).fontFamily;
 buildSprites();
-document.querySelectorAll("[data-icon]").forEach(c => { const x = c.getContext("2d"); x.drawImage(S[c.dataset.icon], 0, 0); });
-fit(); showHi(); requestAnimationFrame(frame);
+
+fit(); requestAnimationFrame(frame);
 </script>
 </body>
 </html>
