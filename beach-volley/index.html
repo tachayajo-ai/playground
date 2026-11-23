@@ -39,6 +39,15 @@ canvas { display: block; width: 100%; height: 100%; }
 .land .pad .tb.hit { background: rgba(255,122,89,.42); }
 .port .pad { height: 170px; }
 .nopad .pad { display: none; }
+/* ----- joystick (left/right) ----- */
+.joyzone { position: relative; flex: 0 0 auto; width: 170px; height: 130px; touch-action: none; }
+.joy { position: absolute; left: 50%; top: 50%; width: 132px; height: 72px; margin: -36px 0 0 -66px; border-radius: 36px; border: 2px solid rgba(255,255,255,.5); background: rgba(255,255,255,.16); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); transition: left .15s ease, top .15s ease, opacity .15s; pointer-events: none; }
+.joy::before, .joy::after { position: absolute; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,.65); font-size: 16px; font-weight: 700; }
+.joy::before { content: "◀"; left: 10px; } .joy::after { content: "▶"; right: 10px; }
+.joy .knob { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF, #DDE8F2 60%, #B9C9D8); box-shadow: 0 3px 8px rgba(0,0,0,.3), inset 0 -3px 0 rgba(0,0,0,.08); }
+.joy.on { transition: opacity .15s; background: rgba(255,255,255,.24); }
+.land .pad .joyzone { pointer-events: auto; width: 42vw; height: 58vh; align-self: flex-end; margin-bottom: -10px; }
+.land .pad .joy { left: 110px; top: auto; bottom: 30px; margin-top: 0; }
 
 /* ----- top-right small buttons ----- */
 .corner { position: absolute; top: 6px; display: flex; gap: 6px; z-index: 3; }
@@ -96,7 +105,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         </div>
         <button class="go" id="startBtn">เริ่มเล่น</button>
         <div class="help">
-          <b>มือถือ:</b> ◀ ▶ เดิน · ▲ กระโดด · ⚡ ตบ (กดตอนลอยตัวใกล้ลูก)<br>
+          <b>มือถือ:</b> ลากจอยซ้าย-ขวาเพื่อเดิน (ลากสุดวิ่งเร็ว แตะตรงไหนในฝั่งซ้ายก็ได้) · ▲ กระโดด · ⚡ ตบ (กดตอนลอยตัวใกล้ลูก)<br>
           <b>คีย์บอร์ด:</b> ← → หรือ A D เดิน · ↑ หรือ W กระโดด · Space ตบ<br>
           <b>เทคนิค:</b> ตอนตบ กดทิศเข้าหาเน็ต = ตบพุ่งแรง · กดทิศถอยหลัง = หยอดโด่ง · ไม่กดทิศ = ตบปักลงพื้น
         </div>
@@ -122,7 +131,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
   <div class="rot" id="rotHint" hidden>📱↻ หมุนจอเป็นแนวนอนจะเล่นง่ายขึ้น</div>
   <div class="pad" id="pad">
-    <div class="grp"><button class="tb" data-k="left" aria-label="เดินซ้าย">◀</button><button class="tb" data-k="right" aria-label="เดินขวา">▶</button></div>
+    <div class="joyzone" id="joyzone" aria-label="จอยสติ๊ก ลากซ้าย-ขวาเพื่อเดิน" role="slider" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0"><div class="joy" id="joy"><div class="knob" id="knob"></div></div></div>
     <div class="grp"><button class="tb" data-k="jump" aria-label="กระโดด">▲</button><button class="tb hit" data-k="hit" aria-label="ตบ">⚡</button></div>
   </div>
 </div>
@@ -197,7 +206,7 @@ const SFX = {
 };
 
 /* ================= Input ================= */
-const input = { left: false, right: false, jump: false, hit: false, jumpEdge: 0, hitEdge: 0 };
+const input = { left: false, right: false, jump: false, hit: false, jumpEdge: 0, hitEdge: 0, speed: 1 };
 function press(k, on) {
   if (k === "jump" && on && !input.jump) input.jumpEdge = 7;
   if (k === "hit" && on && !input.hit) input.hitEdge = 7;
@@ -210,12 +219,41 @@ document.querySelectorAll(".tb").forEach(b => {
   b.addEventListener("pointerdown", down); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up); b.addEventListener("lostpointercapture", up);
   b.addEventListener("contextmenu", e => e.preventDefault());
 });
+/* ----- joystick: floating, horizontal only, analog speed ----- */
+(function () {
+  const zone = document.getElementById("joyzone"), joy = document.getElementById("joy"), knob = document.getElementById("knob");
+  const RANGE = 44, DEAD = 7;
+  let id = null, cx = 0;
+  const set = dx => {
+    knob.style.transform = `translateX(${dx}px)`;
+    const a = Math.abs(dx);
+    input.left = dx < -DEAD; input.right = dx > DEAD;
+    input.speed = a <= DEAD ? 1 : 0.5 + 0.5 * Math.min(1, (a - DEAD) / (RANGE * 0.7));
+    zone.setAttribute("aria-valuenow", (dx / RANGE).toFixed(1));
+  };
+  zone.addEventListener("pointerdown", e => {
+    if (id !== null) return;
+    e.preventDefault(); audio(); id = e.pointerId; zone.setPointerCapture && zone.setPointerCapture(e.pointerId);
+    /* the base jumps to where the thumb lands, so any spot on the left works */
+    const r = zone.getBoundingClientRect(), w = joy.offsetWidth, h = joy.offsetHeight;
+    const lx = Math.max(w / 2, Math.min(r.width - w / 2, e.clientX - r.left)), ly = Math.max(h / 2, Math.min(r.height - h / 2, e.clientY - r.top));
+    joy.style.left = lx - w / 2 + "px"; joy.style.top = ly - h / 2 + "px"; joy.style.bottom = "auto"; joy.style.margin = "0";
+    joy.classList.add("on"); cx = r.left + lx; set(Math.max(-RANGE, Math.min(RANGE, e.clientX - cx)));
+  });
+  zone.addEventListener("pointermove", e => { if (e.pointerId === id) set(Math.max(-RANGE, Math.min(RANGE, e.clientX - cx))); });
+  const up = e => {
+    if (e.pointerId !== id) return; id = null; set(0); input.left = input.right = false; input.speed = 1;
+    joy.classList.remove("on"); joy.style.left = joy.style.top = joy.style.bottom = joy.style.margin = "";
+  };
+  zone.addEventListener("pointerup", up); zone.addEventListener("pointercancel", up); zone.addEventListener("lostpointercapture", up);
+  zone.addEventListener("contextmenu", e => e.preventDefault());
+})();
 const KEYMAP = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", ArrowUp: "jump", KeyW: "jump", Space: "hit", Enter: "hit", KeyJ: "hit" };
 window.addEventListener("keydown", e => {
   if (e.code === "Escape" || e.code === "KeyP") { if (state === "play" || state === "serve" || state === "point") pauseGame(); return; }
   const k = KEYMAP[e.code]; if (!k) return;
   if (!menuOpen()) e.preventDefault();
-  if (!e.repeat) press(k, true);
+  if (!e.repeat) { press(k, true); if (k === "left" || k === "right") input.speed = 1; }
 });
 window.addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) press(k, false); });
 window.addEventListener("blur", () => { ["left", "right", "jump", "hit"].forEach(k => (input[k] = false)); });
@@ -386,7 +424,7 @@ function stepParts() {
 /* ================= Game flow ================= */
 function update() {
   stateT--;
-  const pc = { left: input.left, right: input.right, jumpEdge: input.jumpEdge, hitEdge: input.hitEdge };
+  const pc = { left: input.left, right: input.right, jumpEdge: input.jumpEdge, hitEdge: input.hitEdge, speed: input.speed };
   const pctl = demo ? botB.ctl : pc;
   if (demo) botB.update(); bot.update();
   if (state === "serve" || state === "play") {
