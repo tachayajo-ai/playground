@@ -141,16 +141,16 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* ================= World ================= */
 const W = 480, H = 300, GROUND = 262, NET_X = 240, NET_TOP = 172, NET_HALF = 3;
 const CR = 23, BR = 11;                       // character / ball radius
-const G_BALL = 0.21, G_CHAR = 0.42, JUMP_V = -8.7, RUN = 4.7, MAXV = 14;
+const G_BALL = 0.21, G_CHAR = 0.42, JUMP_V = -10.2, RUN = 4.7, MAXV = 15;
 const KINDS = [
   { id: "cat", name: "ส้มจี๊ด", sub: "แมวส้ม" },
   { id: "peng", name: "ปิงกุ", sub: "เพนกวิน" },
   { id: "bun", name: "โมจิ", sub: "กระต่าย" },
 ];
 const DIFF = [
-  { name: "ชิลล์", err: 30, react: 18, speed: 0.72, jump: 0.35, spike: 0.25, think: 0.6 },
-  { name: "ปกติ", err: 14, react: 9, speed: 0.9, jump: 0.7, spike: 0.6, think: 0.85 },
-  { name: "โปร", err: 4, react: 3, speed: 1.0, jump: 0.95, spike: 0.92, think: 1 },
+  { name: "ชิลล์", err: 30, react: 18, speed: 0.72, jump: 0.3, spike: 0.25, think: 0.6 },
+  { name: "ปกติ", err: 17, react: 10, speed: 0.86, jump: 0.5, spike: 0.55, think: 0.82 },
+  { name: "โปร", err: 10, react: 6, speed: 0.96, jump: 0.75, spike: 0.85, think: 0.94 },
 ];
 const KEY = "beach-volley-v1";
 let opt = { kind: 0, diff: 1, target: 11, sound: true };
@@ -307,9 +307,9 @@ function collideChar(c, ctl) {
   if (c.spikeT > 0 && d < CR + BR + 16 && ball.y < cc.y + 8) {
     const toNet = -c.side, held = (ctl.right ? 1 : 0) - (ctl.left ? 1 : 0);
     let vx, vy;
-    if (held === toNet) { vx = toNet * 12.5; vy = 2.6; }            // fast & flat
+    if (held === toNet) { vx = toNet * 13.5; vy = 3; }            // fast & flat
     else if (held === -toNet) { vx = toNet * 4.2; vy = -6.8; }   // soft lob
-    else { vx = toNet * 9.6; vy = 7.4; }                          // steep smash
+    else { vx = toNet * 10.6; vy = 8.4; }                          // steep smash
     /* the arm "aims": never drive the ball into the net — flatten the shot until it clears the top */
     const dxNet = Math.abs(NET_X - ball.x);
     if (dxNet > 2) {
@@ -402,7 +402,14 @@ function Bot(c, other, level) {
       if (plan) { const d = plan.x - c.x; if (d > 4) ctl.right = true; else if (d < -4) ctl.left = true; }
       /* jump & spike */
       const cc = charCenter(c), dx = ball.x - c.x, mine = c.side < 0 ? ball.x < NET_X - 4 : ball.x > NET_X + 4;
-      if (c.ground && mine && Math.abs(dx) < 34 && ball.y < cc.y - 40 && ball.y > cc.y - 125 && ball.vy > -1.5 && Math.random() < L.jump * 0.25) ctl.jumpEdge = 2;
+      /* jump timing: look ahead to where the ball will be when we are near the top of our jump */
+      if (c.ground && state === "play" && Math.abs(dx) < 90 && Math.random() < L.jump * 0.3) {
+        const k = Math.round(-JUMP_V / G_CHAR * 0.82), rise = -JUMP_V * k - G_CHAR * k * k / 2;
+        const b = { x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy };
+        for (let i = 0; i < k; i++) stepBall(b, true);
+        const onMine = c.side < 0 ? b.x < NET_X - 4 : b.x > NET_X + 4;
+        if (onMine && Math.abs(b.x - c.x) < 24 && Math.abs(b.y - (cc.y - rise)) < 28) ctl.jumpEdge = 2;
+      }
       if (!c.ground && !c.spiked && Math.hypot(dx, ball.y - cc.y) < CR + BR + 14 && ball.y < cc.y + 4 && Math.random() < L.spike) {
         ctl.hitEdge = 2;
         const r = Math.random(), toNet = -c.side;
