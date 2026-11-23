@@ -97,7 +97,7 @@ function fit() {
 }
 window.addEventListener("resize", fit);
 const KEY = "star-storm-v1";
-let opt = { sound: true, hi: 0 };
+let opt = { sound: true, hi: 0, unlocked: 1 };
 try { Object.assign(opt, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
 const saveOpt = () => { try { localStorage.setItem(KEY, JSON.stringify(opt)); } catch (e) {} };
 const rand = (a, b) => a + Math.random() * (b - a), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -108,7 +108,7 @@ const C = {
   black: "#000000", white: "#FCFCFC", lgray: "#BCBCBC", gray: "#7C7C7C", navy: "#0000BC", blue: "#0058F8", sky: "#3CBCFC", pale: "#A4E4FC",
   vio: "#4428BC", purple: "#6844FC", lav: "#9878F8", lilac: "#D8B8F8", mag: "#D800CC", plum: "#940084", pink: "#F878F8", rose: "#F85898",
   red: "#E40058", dred: "#A80020", orange: "#E45C10", lorange: "#FCA044", yellow: "#F8B800", lyellow: "#F8D878", brown: "#881400",
-  green: "#00A800", lgreen: "#58D854", dgreen: "#005800", lime: "#B8F818", cyan: "#00E8D8",
+  green: "#00A800", lgreen: "#58D854", dgreen: "#005800", lime: "#B8F818", cyan: "#00E8D8", dgray: "#545454",
 };
 
 /* ================= Sound: pulse/triangle/noise like the Famicom APU ================= */
@@ -154,6 +154,7 @@ const SFX = {
   item: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.07, "p25", 0.06, null, i * 0.06)),
   warn: () => { for (let i = 0; i < 4; i++) { tone(660, 0.22, "p50", 0.05, null, i * 0.5); tone(440, 0.22, "p50", 0.05, null, i * 0.5 + 0.25); } },
   laser: () => tone(220, 0.8, "p12", 0.07, 55),
+  horn: () => { tone(98, 1.3, "p50", 0.08); tone(73, 1.3, "triangle", 0.22); tone(147, 1.0, "p25", 0.04, null, 0.35); },
   roar: () => { noise(1.1, 0.4, 420); tone(150, 1.0, "p50", 0.07, 45); tone(98, 1.1, "triangle", 0.2, 33); },
   win: () => [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, i === 5 ? 0.5 : 0.12, "p25", 0.07, null, i * 0.13)),
   lose: () => [392, 370, 349, 330].forEach((f, i) => tone(f, i === 3 ? 0.6 : 0.2, "p50", 0.06, null, i * 0.22)),
@@ -161,6 +162,11 @@ const SFX = {
 
 /* ----- original chiptune: stage + boss loops (MIDI note numbers, 0 = rest, one value per 8th note) ----- */
 const SONGS = {
+  stage2: { bpm: 152,
+    lead: [62,0,65,69, 74,0,72,69,  70,0,69,65, 67,0,65,64,  62,0,65,69, 74,0,77,76,  74,72,70,69, 67,0,0,0,
+           70,0,70,72, 74,0,72,70,  69,0,69,70, 72,0,70,69,  67,69,70,72, 74,76,77,79,  81,0,79,77, 76,0,73,0],
+    bass: [38,50,38,50, 38,50,38,50,  46,58,46,58, 43,55,43,55,  38,50,38,50, 45,57,45,57,  46,58,46,58, 45,57,45,57],
+    drum: [1,0,2,0, 1,1,2,1] },
   title: { bpm: 112,
     lead: [62,0,62,64, 66,0,69,0,  71,69,66,0, 64,0,0,0,  62,0,62,64, 66,0,74,0,  73,71,69,0, 0,0,0,0,
            71,0,71,69, 67,0,66,0,  64,66,67,0, 62,0,0,0,  64,0,66,67, 69,0,71,73, 74,0,0,0, 74,0,0,0],
@@ -206,6 +212,7 @@ function scheduleMusic() {
 const keys = {};
 window.addEventListener("keydown", e => {
   if (!game && (e.code === "Enter" || e.code === "Space")) { e.preventDefault(); advanceIntro(); return; }
+  if (!game && e.code === "Digit2" && intro.scene === "title" && (opt.unlocked || 1) >= 2) { advanceIntro(undefined, 2); return; }
   if (e.code === "KeyP" || e.code === "Escape") { if (game && game.state === "play") pauseGame(); return; }
   if (/Arrow|Key[WASD]/.test(e.code) && game && game.state === "play") e.preventDefault();
   keys[e.code] = true;
@@ -214,7 +221,7 @@ window.addEventListener("keyup", e => (keys[e.code] = false));
 window.addEventListener("blur", () => { for (const k in keys) keys[k] = false; if (game && game.state === "play") pauseGame(); });
 let drag = null;
 cv.addEventListener("pointerdown", e => {
-  audio(); if (!game) { advanceIntro(); return; } if (game.state !== "play") return;
+  audio(); if (!game) { const r = cv.getBoundingClientRect(); advanceIntro((e.clientY - r.top) / r.height * LH); return; } if (game.state !== "play") return;
   e.preventDefault(); cv.setPointerCapture(e.pointerId);
   drag = { id: e.pointerId, px: e.clientX, py: e.clientY, sx: P.tx, sy: P.ty };
 });
@@ -232,28 +239,30 @@ const stars = [0, 1, 2].map(l => Array.from({ length: [40, 24, 12][l] }, () => (
 function stepStars() { const boost = 1 + starBoost * 4 + (game && game.state === "clearing" ? 5 : 0); stars.forEach((L, l) => L.forEach(s => { s.y += [0.3, 0.7, 1.4][l] * boost; if (s.y > H) { s.y = -2; s.x = Math.random() * W; } })); }
 function pdisk(c, cx, cy, r, col) { c.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy) + 0.5); c.fillRect(cx - w, cy + dy, w * 2 + 1, 1); } }
 function buildBg() {
-  const c = document.createElement("canvas"); c.width = LW; c.height = LH; const b = c.getContext("2d");
-  b.fillStyle = C.black; b.fillRect(0, 0, LW, LH);
-  /* dithered nebula blobs (checkerboard density falls off with distance) */
+  const TH = 640, c = document.createElement("canvas"); c.width = LW; c.height = TH; const b = c.getContext("2d");
+  b.fillStyle = C.black; b.fillRect(0, 0, LW, TH);
+  /* dithered nebula blobs; pixels wrap vertically so the tile scrolls without a seam */
   let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  [[30, 70, 44, C.vio], [150, 190, 50, C.navy], [70, 290, 40, C.plum], [160, 40, 30, C.navy]].forEach(([x, y, r, col]) => {
+  [[30, 70, 44, C.vio], [150, 190, 50, C.navy], [70, 290, 40, C.plum], [160, 40, 30, C.navy], [40, 430, 46, C.navy], [140, 520, 40, C.vio], [90, 610, 30, C.plum]].forEach(([x, y, r, col]) => {
     b.fillStyle = col;
     for (let py = y - r; py < y + r; py++) for (let px = x - r; px < x + r; px++) {
       const d = Math.hypot(px - x, py - y) / r; if (d > 1) continue;
-      const dens = 1 - d;   // 0..1
-      const pat = (px + py) % 2 === 0 ? 0.5 : 0.25;
-      if ((dens > 0.55 && (px + py) % 2 === 0) || (dens > 0.25 && px % 2 === 0 && py % 2 === 0 && rnd() < 0.9) || (rnd() < dens * 0.08 * pat)) b.fillRect(px, py, 1, 1);
+      const dens = 1 - d, pat = (px + py) % 2 === 0 ? 0.5 : 0.25, wy = ((py % TH) + TH) % TH;
+      if ((dens > 0.55 && (px + py) % 2 === 0) || (dens > 0.25 && px % 2 === 0 && py % 2 === 0 && rnd() < 0.9) || (rnd() < dens * 0.08 * pat)) b.fillRect(px, wy, 1, 1);
     }
   });
-  /* ringed planet with dithered shading */
-  const px = 148, py = 125, r = 15;
-  b.fillStyle = C.lilac; const ring = (front) => { for (let a = 0; a < Math.PI * 2; a += 0.02) { const x = Math.round(px + Math.cos(a) * 26), y = Math.round(py + Math.sin(a) * 6 * 1 - Math.cos(a) * 3); if ((Math.sin(a) > 0) === front) b.fillRect(x, y, 1, 1); } };
-  ring(false);
-  for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy) + 0.5); for (let dx = -w; dx <= w; dx++) {
-    const l = (-dx - dy) / (r * 1.4);   // light from top-left
-    let col = C.purple; if (l > 0.35) col = (l > 0.6 || (dx + dy) % 2 === 0) ? C.lav : C.purple; else if (l < -0.3) col = (l < -0.6 || (dx + dy) % 2 === 0) ? C.vio : C.purple;
-    b.fillStyle = col; b.fillRect(px + dx, py + dy, 1, 1); } }
-  b.fillStyle = C.lilac; ring(true);
+  /* ringed planet + a small moon, dithered shading */
+  const planet = (px, py, r, ringed, cols) => {
+    b.fillStyle = C.lilac; const ring = front => { for (let a = 0; a < Math.PI * 2; a += 0.02) { const x = Math.round(px + Math.cos(a) * r * 1.75), y = Math.round(py + Math.sin(a) * r * 0.4 - Math.cos(a) * 3); if ((Math.sin(a) > 0) === front) b.fillRect(x, y, 1, 1); } };
+    if (ringed) ring(false);
+    for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy) + 0.5); for (let dx = -w; dx <= w; dx++) {
+      const l = (-dx - dy) / (r * 1.4);
+      let col = cols[1]; if (l > 0.35) col = (l > 0.6 || (dx + dy) % 2 === 0) ? cols[0] : cols[1]; else if (l < -0.3) col = (l < -0.6 || (dx + dy) % 2 === 0) ? cols[2] : cols[1];
+      b.fillStyle = col; b.fillRect(px + dx, py + dy, 1, 1); } }
+    if (ringed) { b.fillStyle = C.lilac; ring(true); }
+  };
+  planet(148, 125, 15, true, [C.lav, C.purple, C.vio]);
+  planet(34, 470, 7, false, [C.lgray, C.gray, C.dgray]);
   bgCanvas = c;
 }
 
@@ -273,11 +282,18 @@ let game = null, P = null, T = 0;
 const pb = [], eb = [], enemies = [], items = [], parts = [], rings = [], pops = [];
 let shake = 0, flash = 0, banner = null, starBoost = 0;
 
-function newGame() {
+const STAGES = {
+  1: { waves: null, names: ["ฝูงแรกมาแล้ว", "ระวังตัวพุ่ง!", "ยานหุ้มเกราะ", "ฝูงใหญ่", "ด่านสุดท้ายก่อนบอส"], warn: "ราชินีโคลอสกำลังเข้ามา", music: "stage", sub: "เตรียมรับมือ!" },
+  2: { waves: null, names: ["ฝูงเครื่องบินรบ", "ป้อมปืนบนป้อมดาว", "รบหนัก", "ฝ่าแนวป้องกัน", "ประตูท่าเรือธง"], warn: "เรือธงเดรดนอตกำลังเข้ามา", music: "stage2", sub: "ป้อมดาวเหล็ก" },
+};
+const STAGE = () => STAGES[game.stage];
+function newGame(stage, carry) {
+  stage = stage || 1;
   booms.length = 0; pb.length = eb.length = enemies.length = items.length = parts.length = rings.length = pops.length = 0;
-  P = { x: W / 2, y: H - 90, tx: W / 2, ty: H - 90, vx: 0, vy: 0, hp: 3, maxHp: 5, shield: 1, maxShield: 3, power: 1, inv: 90, fireT: 0, missT: 0, trail: [], alive: true, tilt: 0 };
-  game = { state: "play", score: 0, wave: 0, queue: [], boss: null, waveT: 120, kills: 0, shots: 0, hits: 0, t: 0, dead: 0, laser: null, continues: 0, cont: 0 };
-  showBanner("ด่าน 1", "เตรียมรับมือ!", 110);
+  P = { x: W / 2, y: H - 90, tx: W / 2, ty: H - 90, vx: 0, vy: 0, hp: 3, maxHp: 5, shield: 1, maxShield: 3, power: stage === 2 ? 3 : 1, inv: 90, fireT: 0, missT: 0, trail: [], alive: true, tilt: 0 };
+  if (carry) Object.assign(P, { hp: carry.hp, shield: carry.shield, power: carry.power });
+  game = { stage, state: "play", score: carry ? carry.score : 0, wave: 0, queue: [], boss: null, waveT: 120, kills: carry ? carry.kills : 0, shots: 0, hits: 0, t: 0, dead: 0, laser: null, continues: carry ? carry.continues : 0, cont: 0 };
+  showBanner(`ด่าน ${stage}`, STAGE().sub, 110);
 }
 function showBanner(a, b, t, col) { banner = { a, b, t, max: t, col: col || "#46E6FF" }; }
 
@@ -296,9 +312,11 @@ const WAVES = [
 ];
 function nextWave() {
   game.wave++;
-  if (game.wave <= WAVES.length) { showBanner(`ระลอก ${game.wave}/${WAVES.length}`, ["ฝูงแรกมาแล้ว", "ระวังตัวพุ่ง!", "ยานหุ้มเกราะ", "ฝูงใหญ่", "ด่านสุดท้ายก่อนบอส"][game.wave - 1], 90); WAVES[game.wave - 1](); }
-  else { showBanner("⚠ คำเตือน ⚠", "ราชินีโคลอสกำลังเข้ามา", 170, "#FF4F6A"); SFX.warn(); playMusic("boss"); starBoost = 1; game.queue.push({ at: game.t + 170, fn: spawnBoss }); game.bossIncoming = true; }
+  const st = STAGE(), waves = game.stage === 2 ? WAVES2 : WAVES;
+  if (game.wave <= waves.length) { showBanner(`ระลอก ${game.wave}/${waves.length}`, st.names[game.wave - 1], 90); waves[game.wave - 1](); }
+  else { showBanner("⚠ คำเตือน ⚠", st.warn, 170, "#FF4F6A"); SFX.warn(); playMusic("boss"); starBoost = 1; if (game.stage === 2) game.fortEnd = bgScroll; game.queue.push({ at: game.t + 170, fn: game.stage === 2 ? spawnDread : spawnBoss }); game.bossIncoming = true; }
 }
+const waveCount = () => (game.stage === 2 ? WAVES2 : WAVES).length;
 
 /* ----- boss ----- */
 function spawnBoss() {
@@ -306,6 +324,7 @@ function spawnBoss() {
 }
 function bossPhase(b) { const f = b.hp / b.max; return f > 0.66 ? 1 : f > 0.33 ? 2 : 3; }
 function stepBoss(b) {
+  if (b.kind === "dread") return stepDread(b);
   b.t++;
   if (b.dying) {
     b.dying++; b.y += 0.25;
@@ -353,7 +372,7 @@ function playerFire() {
 
 /* ================= Update ================= */
 function update() {
-  T++;
+  T++; bgScroll += game && game.state === "clearing" ? 2 : 0.6;
   if (!game) return stepBgOnly();
   if (game.state === "continue") return stepContinue();
   game.t++;
@@ -401,10 +420,7 @@ function update() {
     let hit = false;
     for (const e of enemies) if ((b.x - e.x) ** 2 + (b.y - e.y) ** 2 < (e.r + 4) ** 2) { damageEnemy(e, b.dmg); hit = true; break; }
     const bo = g.boss;
-    if (!hit && bo && bo.entered && !bo.dying && Math.abs(b.x - bo.x) < 88 && Math.abs(b.y - bo.y) < 48 && ((b.x - bo.x) / 88) ** 2 + ((b.y - bo.y) / 48) ** 2 < 1) {
-      bo.hp -= b.dmg; bo.flash = 4; hit = true; g.hits++; if (T % 3 === 0) spark(b.x, b.y, "#FFD6F0");
-      if (bo.hp <= 0) { bo.hp = 0; bo.dying = 1; eb.length = 0; game.laser = null; enemies.forEach(e => (e.hp = 0)); }
-    }
+    if (!hit && bo && bo.entered && !bo.dying && bossHit(bo, b.x, b.y, b.dmg)) { hit = true; g.hits++; }
     if (hit) { spark(b.x, b.y, b.missile ? "#FFB84F" : "#9FF4FF"); pb.splice(i, 1); }
   }
   enemies.forEach(stepEnemy);
@@ -413,14 +429,20 @@ function update() {
   /* boss laser */
   if (g.laser) {
     const L = g.laser; L.t++;
-    if (L.t < 60) L.x += (P.x - L.x) * 0.04;
+    if (L.fixed) { if (g.boss) L.x = g.boss.x; } else if (L.t < 60) L.x += (P.x - L.x) * 0.04;
     if (L.t === 60) { SFX.laser(); shake = 8; }
-    if (L.t >= 60 && L.t < 110 && P.alive && Math.abs(P.x - L.x) < 16 && P.y > (g.boss ? g.boss.y : 0)) hurtPlayer();
+    if (L.t >= 60 && L.t < 110 && P.alive && Math.abs(P.x - L.x) < (L.w ? L.w * 2 + 4 : 16) && P.y > (g.boss ? g.boss.y : 0)) hurtPlayer();
     if (L.t >= 110) g.laser = null;
   }
   /* enemy bullets */
   for (let i = eb.length - 1; i >= 0; i--) {
     const b = eb[i]; if (!b) continue;
+    if (b.home > 0) {
+      b.home--; const a = Math.atan2(P.y - b.y, P.x - b.x), cur = Math.atan2(b.vy, b.vx); let da = a - cur;
+      while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+      const na = cur + clamp(da, -0.05, 0.05), sp = Math.min(b.sp, Math.hypot(b.vx, b.vy) + 0.06); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp;
+      if (T % 3 === 0) parts.push({ x: b.x, y: b.y, vx: 0, vy: 0, life: 12, max: 12, c: C.gray, r: 1 });
+    }
     b.x += b.vx; b.y += b.vy;
     if (b.y > H + 20 || b.y < -40 || b.x < -20 || b.x > W + 20) { eb.splice(i, 1); continue; }
     /* hurtPlayer() may clear or splice eb, so stop iterating after a hit */
@@ -458,7 +480,8 @@ function stepEnemy(e) {
   e.t++; if (e.flash) e.flash--;
   const aim = () => Math.atan2(P.y - e.y, P.x - e.x);
   const canFire = game.state === "play" && P.alive && e.y > 20 && e.y < H * 0.7;
-  if (e.type === "drone") {
+  if (e.type === "turret" || e.type === "jet") stepNewEnemy(e, aim, canFire);
+  else if (e.type === "drone") {
     if (e.st === "enter") {
       const k = Math.min(1, e.t / e.dur), u = 1 - k, ease = k;
       e.x = u * u * e.sx + 2 * u * ease * e.cx + ease * ease * e.slot.x; e.y = u * u * e.sy + 2 * u * ease * e.cy + ease * ease * e.slot.y;
@@ -484,18 +507,18 @@ function stepEnemy(e) {
     if (canFire && --e.fireT <= 0) { e.fireT = 100; const a = aim(); for (let i = -1; i <= 1; i++) shoot(e.x, e.y + 16, a + i * 0.2, 2.7, "#FFB84F", 5); }
   }
   /* body contact */
-  if (P.alive && game.state === "play" && (e.x - P.x) ** 2 + (e.y - P.y) ** 2 < (e.r * 0.8 + 7) ** 2) { hurtPlayer(); if (e.type !== "tank") e.hp = 0; }
+  if (P.alive && game.state === "play" && e.type !== "turret" && (e.x - P.x) ** 2 + (e.y - P.y) ** 2 < (e.r * 0.8 + 7) ** 2) { hurtPlayer(); if (e.type !== "tank") e.hp = 0; }
 }
 function damageEnemy(e, d) { e.hp -= d; e.flash = 4; game.hits++; }
 function killEnemy(e) {
   const big = e.type === "tank";
-  explode(e.x, e.y, big ? 1.8 : 0.9, e.type === "drone" ? "#9BFF6A" : e.type === "stinger" ? "#FF6A9A" : "#FFB84F");
+  explode(e.x, e.y, big ? 1.8 : e.type === "turret" ? 1.2 : 0.9, e.type === "drone" ? "#9BFF6A" : e.type === "stinger" || e.type === "jet" ? "#FF6A9A" : "#FFB84F");
   big ? SFX.boom() : SFX.pop(); if (big) shake = Math.max(shake, 6);
   if (game.boss && game.boss.dying) return;
-  const pts = { drone: 100, stinger: 150, tank: 500 }[e.type];
+  const pts = { drone: 100, stinger: 150, tank: 500, turret: 200, jet: 150 }[e.type];
   game.score += pts; game.kills++;
   pops.push({ x: e.x, y: e.y, s: "+" + pts, t: 40, c: "#EAF2FF" });
-  const chance = big ? 1 : e.minion ? 0.12 : 0.09;
+  const chance = big ? 1 : e.minion ? 0.12 : e.type === "turret" ? 0.15 : 0.09;
   if (Math.random() < chance) {
     const r = Math.random();
     let kind = big ? (r < 0.6 ? "power" : "shield") : r < 0.45 ? "power" : r < 0.75 ? "shield" : "life";
@@ -520,6 +543,259 @@ function hurtPlayer() {
 }
 function clearDead() { for (let i = eb.length - 1; i >= 0; i--) if (eb[i].dead) eb.splice(i, 1); }
 
+
+/* ================= Stage 2: alien fortress, fighters, turrets and the Dreadnought ================= */
+const SCROLL2 = 1.2;   // world units per frame the fortress (and things bolted to it) moves down
+let bgScroll = 0, FORT = null;
+
+/* a 180x480 tile of alien hull, seamless top-to-bottom; blinking lights are drawn on top each frame */
+function buildFortress() {
+  const Ht = 480, c = document.createElement("canvas"); c.width = LW; c.height = Ht; const f = c.getContext("2d");
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const lights = [], segH = 48;
+  for (let s = 0; s < Ht / segH; s++) {
+    const y0 = s * segH, l = 8 + Math.floor(rnd() * 32), r = LW - 8 - Math.floor(rnd() * 32);
+    f.fillStyle = C.dgray; f.fillRect(l, y0, r - l, segH);
+    for (let py = y0; py < y0 + segH; py += 12) {
+      let px = l;
+      while (px < r) {
+        const w = 10 + Math.floor(rnd() * 26), pw = Math.min(w, r - px);
+        f.fillStyle = rnd() < 0.22 ? C.gray : C.dgray; f.fillRect(px + 1, py + 1, pw - 2, 10);
+        f.fillStyle = C.gray; f.fillRect(px + 1, py + 1, pw - 2, 1);
+        f.fillStyle = C.black; f.fillRect(px, py, 1, 12); f.fillRect(px, py + 11, pw, 1);
+        if (pw > 6) { f.fillStyle = C.gray; f.fillRect(px + 2, py + 4, 1, 1); f.fillRect(px + pw - 3, py + 4, 1, 1); }
+        px += w;
+      }
+    }
+    const feat = rnd();
+    if (feat < 0.3) {   // hangar bay with hazard stripes
+      const hx = l + 12 + Math.floor(rnd() * Math.max(1, r - l - 56)), hy = y0 + 12;
+      f.fillStyle = C.black; f.fillRect(hx - 1, hy - 1, 32, 20);
+      for (let i = 0; i < 30; i += 4) { f.fillStyle = C.yellow; f.fillRect(hx + i, hy - 3, 2, 2); f.fillRect(hx + i, hy + 19, 2, 2); }
+      f.fillStyle = C.navy; f.fillRect(hx + 2, hy + 2, 26, 14); f.fillStyle = C.blue; f.fillRect(hx + 2, hy + 2, 26, 1);
+      lights.push({ x: hx + 15, y: hy + 9, c: C.sky, p: Math.floor(rnd() * 32) });
+    } else if (feat < 0.62) {   // glowing vents
+      for (let i = 0; i < 3; i++) {
+        const vx = l + 10 + Math.floor(rnd() * Math.max(1, r - l - 24)), vy = y0 + 6 + i * 14;
+        f.fillStyle = C.black; f.fillRect(vx, vy, 12, 6); f.fillStyle = C.dred; for (let k = 0; k < 12; k += 3) f.fillRect(vx + k, vy + 1, 2, 4);
+        lights.push({ x: vx + 6, y: vy + 3, c: C.orange, p: Math.floor(rnd() * 32) });
+      }
+    } else {   // tower block with a drop shadow
+      const tx = l + 14 + Math.floor(rnd() * Math.max(1, r - l - 44)), tw = 16, th = 26, ty = y0 + 8;
+      f.fillStyle = C.black; f.fillRect(tx + 3, ty + 3, tw, th);
+      f.fillStyle = C.dgray; f.fillRect(tx, ty, tw, th); f.fillStyle = C.gray; f.fillRect(tx, ty, tw, 2); f.fillRect(tx, ty, 2, th);
+      f.fillStyle = C.dgray; f.fillRect(tx + 4, ty + 10, tw - 8, 12);
+      for (let i = 0; i < 3; i++) lights.push({ x: tx + 4 + i * 4, y: ty + 6, c: C.red, p: i * 8 });
+    }
+    /* pipes along both edges */
+    [l + 3, r - 6].forEach(x => { f.fillStyle = C.dgray; f.fillRect(x, y0, 3, segH); f.fillStyle = C.gray; f.fillRect(x, y0, 1, segH); f.fillStyle = C.black; f.fillRect(x + 3, y0, 1, segH); });
+    f.fillStyle = C.black; f.fillRect(l - 1, y0, 1, segH); f.fillRect(r, y0, 1, segH);
+    for (let k = 4; k < segH; k += 12) { f.fillStyle = C.dgray; f.fillRect(l - 5, y0 + k, 5, 4); f.fillRect(r + 1, y0 + k, 5, 4); f.fillStyle = C.gray; f.fillRect(l - 5, y0 + k, 5, 1); f.fillRect(r + 1, y0 + k, 5, 1); lights.push({ x: l - 3, y: y0 + k + 2, c: C.lgreen, p: k * 3 }); lights.push({ x: r + 3, y: y0 + k + 2, c: C.lgreen, p: k * 3 + 16 }); }
+  }
+  FORT = { c, lights, h: Ht };
+}
+function drawStars() {
+  const boost = 1 + starBoost * 4 + (game && game.state === "clearing" ? 5 : 0);
+  stars.forEach((L, l) => L.forEach(s => { const tw = (T + s.tw) % 60 < 6; g.fillStyle = tw ? C.white : [C.gray, C.lgray, C.white][l]; g.fillRect(X(s.x), X(s.y), 1, 1 + (boost > 1 ? Math.round(l * boost * 0.6) : 0)); }));
+}
+function drawBackground() {
+  if (game && game.stage === 2) {
+    g.fillStyle = C.black; g.fillRect(0, 0, LW, LH); drawStars();
+    if (!FORT) buildFortress();
+    /* before the boss the fortress ends: everything above the "cut" line is open space */
+    const cut = game.fortEnd !== undefined ? Math.floor(bgScroll - game.fortEnd) : -1;
+    if (cut < LH) {
+      const off = Math.floor(bgScroll) % FORT.h;
+      g.save(); if (cut > 0) { g.beginPath(); g.rect(0, cut, LW, LH - cut); g.clip(); }
+      for (const k of [-FORT.h, 0]) {
+        g.drawImage(FORT.c, 0, off + k);
+        FORT.lights.forEach(l => { const y = l.y + off + k; if (y < cut || y < -2 || y > LH + 2 || ((T + l.p) >> 4) % 2) return; g.fillStyle = l.c; g.fillRect(l.x - 1, y - 1, 2, 2); });
+      }
+      g.restore();
+      if (cut > 0) { g.fillStyle = C.black; g.fillRect(0, cut, LW, 3); for (let x = 20; x < LW - 20; x += 14) { g.fillStyle = (T >> 3) % 2 ? C.red : C.dred; g.fillRect(x, cut + 1, 2, 1); } }
+    }
+  } else {
+    if (!bgCanvas) buildBg();
+    const off = Math.floor(bgScroll * 0.25) % bgCanvas.height;
+    g.drawImage(bgCanvas, 0, off - bgCanvas.height); g.drawImage(bgCanvas, 0, off);
+    drawStars();
+  }
+}
+
+/* ----- new enemies ----- */
+function turret(x, delay, burst) { game.queue.push({ at: game.t + delay, fn: () => enemies.push({ type: "turret", x, y: -24, hp: 8, max: 8, r: 12, t: 0, fireT: rand(40, 90), rate: 95, burst: burst || 1, ang: Math.PI / 2, flash: 0 }) }); }
+function jet(x, ty, delay) { game.queue.push({ at: game.t + delay, fn: () => enemies.push({ type: "jet", x, y: -20, ty, hp: 4, max: 4, r: 11, t: 0, st: "dive", shots: 3, flash: 0, vx: 0 }) }); }
+function vform(cx, delay, ty) { [0, -1, 1, -2, 2].forEach(k => jet(cx + k * 26, ty - Math.abs(k) * 16, delay + Math.abs(k) * 6)); }
+function stepNewEnemy(e, aim, canFire) {
+  if (e.type === "turret") {
+    e.y += SCROLL2; e.ang = aim();
+    if (canFire && --e.fireT <= 0) { e.fireT = e.rate; e.muzzle = 6; for (let k = 0; k < e.burst; k++) game.queue.push({ at: game.t + k * 9, fn: () => { if (e.hp > 0 && P.alive) shoot(e.x + Math.cos(e.ang) * 14, e.y + Math.sin(e.ang) * 14, e.ang, 3, "#FFB84F"); } }); }
+    if (e.muzzle) e.muzzle--;
+    if (e.y > H + 30) e.gone = true;
+    return true;
+  }
+  if (e.type === "jet") {
+    if (e.st === "dive") { e.y += 3.4; if (e.y >= e.ty) { e.st = "turn"; e.vx = (e.x < W / 2 ? 1 : -1) * 0.6; } }
+    else { e.vx = clamp(e.vx + Math.sign(e.vx) * 0.18, -4.6, 4.6); e.x += e.vx; e.y += 1.1; if (e.t % 12 === 0 && e.shots-- > 0 && canFire) shoot(e.x, e.y + 8, aim(), 3.3, "#FF6A6A"); if (e.x < -30 || e.x > W + 30) e.gone = true; }
+    return true;
+  }
+  return false;
+}
+function drawNewEnemy(e) {
+  const x = X(e.x), y = X(e.y), fl = e.flash > 0;
+  if (e.type === "turret") {
+    pdisk(g, x, y, 7, C.black); pdisk(g, x, y, 6, fl ? C.white : C.dgray); pdisk(g, x, y, 4, fl ? C.white : C.gray); pdisk(g, x, y, 2, fl ? C.white : C.lgray);
+    const ex = x + Math.round(Math.cos(e.ang) * 8), ey = y + Math.round(Math.sin(e.ang) * 8);
+    thick(x, y, ex, ey, C.black, 3); pline(x, y, ex, ey, fl ? C.white : C.lgray);
+    if (e.muzzle) pdisk(g, ex, ey, 2, (T >> 1) % 2 ? C.white : C.yellow);
+    g.fillStyle = (T >> 3) % 2 ? C.red : C.dred; g.fillRect(x - 1, y - 1, 2, 2);
+    return;
+  }
+  spr((fl ? S.jetW : S.jet)[e.st === "turn" ? (e.vx < 0 ? 1 : 2) : 0], x, y);
+  if (e.st === "dive" && (T >> 1) % 2) { g.fillStyle = C.orange; g.fillRect(x - 5, y - 9, 2, 2); g.fillRect(x + 3, y - 9, 2, 2); }
+}
+function buildStage2Sprites() {
+  const jet = mirror(["rr......", "rgg.....", ".rgg....", ".rlgg...", "..rlgg..", "..rllgg.", "...rllgg", "...rlllk", "....rlly", "....rlly", ".....rll", ".....rll", "......rl", "......rl", ".......r", "........"]);
+  const jp = { r: C.dred, g: C.gray, l: C.lgray, k: C.black, y: C.yellow };
+  const bankL = dropCols(jet, [0, 1, 2]), bankR = dropCols(jet, [13, 14, 15]);
+  S.jet = [sprite(jet, jp), sprite(bankL, jp), sprite(bankR, jp)];
+  S.jetW = [sprite(jet, {}, { solid: C.white }), sprite(bankL, {}, { solid: C.white }), sprite(bankR, {}, { solid: C.white })];
+}
+
+const WAVES2 = [
+  () => { vform(180, 0, 300); vform(100, 150, 260); vform(260, 300, 260); [90, 270, 140, 220].forEach((x, i) => turret(x, 60 + i * 70)); },
+  () => { for (let i = 0; i < 6; i++) turret(70 + i * 44, i * 30, 1); for (let i = 0; i < 6; i++) drone(SLOTS[i], { x: i < 3 ? -20 : W + 20, y: 100, cx: 180, cy: 380 }, 160 + i * 12); vform(180, 360, 320); },
+  () => { tank(110, 150, 0); tank(250, 190, 40); for (let i = 0; i < 8; i++) jet(i % 2 ? 50 : 310, rand(200, 320), 60 + i * 30); [80, 180, 280, 130].forEach((x, i) => turret(x, 100 + i * 60, 2)); },
+  () => { for (let i = 0; i < 8; i++) stinger(rand(50, 310), i % 2 ? 1 : -1, i * 20); vform(120, 120, 280); vform(240, 200, 280); vform(180, 320, 330); [100, 260, 180, 140].forEach((x, i) => turret(x, 80 + i * 80, 2)); },
+  () => { tank(90, 140, 0); tank(270, 140, 0); tank(180, 200, 220); for (let i = 0; i < 12; i++) jet(rand(40, 320), rand(180, 330), 100 + i * 25); for (let i = 0; i < 6; i++) turret(60 + i * 48, 60 + i * 40, 2); },
+];
+
+/* ----- Boss 2: the Dreadnought (alien battleship) ----- */
+function spawnDread() {
+  game.boss = { kind: "dread", x: W / 2, y: -220, hp: 3600, max: 3600, t: 0, phase: 1, flash: 0, fireT: 90, dir: 1, spiral: 0, dying: 0, entered: false, missT: 150, hold: 0,
+    tur: [-1, 1].map(s => ({ s, hp: 450, max: 450, alive: true, ang: Math.PI / 2, fireT: 60 + (s > 0 ? 35 : 0), flash: 0 })) };
+}
+const turPos = (b, tu) => ({ x: b.x + tu.s * 78, y: b.y + 10 });
+function stepDread(b) {
+  b.t++;
+  if (b.dying) {
+    b.dying++; b.y += 0.3;
+    if (b.dying % 5 === 0) { explode(b.x + rand(-115, 115), b.y + rand(-55, 60), 1.3, b.dying % 10 ? "#FFB84F" : "#FFD25A"); SFX.pop(); shake = 6; }
+    if (b.dying === 130) { explode(b.x, b.y, 4.5, "#FFFFFF"); flash = 18; shake = 18; SFX.boom(); game.score += 15000; pops.push({ x: b.x, y: b.y, s: "+15000", t: 90, c: "#FFD25A" }); }
+    if (b.dying > 135) { game.boss = null; eb.length = 0; game.state = "clearing"; game.clearT = 150; stopMusic(); showBanner("ภารกิจสำเร็จ!", "ทำลายเรือธงเดรดนอตได้แล้ว", 150, "#FFD25A"); SFX.win(); }
+    return;
+  }
+  if (!b.entered) { b.y += 0.9; if (b.y >= 170) { b.entered = true; starBoost = 0; shake = 10; SFX.horn(); } return; }
+  if (P.alive && ((P.x - b.x) / 118) ** 2 + ((P.y - b.y) / 56) ** 2 < 1) hurtPlayer();
+  const f = b.hp / b.max, ph = f > 0.66 ? 1 : f > 0.33 ? 2 : 3;
+  if (ph !== b.phase) { b.phase = ph; showBanner(ph === 2 ? "เปิดฝาจรวด!" : "เตาปฏิกรณ์วิกฤต!", ph === 2 ? "จรวดนำวิถี + ปืนใหญ่หัวเรือ" : "กระสุนเกลียวรอบทิศ", 90, "#FF4F6A"); shake = 10; ring(b.x, b.y, "#FF4F6A", 150); SFX.horn(); }
+  if (b.hold > 0) b.hold--; else { b.x += b.dir * (ph === 3 ? 1.0 : 0.6); if (b.x < 122 || b.x > W - 122) b.dir *= -1; }
+  b.y = 170 + Math.sin(b.t * 0.015) * 8;
+  const aim = (x, y) => Math.atan2(P.y - y, P.x - x);
+  b.tur.forEach(tu => {
+    if (tu.flash) tu.flash--;
+    if (!tu.alive) return;
+    const p = turPos(b, tu); tu.ang = aim(p.x, p.y);
+    if (--tu.fireT <= 0) { tu.fireT = ph === 1 ? 72 : 60; for (let k = 0; k < 3; k++) game.queue.push({ at: game.t + k * 7, fn: () => { if (tu.alive && game.boss === b && !b.dying) { const q = turPos(b, tu); shoot(q.x + Math.cos(tu.ang) * 18, q.y + Math.sin(tu.ang) * 18, tu.ang, 3.3, "#FFB84F"); } } }); }
+  });
+  if (--b.fireT <= 0) { b.fireT = ph === 1 ? 110 : 140; for (let i = -3; i <= 3; i++) shoot(b.x, b.y + 58, Math.PI / 2 + i * 0.15, 2.8, "#FF5FA2"); }
+  if (ph >= 2 && --b.missT <= 0) { b.missT = ph === 3 ? 200 : 150; for (const s of [-1, 1]) for (const k of [1, 2]) eb.push({ x: b.x + s * 40, y: b.y + 28, vx: s * 1.3 * k, vy: 0.6, r: 5, col: "#FFB84F", home: 90, sp: 2.3 }); }
+  if (ph >= 2 && !game.laser && b.t % 340 === 0) { b.hold = 125; game.laser = { x: b.x, t: 0, fixed: true, w: 9, y0off: 64 }; }
+  if (ph === 3 && b.t % 7 === 0) { b.spiral += 0.23; for (let k = 0; k < 3; k++) shoot(b.x, b.y - 6, b.spiral + k * Math.PI * 2 / 3, 2.3, k % 2 ? "#46E6FF" : "#B67CFF"); }
+}
+function killBoss(b) { b.hp = 0; b.dying = 1; eb.length = 0; game.laser = null; enemies.forEach(e => (e.hp = 0)); }
+/* player shot vs boss; returns true when the shot is absorbed */
+function bossHit(b, x, y, dmg) {
+  if (b.kind !== "dread") {
+    if (Math.abs(x - b.x) < 88 && Math.abs(y - b.y) < 48 && ((x - b.x) / 88) ** 2 + ((y - b.y) / 48) ** 2 < 1) {
+      b.hp -= dmg; b.flash = 4; if (T % 3 === 0) spark(x, y, "#FFD6F0"); if (b.hp <= 0) killBoss(b); return true;
+    }
+    return false;
+  }
+  for (const tu of b.tur) {
+    if (!tu.alive) continue; const p = turPos(b, tu);
+    if ((x - p.x) ** 2 + (y - p.y) ** 2 < 22 * 22) {
+      tu.hp -= dmg; tu.flash = 3;
+      if (tu.hp <= 0) {
+        tu.alive = false; explode(p.x, p.y, 2.4, "#FFB84F"); SFX.boom(); shake = 10; game.score += 3000; pops.push({ x: p.x, y: p.y - 20, s: "+3000", t: 60, c: "#FFD25A" });
+        const left = b.tur.filter(t => t.alive).length;
+        showBanner("ป้อมปืนถูกทำลาย!", left ? "เหลืออีก 1 ป้อม" : "เกราะเตาปฏิกรณ์หลุดแล้ว ยิงที่แกนกลาง!", 90, "#FFD25A");
+      }
+      return true;
+    }
+  }
+  /* the core plus the bow channel leading to it (shots fly over the hull plating, seen from above) */
+  if ((x - b.x) ** 2 + (y - (b.y - 6)) ** 2 < 30 * 30 || (Math.abs(x - b.x) < 12 && y > b.y && y < b.y + 64)) {
+    const shielded = b.tur.some(t => t.alive);
+    b.hp -= shielded ? dmg * 0.3 : dmg; b.flash = 4;
+    if (T % 3 === 0) spark(x, y, shielded ? "#46E6FF" : "#FFD25A");
+    if (b.hp <= 0) killBoss(b);
+    return true;
+  }
+  return false;
+}
+function drawDread(b) {
+  const bx = X(b.x), by = X(b.y), fl = b.flash > 0 && T % 4 === 0, ph = b.phase;
+  if (b.flash) b.flash--;
+  const W8 = c => (fl ? C.white : c), steel = [W8(C.lav), W8(C.purple), W8(C.vio), W8(C.black)];   // alien violet steel, stands out from the grey fortress
+  /* engines at the stern (top), exhaust pointing up */
+  [-22, 22].forEach(ex => {
+    const fh = 6 + ((T >> 1) % 3) * 2 + (b.entered ? 0 : 6);
+    for (let k = 0; k < fh; k++) { g.fillStyle = k < 2 ? C.white : k < fh / 2 ? C.yellow : C.orange; const w = Math.max(1, 4 - Math.floor(k / 3)); g.fillRect(bx + ex - w, by - 33 - k, w * 2, 1); }
+    g.fillStyle = steel[3]; g.fillRect(bx + ex - 7, by - 33, 14, 11); g.fillStyle = steel[2]; g.fillRect(bx + ex - 6, by - 32, 12, 9); g.fillStyle = steel[0]; g.fillRect(bx + ex - 6, by - 32, 12, 1); g.fillStyle = W8(C.dred); g.fillRect(bx + ex - 4, by - 34, 8, 1);
+  });
+  /* hull: wide stern deck, swept wings, tapering bow (pointing at the player) */
+  for (let dy = -28; dy <= 31; dy++) {
+    const hw = dy < -18 ? 30 + (dy + 28) * 2 : dy < 6 ? 60 : Math.max(4, Math.round(60 - (dy - 6) * 2.25));
+    for (let dx = -hw; dx <= hw; dx++) {
+      const ax = Math.abs(dx);
+      let c = dy < -14 ? steel[0] : steel[1];
+      if (ax > 44 && dy < 6) c = (ax + dy) % 2 ? steel[2] : steel[1];
+      if ((dy + 28) % 6 === 0 && ax < hw - 1) c = steel[3];
+      if (ax % 12 === 0 && dy > -18 && dy < 22) c = steel[2];
+      if (ax === hw - 2 && dy > -19 && dy < 6) c = W8(C.red);
+      if (ax >= hw - 1) c = steel[3];
+      g.fillStyle = c; g.fillRect(bx + dx, by + dy, 1, 1);
+    }
+    if (dy >= -18 && dy < 6 && (dy + 18) % 5 === 0) { g.fillStyle = steel[2]; g.fillRect(bx - hw - 4, by + dy, 4, 2); g.fillRect(bx + hw + 1, by + dy, 4, 2); g.fillStyle = W8(C.red); g.fillRect(bx - hw - 4, by + dy, 1, 1); g.fillRect(bx + hw + 4, by + dy, 1, 1); }
+  }
+  /* bridge windows */
+  for (let i = -5; i <= 5; i++) { if (!i) continue; const on = ((i + 7) * 3 + (T >> 4)) % 4 !== 0; g.fillStyle = on ? W8(C.lyellow) : steel[2]; g.fillRect(bx + i * 8 - 1, by - 22, 2, 1); if (Math.abs(i) < 4) g.fillRect(bx + i * 5, by + 17, 1, 1); }
+  /* missile hatches */
+  [-1, 1].forEach(s => { const open = ph >= 2; g.fillStyle = open ? C.black : steel[2]; g.fillRect(bx + s * 20 - 3, by + 12, 6, 4); if (open) { g.fillStyle = (T >> 3) % 2 ? C.orange : C.red; g.fillRect(bx + s * 20 - 1, by + 13, 2, 2); } });
+  /* bow cannon, glowing while it charges */
+  g.fillStyle = steel[3]; g.fillRect(bx - 4, by + 22, 8, 11); g.fillStyle = steel[1]; g.fillRect(bx - 3, by + 22, 2, 10);
+  const L = game.laser;
+  if (L && L.fixed && L.t < 60) pdisk(g, bx, by + 33, 2 + Math.floor(L.t / 9), (T >> 1) % 2 ? C.white : C.yellow);
+  /* reactor core behind armour petals; petals slide open once both turrets are gone */
+  const anyT = b.tur.some(t => t.alive), cy = by - 3, pulse = (T >> (ph === 3 ? 2 : 3)) % 2, op = anyT ? 0 : 4;
+  pdisk(g, bx, cy, 13, steel[3]);
+  pdisk(g, bx, cy, 9, W8(C.dred)); pdisk(g, bx, cy, 7 + pulse, W8(ph === 3 ? C.orange : C.red)); pdisk(g, bx, cy, 4, W8(C.yellow)); pdisk(g, bx, cy, 2, C.white);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => { const px = bx + sx * (4 + op) - (sx < 0 ? 7 : 0), py = cy + sy * (3 + op) - (sy < 0 ? 5 : 0); g.fillStyle = steel[3]; g.fillRect(px - 1, py - 1, 9, 7); g.fillStyle = steel[0]; g.fillRect(px, py, 7, 5); g.fillStyle = steel[1]; g.fillRect(px, py + 4, 7, 1); });
+  if (anyT && T % 2 === 0) for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + T * 0.03, a2 = a1 + Math.PI / 3; pline(bx + Math.round(Math.cos(a1) * 15), cy + Math.round(Math.sin(a1) * 15), bx + Math.round(Math.cos(a2) * 15), cy + Math.round(Math.sin(a2) * 15), C.sky); }
+  /* side turrets */
+  b.tur.forEach(tu => {
+    const tx = bx + tu.s * 39, ty = by + 5;
+    if (!tu.alive) { pdisk(g, tx, ty, 7, C.black); pdisk(g, tx, ty, 4, (T >> 2) % 2 ? C.dred : C.brown); if (T % 6 === 0) parts.push({ x: tx * 2 + rand(-6, 6), y: ty * 2, vx: rand(-0.3, 0.3), vy: -rand(0.5, 1.2), life: 22, max: 22, c: Math.random() < 0.5 ? C.gray : C.dgray, r: 1 }); return; }
+    const tf = tu.flash > 0 && T % 2 === 0;
+    pdisk(g, tx, ty, 9, steel[3]); pdisk(g, tx, ty, 8, tf ? C.white : steel[2]); pdisk(g, tx, ty, 5, tf ? C.white : steel[1]); pdisk(g, tx, ty, 3, tf ? C.white : steel[0]);
+    const ex = tx + Math.round(Math.cos(tu.ang) * 10), ey = ty + Math.round(Math.sin(tu.ang) * 10);
+    thick(tx, ty, ex, ey, C.black, 4); thick(tx, ty, ex, ey, steel[1], 2);
+    g.fillStyle = (T >> 3) % 2 ? C.red : C.dred; g.fillRect(tx - 1, ty - 1, 2, 2);
+    g.fillStyle = C.black; g.fillRect(tx - 8, ty - 14, 16, 3); g.fillStyle = C.yellow; g.fillRect(tx - 7, ty - 13, Math.ceil(14 * tu.hp / tu.max), 1);
+  });
+  /* fires on a damaged hull */
+  if (ph >= 2 && !fl) for (let i = 0; i < (ph === 3 ? 7 : 3); i++) { const fx = bx + ((i * 37 + 11) % 100) - 50, fy = by + ((i * 23) % 30) - 16; if ((T + i * 7) % 12 < 6) { g.fillStyle = C.orange; g.fillRect(fx, fy, 2, 2); g.fillStyle = C.yellow; g.fillRect(fx, fy - 1, 1, 1); } }
+}
+
+/* story for stage 2 */
+const CRAWL2 = [
+  ["ตอนที่ 2", 15, "big"], ["เรือธงเดรดนอต", 15, "big"], ["", 8],
+  ["ราชินีโคลอสพ่ายแพ้แล้ว", 12], ["แต่ฝูงที่เหลือหนีกลับไปรวมพล", 12], ["ที่ “ป้อมดาวเหล็ก”", 12], ["ฐานทัพลอยฟ้าขนาดเท่าดวงจันทร์", 12], ["", 8],
+  ["ป้อมปืนนับพันเรียงรายบนผิวป้อม", 12], ["ฝูงเครื่องบินรบพร้อมโจมตี", 12], ["และใจกลางท่าเรือคือ", 12], ["“เรือธงเดรดนอต”", 12], ["เรือรบที่ไม่เคยพ่ายแพ้", 12], ["", 8],
+  ["ทำลายป้อมปืนข้างลำ", 12], ["เพื่อเปิดเกราะเตาปฏิกรณ์", 12], ["แล้วยิงที่แกนกลางให้ระเบิด!", 12], ["", 8],
+  ["นี่คือการบินครั้งสำคัญที่สุด", 12], ["ของสตาร์สตอร์ม", 12],
+];
 
 /* ================= Pixel sprites =================
    Each sprite is a list of rows; most are written as the left half and mirrored.
@@ -593,6 +869,7 @@ function buildSprites() {
   S.eb = {};
   [["#FF5FA2", C.rose, C.white], ["#FFB84F", C.orange, C.lyellow], ["#B67CFF", C.purple, C.lilac], ["#46E6FF", C.blue, C.pale], ["#9BFF6A", C.green, C.lime], ["#FF6A6A", C.red, C.pink]].forEach(([k, o, i]) => { S.eb[k] = [ball(o, i), ball(i, C.white)]; });
   S.ebBig = {}; Object.keys(S.eb).forEach(k => (S.ebBig[k] = S.eb[k]));
+  buildStage2Sprites();
 }
 
 /* ----- bitmap digits (3x5) for the score ----- */
@@ -660,6 +937,7 @@ function drawShield() {
   }
 }
 function drawEnemy(e) {
+  if (e.type === "turret" || e.type === "jet") return drawNewEnemy(e);
   const fr = (T >> 3) % 2, fl = e.flash > 0;
   if (e.type === "drone") spr((fl ? S.droneW : S.drone)[fr], X(e.x), X(e.y));
   else if (e.type === "stinger") spr((fl ? S.stingerW : S.stinger)[(T >> 2) % 2], X(e.x), X(e.y));
@@ -671,6 +949,7 @@ function drawEnemy(e) {
 /* ----- Boss: "Queen Kolos", a horned three-eyed space monster ----- */
 function thick(x0, y0, x1, y1, col, w) { for (let o = -Math.floor(w / 2); o <= Math.floor((w - 1) / 2); o++) { pline(x0 + o, y0, x1 + o, y1, col); pline(x0, y0 + o, x1, y1 + o, col); } }
 function drawBoss(b) {
+  if (b.kind === "dread") return drawDread(b);
   const bx = X(b.x), by = X(b.y), fl = b.flash > 0 && T % 4 === 0, rage = b.phase === 3;   // brief palette flash, not a solid white blob
   if (b.flash) b.flash--;
   const W8 = c => (fl ? C.white : c);
@@ -764,12 +1043,13 @@ function drawBooms() {
 }
 function drawHUD() {
   if (!game) return;
+  g.fillStyle = C.black; g.fillRect(0, 0, LW, 29); g.fillStyle = C.navy; g.fillRect(0, 29, LW, 1);   // solid status bar, like the old consoles
   for (let i = 0; i < P.maxHp; i++) spr(i < P.hp ? S.heart : S.heartOff, 7 + i * 8, 7);
   for (let i = 0; i < P.maxShield; i++) spr(i < P.shield ? S.hex : S.hexOff, 7 + i * 8, 16);
   digits("P", 6, 23, C.yellow);
   for (let i = 0; i < 5; i++) { g.fillStyle = i < P.power ? C.yellow : C.brown; g.fillRect(11 + i * 5, 23, 4, 5); }
   digits(String(game.score).padStart(6, "0"), LW / 2, 4, C.white, 2, C.blue);
-  const lbl = game.boss || game.bossIncoming ? "บอส" : `ระลอก ${Math.max(1, Math.min(game.wave, WAVES.length))}/${WAVES.length}`;
+  const lbl = game.boss || game.bossIncoming ? "บอส" : `ระลอก ${Math.max(1, Math.min(game.wave, waveCount()))}/${waveCount()}`;
   ptext(lbl, LW / 2, 22, 12, C.lgray, "center");
   const b = game.boss;
   if (b && !b.dying) {
@@ -783,21 +1063,19 @@ let flashPat = null;
 const POPC = { "#EAF2FF": C.white, "#FFD25A": C.yellow, "#FF5C7A": C.rose, "#46E6FF": C.sky };
 const BANC = { "#46E6FF": [C.sky, C.blue], "#FF4F6A": [C.red, C.dred], "#FFD25A": [C.yellow, C.orange] };
 function render() {
-  if (!bgCanvas) buildBg();
   g.imageSmoothingEnabled = false;
-  g.drawImage(bgCanvas, 0, 0);
+  drawBackground();
   /* stars: 1px, twinkle by colour swap, streak when warping */
   const boost = 1 + starBoost * 4 + (game && game.state === "clearing" ? 5 : 0);
-  stars.forEach((L, l) => L.forEach(s => { const tw = (T + s.tw) % 60 < 6; g.fillStyle = tw ? C.white : [C.gray, C.lgray, C.white][l]; g.fillRect(X(s.x), X(s.y), 1, 1 + (boost > 1 ? Math.round(l * boost * 0.6) : 0)); }));
   if (!game) { renderIntro(); return composite(0, 0); }
   items.forEach(drawItem);
   if (game.boss) drawBoss(game.boss);
   enemies.forEach(drawEnemy);
   /* boss laser */
   if (game.laser) {
-    const L = game.laser, x = X(L.x), y0 = game.boss ? X(game.boss.y) + 20 : 0;
+    const L = game.laser, x = X(L.x), y0 = game.boss ? X(game.boss.y + (L.y0off || 40)) : 0;
     if (L.t < 60) { if ((L.t >> 2) % 2 === 0) for (let y = y0; y < LH; y += 4) { g.fillStyle = C.red; g.fillRect(x, y, 1, 2); } ptext("! หลบ !", x, LH - 22, 10, C.red, "center", C.black); }
-    else { const w = 5 + ((T >> 1) % 2); g.fillStyle = C.red; g.fillRect(x - w, y0, w * 2 + 1, LH); g.fillStyle = C.pink; g.fillRect(x - w + 2, y0, w * 2 - 3, LH); g.fillStyle = C.white; g.fillRect(x - 1, y0, 3, LH); }
+    else { const w = (L.w || 5) + ((T >> 1) % 2); g.fillStyle = C.red; g.fillRect(x - w, y0, w * 2 + 1, LH); g.fillStyle = C.pink; g.fillRect(x - w + 2, y0, w * 2 - 3, LH); g.fillStyle = C.white; g.fillRect(x - 1, y0, 3, LH); }
   }
   /* player shots */
   pb.forEach(b => {
@@ -808,7 +1086,10 @@ function render() {
   });
   drawPlayer();
   /* enemy shots: 2-frame colour cycle */
-  eb.forEach(b => { const set = S.eb[b.col] || S.eb["#FF5FA2"]; spr(set[(T >> 2) % 2], X(b.x), X(b.y)); });
+  eb.forEach(b => {
+    if (b.home !== undefined) { const x = X(b.x), y = X(b.y), a = Math.atan2(b.vy, b.vx); g.fillStyle = C.lgray; g.fillRect(x - 1, y - 1, 3, 3); g.fillStyle = C.red; g.fillRect(x + Math.round(Math.cos(a) * 2), y + Math.round(Math.sin(a) * 2), 1, 1); g.fillStyle = T % 2 ? C.yellow : C.orange; g.fillRect(x - Math.round(Math.cos(a) * 3), y - Math.round(Math.sin(a) * 3), 2, 2); return; }
+    const set = S.eb[b.col] || S.eb["#FF5FA2"]; spr(set[(T >> 2) % 2], X(b.x), X(b.y));
+  });
   drawBooms();
   parts.forEach(p => { if (p.life < 6 && T % 2) return; g.fillStyle = p.c; g.fillRect(X(p.x), X(p.y), p.r || 1, p.r || 1); });
   rings.forEach(r => pcircle(X(r.x), X(r.y), Math.round(r.r / 2 * (0.3 + r.t / r.max)), r.c, r.t > r.max / 2));
@@ -902,7 +1183,7 @@ const CRAWL = [
 ];
 let CRAWLC = null;
 function buildCrawl() {
-  const tw = 300, k = 1.75, lines = CRAWL.map(([s, sz, kind]) => ({ s, sz: Math.round(sz * k), kind })), lh = l => Math.round(l.sz * 1.5);
+  const tw = 300, k = 1.75, lines = (intro.stage === 2 ? CRAWL2 : CRAWL).map(([s, sz, kind]) => ({ s, sz: Math.round(sz * k), kind })), lh = l => Math.round(l.sz * 1.5);
   const th = lines.reduce((a, l) => a + lh(l), 0) + 20;
   const c = document.createElement("canvas"); c.width = tw; c.height = th; const o = c.getContext("2d");
   o.textAlign = "center"; o.textBaseline = "middle"; o.fillStyle = "#fff";
@@ -913,7 +1194,7 @@ function buildCrawl() {
 }
 
 /* ----- intro scenes: "title" -> "crawl" -> game ----- */
-const intro = { scene: "title", t: 0, scroll: 0 };
+const intro = { scene: "title", t: 0, scroll: 0, stage: 1, carry: null };
 /* crawl camera: vanishing point above the screen so lines stay readable most of the way up */
 const CR = { horizon: -200, F: 540800, zNear: 1040, F2: 614, endZ: 2400 };
 function stepIntro() {
@@ -924,10 +1205,15 @@ function stepIntro() {
     intro.done = CR.zNear + intro.scroll - CRAWLC.h > CR.endZ;
   }
 }
-function advanceIntro() {
+function goCrawl(stage, carry) {
+  $end.hidden = true; $cont.hidden = true; $pauseBtn.hidden = true; game = null; P = null; parts.length = 0; eb.length = 0;
+  intro.scene = "crawl"; intro.stage = stage; intro.carry = carry || null; intro.t = 0; intro.scroll = 0; intro.done = false; CRAWLC = null; stopMusic();
+}
+/* ly = tap height in pixels (title only): lower option picks stage 2 once it is unlocked */
+function advanceIntro(ly, forceStage) {
   audio();
-  if (intro.scene === "title") { intro.scene = "crawl"; intro.t = 0; intro.scroll = 0; intro.done = false; stopMusic(); }
-  else start();
+  if (intro.scene === "title") { const st = forceStage || ((opt.unlocked || 1) >= 2 && ly !== undefined && ly > 226 && ly < 252 ? 2 : 1); goCrawl(st, null); }
+  else start(intro.stage, intro.carry);
 }
 function renderIntro() {
   if (intro.scene === "title") return renderTitle();
@@ -935,7 +1221,7 @@ function renderIntro() {
   /* 1) opening lines (blue) */
   if (t < 160) {
     const vis = t > 20 && t < 140 && !((t < 32 || t > 128) && T % 2);
-    if (vis) { ptext("ปีดาราศักราช 2187", LW / 2, 140, 11, C.sky, "center"); ptext("ณ ขอบนอกของทางช้างเผือก....", LW / 2, 158, 11, C.sky, "center"); }
+    if (vis) { const o = intro.stage === 2 ? ["สามวันหลังการล่มสลายของราชินี", "ณ ป้อมดาวเหล็ก...."] : ["ปีดาราศักราช 2187", "ณ ขอบนอกของทางช้างเผือก...."]; ptext(o[0], LW / 2, 140, 11, C.sky, "center"); ptext(o[1], LW / 2, 158, 11, C.sky, "center"); }
   }
   /* 2) logo flies away into the stars, music starts */
   if (t === 160) playMusic("title");
@@ -971,17 +1257,20 @@ function renderTitle() {
   bigLatin("STAR STORM", LW / 2, 34, 1, [C.pale, C.sky, C.sky, C.blue, C.blue, C.navy], C.black);
   g.fillStyle = C.blue; g.fillRect(30, 45, 120, 1); g.fillStyle = C.navy; g.fillRect(40, 47, 100, 1);
   drawLogo(LW / 2, 80, 1);
-  ptext("ตอนที่ 1 · ราชินีโคลอส", LW / 2, 116, 12, C.lilac, "center");
+  ptext("ภารกิจพิทักษ์ดวงดาว", LW / 2, 116, 12, C.lilac, "center");
   /* hero ship at 2x, banking left and right */
   const sx = LW / 2 + Math.round(Math.sin(t * 0.02) * 22), sy = 170 + Math.round(Math.sin(t * 0.05) * 3), tilt = Math.cos(t * 0.02);
   const fl = S.flameLong[(T >> 2) % 2], sh = (tilt < -0.5 ? S.shipL : tilt > 0.5 ? S.shipR : S.ship)[(T >> 4) % 2];
   if (T % 2 === 0) { const gh = S.ghost[tilt < -0.5 ? 1 : tilt > 0.5 ? 2 : 0]; g.drawImage(gh, sx - Math.round(Math.sin(t * 0.02 - 0.3) * 6) - gh.width, sy + 8 - gh.height, gh.width * 2, gh.height * 2); }
   g.drawImage(fl, sx - fl.width, sy + 14, fl.width * 2, fl.height * 2);
   g.drawImage(sh, sx - sh.width, sy - sh.height, sh.width * 2, sh.height * 2);
-  if ((T >> 4) % 2) ptext("▶ แตะเพื่อเริ่ม", LW / 2, 224, 15, C.white, "center");
+  if ((opt.unlocked || 1) >= 2) {
+    ptext("ด่าน 1 · ราชินีโคลอส", LW / 2 + 6, 214, 13, C.white, "center"); ptext("ด่าน 2 · เรือธงเดรดนอต", LW / 2 + 6, 238, 13, C.yellow, "center");
+    if ((T >> 4) % 2) { ptext("▶", 14, 214, 13, C.white, "left"); ptext("▶", 14, 238, 13, C.yellow, "left"); }
+  } else if ((T >> 4) % 2) ptext("▶ แตะเพื่อเริ่ม", LW / 2, 224, 15, C.white, "center");
   /* legend + controls */
-  [["life", "ชีวิต"], ["shield", "เกราะ"], ["power", "ปืน"]].forEach(([k, l], i) => { const x = 34 + i * 56; spr(S[k], x - 10, 252); ptext(l, x - 3, 252, 12, C.lgray, "left"); });
-  ptext("ลากนิ้วบังคับยาน · ยิงอัตโนมัติ", LW / 2, 276, 12, C.lgray, "center");
+  [["life", "ชีวิต"], ["shield", "เกราะ"], ["power", "ปืน"]].forEach(([k, l], i) => { const x = 34 + i * 56; spr(S[k], x - 10, 262); ptext(l, x - 3, 262, 12, C.lgray, "left"); });
+  ptext("ลากนิ้วบังคับยาน · ยิงอัตโนมัติ", LW / 2, 282, 12, C.lgray, "center");
   if (opt.hi) { bigLatin("HI", LW / 2 - 30, 300, 1, [C.yellow], C.brown); digits(String(opt.hi).padStart(6, "0"), LW / 2 + 10, 301, C.white, 1, C.blue); }
 }
 
@@ -996,8 +1285,7 @@ function frame(now) {
   } catch (e) { acc = 0; console.error(e); }
 }
 const $pause = document.getElementById("pauseOv"), $end = document.getElementById("endOv"), $pauseBtn = document.getElementById("pauseBtn");
-function start() { audio(); $end.hidden = true; $cont.hidden = true; newGame(); $pauseBtn.hidden = false; playMusic("stage"); }
-document.getElementById("againBtn").onclick = start;
+function start(stage, carry) { audio(); $end.hidden = true; $cont.hidden = true; newGame(stage, carry); $pauseBtn.hidden = false; playMusic(STAGE().music); }
 function toMenu() { stopMusic(); $cont.hidden = true; game = null; P = null; parts.length = 0; $end.hidden = true; $pause.hidden = true; paused = false; $pauseBtn.hidden = true; intro.scene = "title"; intro.t = 0; }
 document.getElementById("menuBtn").onclick = toMenu; document.getElementById("quitBtn").onclick = toMenu;
 function pauseGame() { if (paused || !game || game.state !== "play") return; paused = true; document.getElementById("pauseScore").textContent = "คะแนน " + game.score; $pause.hidden = false; document.getElementById("resumeBtn").focus(); }
@@ -1010,7 +1298,7 @@ function askContinue() {
   if (game.continues >= MAX_CONT) return endGame(false);
   game.state = "continue"; game.cont = 600; $pauseBtn.hidden = true; SFX.lose();
   const b = game.boss;
-  document.getElementById("contNote").textContent = b ? `บอสเหลือพลังชีวิต ${Math.max(1, Math.round(b.hp / b.max * 100))}%${b.hp / b.max < 0.4 ? " อีกนิดเดียว!" : ""}` : game.bossIncoming ? "บอสกำลังมา" : `ระลอก ${Math.min(game.wave, WAVES.length)}/${WAVES.length}`;
+  document.getElementById("contNote").textContent = b ? `บอสเหลือพลังชีวิต ${Math.max(1, Math.round(b.hp / b.max * 100))}%${b.hp / b.max < 0.4 ? " อีกนิดเดียว!" : ""}` : game.bossIncoming ? "บอสกำลังมา" : `ระลอก ${Math.min(game.wave, waveCount())}/${waveCount()}`;
   document.getElementById("contLeft").textContent = `เล่นต่อได้อีก ${MAX_CONT - game.continues} ครั้ง · กลับมาพร้อม ♥3 เกราะ 1 ชั้น`;
   document.getElementById("contNum").textContent = "9";
   $cont.hidden = false; document.getElementById("contBtn").focus();
@@ -1029,17 +1317,22 @@ function doContinue() {
   eb.length = 0; game.laser = null; game.state = "play"; flash = 0; shake = 0;
   ring(P.x, P.y, "#46E6FF", 60); ring(P.x, P.y, "#FFD25A", 40);
   showBanner("กลับมาสู้ต่อ!", `ใช้เล่นต่อแล้ว ${game.continues}/${MAX_CONT} ครั้ง`, 100, "#FFD25A");
-  playMusic(game.boss || game.bossIncoming ? "boss" : "stage"); $pauseBtn.hidden = false;
+  playMusic(game.boss || game.bossIncoming ? "boss" : STAGE().music); $pauseBtn.hidden = false;
 }
 document.getElementById("contBtn").onclick = doContinue;
 document.getElementById("giveUpBtn").onclick = () => { if (game && game.state === "continue") { $cont.hidden = true; endGame(false, true); } };
 function endGame(win, quiet) {
   game.state = "over"; $pauseBtn.hidden = true; stopMusic(); if (!win && !quiet) SFX.lose();
   if (win) game.score += P.hp * 2000 + P.shield * 1000;
-  const newHi = game.score > opt.hi; if (newHi) { opt.hi = game.score; saveOpt(); }
-  document.getElementById("endTitle").textContent = win ? "ภารกิจสำเร็จ! 🚀" : "ยานถูกยิงตก";
+  const next = win && game.stage < 2;
+  if (win && game.stage === 1) { opt.unlocked = Math.max(opt.unlocked || 1, 2); }
+  const again = document.getElementById("againBtn"), st = game.stage;
+  if (next) { const carry = { hp: P.hp, shield: P.shield, power: P.power, score: game.score, kills: game.kills, continues: game.continues }; again.textContent = "▶ ด่าน 2"; again.onclick = () => goCrawl(2, carry); }
+  else { again.textContent = "เล่นอีกครั้ง"; again.onclick = () => start(st); }
+  const newHi = game.score > opt.hi; if (newHi) opt.hi = game.score; saveOpt();
+  document.getElementById("endTitle").textContent = win ? (next ? "ผ่านด่าน 1! 🚀" : "ชนะเกม! ผ่านทุกด่าน 🏆") : "ยานถูกยิงตก";
   document.getElementById("endScore").textContent = game.score.toLocaleString();
-  document.getElementById("endNote").innerHTML = (win ? `โบนัสชีวิตและเกราะที่เหลือรวมแล้ว<br>` : `ถึงระลอก ${Math.min(game.wave, WAVES.length)}${game.boss || game.bossIncoming ? " (บอส)" : ""}<br>`) + `ยิงเอเลี่ยนตก ${game.kills} ตัว` + (game.continues ? ` · เล่นต่อ ${game.continues} ครั้ง` : "") + (newHi ? "<br><b style='color:#FFD25A'>สถิติใหม่!</b>" : "");
+  document.getElementById("endNote").innerHTML = (win ? `โบนัสชีวิตและเกราะที่เหลือรวมแล้ว${next ? " · พลังยานติดตัวไปด่าน 2" : ""}<br>` : `ด่าน ${game.stage} ถึงระลอก ${Math.min(game.wave, waveCount())}${game.boss || game.bossIncoming ? " (บอส)" : ""}<br>`) + `ยิงเอเลี่ยนตก ${game.kills} ตัว` + (game.continues ? ` · เล่นต่อ ${game.continues} ครั้ง` : "") + (newHi ? "<br><b style='color:#FFD25A'>สถิติใหม่!</b>" : "");
   $end.hidden = false; document.getElementById("againBtn").focus();
 }
 document.getElementById("soundBtn").onclick = e => { opt.sound = !opt.sound; saveOpt(); e.currentTarget.textContent = opt.sound ? "♪" : "×"; e.currentTarget.style.color = opt.sound ? "" : "#7C7C7C"; if (opt.sound) audio(); if (music.bus) music.bus.gain.setValueAtTime(opt.sound ? 1 : 0, ac.currentTime); };
