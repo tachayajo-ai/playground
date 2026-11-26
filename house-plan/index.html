@@ -64,6 +64,9 @@ table.sum td { padding: 5px 2px; border-bottom: 1px solid var(--line); }
 table.sum td:last-child { text-align: right; white-space: nowrap; }
 table.sum tr.tot td { font-weight: 700; border-bottom: 2px solid var(--ink); }
 .dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+.sw { display: flex; flex-wrap: wrap; gap: 7px; }
+.sw button { width: 34px; height: 34px; border-radius: 9px; border: 2px solid rgba(0,0,0,.12); padding: 0; }
+.sw button.on { border-color: var(--accent); box-shadow: 0 0 0 2px #fff inset, 0 0 0 1px var(--accent); }
 .fgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .fgrid button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 4px 2px 6px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .fgrid button.on { border-color: var(--accent); background: var(--accent2); }
@@ -889,6 +892,7 @@ function updatePanel() {
       ${rect ? `<div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.3" data-k="rw" value="${fmt(c - a)}"></div>
       <div class="row"><label>ลึก (ม.)</label><input type="number" step="0.05" min="0.3" data-k="rh" value="${fmt(d - b)}"></div>` : `<p class="mute">ห้องรูปทรงอิสระ ${o.pts.length} มุม · ลากจุด ● เพื่อปรับ</p>`}
       <p>พื้นที่ <span class="big">${fmt(areaOf(o.pts))}</span> ตร.ม.</p>
+      ${roomColorHTML(o)}
       <div class="btns"><button class="b" data-a="dup">⧉ ทำซ้ำ (วางข้างกัน)</button><button class="b" data-a="toFloor">ย้ายไปชั้นอื่น</button><button class="b del" data-a="del">🗑 ลบ</button></div>
       <p class="mute">ลาก ■ กลางผนังเพื่อขยับผนัง · ลาก ● เพื่อย้ายมุม · ลากในห้องเพื่อย้ายทั้งห้อง</p>`; return;
   }
@@ -1274,8 +1278,36 @@ function generate(o) {
   return { plan, warn: warn.join(" · ") };
 }
 
+/* ============================================================ colours / style */
+const WALL_COLS = [["#F3EFE6", "ขาวนวล"], ["#EFE3C8", "ครีม"], ["#F6E9B8", "เหลืองอ่อน"], ["#F1D9D4", "ชมพูอ่อน"], ["#D6E6CF", "เขียวอ่อน"], ["#CFE0EA", "ฟ้าอ่อน"], ["#D9D9D6", "เทาอ่อน"], ["#8D8F92", "เทาเข้ม"], ["#B76E4F", "อิฐ"], ["#A67B5B", "ไม้"]];
+const FLOOR_COLS = [["#B8865A", "ไม้สัก"], ["#D9B98C", "ไม้อ่อน"], ["#ECEBE7", "กระเบื้องขาว"], ["#E8E4DC", "หินอ่อน"], ["#BDBDB8", "กระเบื้องเทา"], ["#A9A9A4", "ปูนขัดมัน"], ["#C27A55", "ดินเผา"], ["#BFD7E6", "กระเบื้องฟ้า"], ["#8FB38A", "หญ้า/สนาม"], ["#4A4A4A", "สีเข้ม"]];
+const ROOF_COLS = [["#B5523B", "แดงอิฐ"], ["#C8703F", "ส้มดินเผา"], ["#7A5235", "น้ำตาล"], ["#5A5F66", "เทาเข้ม"], ["#3F5E8C", "น้ำเงิน"], ["#4F7A5A", "เขียว"], ["#C9CCCF", "เทาเงิน"]];
+const ROOF_TYPES = [["none", "ไม่มี"], ["hip", "ปั้นหยา"], ["gable", "จั่ว"], ["shed", "หมาแหงน"], ["flat", "แบน/ดาดฟ้า"]];
+const PITCH = [[0.35, "ลาด"], [0.55, "ปกติ"], [0.9, "ชัน (ทรงไทย)"]];
+function styleOf() { if (!plan.style) plan.style = {}; const s = plan.style; if (!s.roof) s.roof = "none"; if (!s.roofColor) s.roofColor = "#B5523B"; if (!s.ext) s.ext = "#F3EFE6"; if (!s.pitch) s.pitch = 0.55; if (s.dir === undefined) s.dir = 0; if (s.autoLower === undefined) s.autoLower = true; return s; }
+function swatches(kind, cur, list, extra) {
+  return `<div class="sw">${list.map(([c, n]) => `<button data-col="${kind}" data-c="${c}" title="${n}" class="${(cur || "").toUpperCase() === c ? "on" : ""}" style="background:${c}"></button>`).join("")}</div>${extra || ""}`;
+}
+function roomColorHTML(r) {
+  return `<h4>สีพื้น</h4>${swatches("floor", r.floorColor, FLOOR_COLS)}
+    <h4>สีผนังด้านใน</h4>${swatches("wall", r.wallColor, WALL_COLS)}
+    <div class="btns"><button class="b" data-col="allfloor">ใช้สีพื้นนี้ทั้งชั้น</button><button class="b" data-col="allwall">ใช้สีผนังนี้ทั้งชั้น</button><button class="b" data-col="reset">ค่าเริ่มต้น</button></div>`;
+}
+function colorTarget() { if (V3.on && V3.sel) { const f = plan.floors[V3.sel.fi]; return f && { f, r: f.rooms.find(r => r.id === V3.sel.id) }; } const o = getSel(); return o && sel.t === "room" ? { f: FL(), r: o } : null; }
+document.getElementById("panel").addEventListener("click", e => {
+  const b = e.target.closest("[data-col]"); if (!b) return; e.stopPropagation();
+  const k = b.dataset.col, c = b.dataset.c, before = snapshot(), st = styleOf();
+  if (k === "ext") st.ext = c; else if (k === "roofc") st.roofColor = c;
+  else { const t = colorTarget(); if (!t || !t.r) return; const r = t.r;
+    if (k === "floor") r.floorColor = c; else if (k === "wall") r.wallColor = c;
+    else if (k === "allfloor") t.f.rooms.forEach(q => { if (r.floorColor) q.floorColor = r.floorColor; else delete q.floorColor; });
+    else if (k === "allwall") t.f.rooms.forEach(q => { if (r.wallColor) q.wallColor = r.wallColor; else delete q.wallColor; });
+    else if (k === "reset") { delete r.floorColor; delete r.wallColor; } }
+  commit(before);
+}, true);
+
 /* ============================================================ 3D view (own WebGL, works offline) */
-var V3 = { on: false, upto: 99, cut: false, roof: false, furn: true, yaw: -0.55, pitch: 0.62, dist: 30, t: [0, 0, 0], need: true, gl: null, n: 0, ng: 0 };
+var V3 = { on: false, upto: 99, cut: false, furn: true, sel: null, yaw: -0.55, pitch: 0.62, dist: 30, t: [0, 0, 0], need: true, gl: null, n: 0, ng: 0 };
 const cv3 = document.getElementById("cv3");
 const hex3 = (h, k) => { h = h.replace("#", ""); const n = parseInt(h, 16); k = k || 1; return [((n >> 16) & 255) / 255 * k, ((n >> 8) & 255) / 255 * k, (n & 255) / 255 * k]; };
 let VB = [], GB = [];                 /* opaque / glass: x y z nx ny nz r g b a */
@@ -1312,6 +1344,64 @@ function triangulate(pts) {
   if (P.length === 3) out.push(P.map(i => pts[i]));
   return out;
 }
+/* merge rectangles that share a full edge at the same height into bigger rectangles */
+function mergeRects(rects) {
+  rects = rects.map(q => ({ b: q.b.slice(), y: q.y }));
+  const eq = (p, q) => Math.abs(p - q) < 0.02;
+  for (let changed = true; changed;) { changed = false;
+    for (let i = 0; i < rects.length && !changed; i++) for (let j = i + 1; j < rects.length && !changed; j++) {
+      const A = rects[i].b, B = rects[j].b; if (!eq(rects[i].y, rects[j].y)) continue;
+      if ((eq(A[1], B[1]) && eq(A[3], B[3]) && (eq(A[2], B[0]) || eq(B[2], A[0]))) || (eq(A[0], B[0]) && eq(A[2], B[2]) && (eq(A[3], B[1]) || eq(B[3], A[1])))) {
+        rects[i].b = [Math.min(A[0], B[0]), Math.min(A[1], B[1]), Math.max(A[2], B[2]), Math.max(A[3], B[3])]; rects.splice(j, 1); changed = true; } } }
+  return rects;
+}
+function poly3(A, pts, col, hint) {
+  const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(...n) || 1; n = n.map(x => x / l);
+  if (n[0] * hint[0] + n[1] * hint[1] + n[2] * hint[2] < 0) n = n.map(x => -x);
+  for (let i = 1; i < pts.length - 1; i++) tri3(A, pts[0], pts[i], pts[i + 1], n, col);
+}
+/* roof over footprint [x0,z0,x1,z1] whose walls stop at height y */
+function roofRect(bb, y, type, dir, pitch, col, ext, o) {
+  const [x0, z0, x1, z1] = bb, X0 = x0 - o, X1 = x1 + o, Z0 = z0 - o, Z1 = z1 + o, w = X1 - X0, d = Z1 - Z0, xm = (X0 + X1) / 2, zm = (Z0 + Z1) / 2, cap = 0.15, yt = y + cap;
+  if (type === "flat") {
+    obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, y + 0.2, 0, hex3("#CFCBC3"));
+    const ph = 0.8, t = 0.15; obox(VB, (x0 + x1) / 2, z0, x1 - x0 + WALL, t, y, y + ph, 0, ext); obox(VB, (x0 + x1) / 2, z1, x1 - x0 + WALL, t, y, y + ph, 0, ext);
+    obox(VB, x0, (z0 + z1) / 2, t, z1 - z0, y, y + ph, 0, ext); obox(VB, x1, (z0 + z1) / 2, t, z1 - z0, y, y + ph, 0, ext); return;
+  }
+  obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, yt, 0, ext);
+  let alongX = w >= d; if (dir % 2) alongX = !alongX;
+  if (type === "hip") {
+    const half = (alongX ? d : w) / 2, rh = half * pitch;
+    if (alongX) { let s0 = X0 + half, s1 = X1 - half; if (s0 > s1) s0 = s1 = xm; const r0 = [s0, yt + rh, zm], r1 = [s1, yt + rh, zm];
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], r1, r0], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], r1, r0], col, [0, 1, 0]);
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], r0], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], r1], col, [0, 1, 0]); }
+    else { let s0 = Z0 + half, s1 = Z1 - half; if (s0 > s1) s0 = s1 = zm; const r0 = [xm, yt + rh, s0], r1 = [xm, yt + rh, s1];
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], r1, r0], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], r1, r0], col, [0, 1, 0]);
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], r0], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], r1], col, [0, 1, 0]); }
+    return;
+  }
+  if (type === "gable") {
+    if (alongX) { const half = d / 2, rh = half * pitch, ew = yt + o * pitch, top = yt + rh;
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], [X1, top, zm], [X0, top, zm]], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], [X1, top, zm], [X0, top, zm]], col, [0, 1, 0]);
+      for (const [x, s] of [[x0 - WALL / 2, -1], [x1 + WALL / 2, 1]]) poly3(VB, [[x, yt, z0], [x, ew, z0], [x, top - 0.02, zm], [x, ew, z1], [x, yt, z1]], ext, [s, 0, 0]); }
+    else { const half = w / 2, rh = half * pitch, ew = yt + o * pitch, top = yt + rh;
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], [xm, top, Z1], [xm, top, Z0]], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], [xm, top, Z1], [xm, top, Z0]], col, [0, 1, 0]);
+      for (const [z, s] of [[z0 - WALL / 2, -1], [z1 + WALL / 2, 1]]) poly3(VB, [[x0, yt, z], [x0, ew, z], [xm, top - 0.02, z], [x1, ew, z], [x1, yt, z]], ext, [0, 0, s]); }
+    return;
+  }
+  /* shed (หมาแหงน): dir 0 low at front (+z), 1 low at right (+x), 2 low at back, 3 low at left */
+  const k = ((dir % 4) + 4) % 4, p = pitch * 0.5, span = k % 2 ? w : d, rise = span * p;
+  const hAt = s => yt + rise - s * p;            /* s = distance from the high eave */
+  if (k === 0 || k === 2) { const hi = k === 0 ? Z0 : Z1, lo = k === 0 ? Z1 : Z0, zw = k === 0 ? z0 : z1, zl = k === 0 ? z1 : z0;
+    poly3(VB, [[X0, hAt(0), hi], [X1, hAt(0), hi], [X1, hAt(span), lo], [X0, hAt(span), lo]], col, [0, 1, 0]);
+    const hw = hAt(o), hl = hAt(span - o); poly3(VB, [[x0, yt, zw], [x1, yt, zw], [x1, hw, zw], [x0, hw, zw]], ext, [0, 0, k === 0 ? -1 : 1]);
+    for (const [x, s] of [[x0 - WALL / 2, -1], [x1 + WALL / 2, 1]]) poly3(VB, [[x, yt, zw], [x, hw, zw], [x, hl, zl], [x, yt, zl]], ext, [s, 0, 0]); }
+  else { const hi = k === 1 ? X0 : X1, lo = k === 1 ? X1 : X0, xw = k === 1 ? x0 : x1, xl = k === 1 ? x1 : x0;
+    poly3(VB, [[hi, hAt(0), Z0], [hi, hAt(0), Z1], [lo, hAt(span), Z1], [lo, hAt(span), Z0]], col, [0, 1, 0]);
+    const hw = hAt(o), hl = hAt(span - o); poly3(VB, [[xw, yt, z0], [xw, yt, z1], [xw, hw, z1], [xw, hw, z0]], ext, [k === 1 ? -1 : 1, 0, 0]);
+    for (const [z, s] of [[z0 - WALL / 2, -1], [z1 + WALL / 2, 1]]) poly3(VB, [[xw, yt, z], [xw, hw, z], [xl, hl, z], [xl, yt, z]], ext, [0, 0, s]); }
+}
 const H3 = { bed1: .5, bed5: .5, bed6: .5, hbed: .6, wardrobe: 2.0, sofa: .45, armchair: .45, tv: .5, ctable: .42, dtable4: .75, dtable6: .75, desk: .75, counter: .9, fridge: 1.75, toilet: .42, basin: .85, shower: .04, tub: .55, washer: .85, car: .75, moto: 1.0, stairs: .2, altar: 1.0, plant: .45, wchair: .5, grab: .9 };
 const C3 = { bed1: "#F2EEE6", bed5: "#F2EEE6", bed6: "#F2EEE6", hbed: "#E6EEF4", wardrobe: "#B08458", sofa: "#7C8FA6", armchair: "#7C8FA6", tv: "#5A5048", ctable: "#A57C55", dtable4: "#A57C55", dtable6: "#A57C55", desk: "#A57C55", counter: "#D9D4CB", fridge: "#E8ECEF", toilet: "#FFFFFF", basin: "#FFFFFF", shower: "#BFD9E6", tub: "#FFFFFF", washer: "#F3F5F6", car: "#C8463C", moto: "#3B3F46", stairs: "#BFA383", altar: "#C99A3A", plant: "#7A5232", wchair: "#3E6FB5", grab: "#9AA4AE" };
 function addItem3(it, y) {
@@ -1344,7 +1434,7 @@ function addItem3(it, y) {
   }
 }
 function build3D() {
-  VB = []; GB = [];
+  VB = []; GB = []; const st = styleOf(), FE = [];
   const SLAB = 0.15, WALLC = hex3("#F3EFE6"), SIDE = hex3("#BDB6A8"), GLASS = [0.55, 0.75, 0.9, 0.42];
   /* ground and land */
   const [a, b, c, d] = planBounds(), cx = (a + c) / 2, cz = (b + d) / 2, R = Math.max(60, (c - a) * 3, (d - b) * 3);
@@ -1358,29 +1448,41 @@ function build3D() {
     /* floor slabs (stair rooms above ground are holes) */
     for (const r of f.rooms) {
       if (r.type === "stair" && i > 0) continue;
-      const col = hex3((ROOM_TYPES[r.type] || ROOM_TYPES.other).c, 0.93);
+      const col = r.floorColor ? hex3(r.floorColor) : hex3((ROOM_TYPES[r.type] || ROOM_TYPES.other).c, 0.93);
       for (const [p, q, s] of triangulate(r.pts)) tri3(VB, [p[0], elev, p[1]], [q[0], elev, q[1]], [s[0], elev, s[1]], [0, 1, 0], [...col, 1]);
       r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], ex = q[0] - p[0], ez = q[1] - p[1], L = Math.hypot(ex, ez) || 1;
         quad3(VB, [p[0], elev - SLAB, p[1]], [q[0], elev - SLAB, q[1]], [q[0], elev, q[1]], [p[0], elev, p[1]], [ez / L, 0, -ex / L], [...SIDE, 1]); });
     }
-    /* walls with door / window cut-outs */
+    /* walls with door / window cut-outs: inner skin in the room's colour, outer skin only where no room is next door */
+    const EXT = hex3(st.ext);
     for (const r of f.rooms) {
       let h = r.type === "porch" ? (i > 0 ? 1.0 : 0) : wallTop; if (V3.cut) h = Math.min(h, 1.2); if (h <= 0) continue;
+      const IN = r.wallColor ? hex3(r.wallColor) : WALLC;
       r.pts.forEach((A, k) => {
         const B = r.pts[(k + 1) % r.pts.length], ex = B[0] - A[0], ez = B[1] - A[1], L = Math.hypot(ex, ez); if (L < 0.01) return;
         const ang = Math.atan2(ez, ex), ux = ex / L, uz = ez / L, iv = [];
+        let nx = -uz, nz = ux; if (!inPoly((A[0] + B[0]) / 2 + nx * 0.05, (A[1] + B[1]) / 2 + nz * 0.05, r.pts)) { nx = -nx; nz = -nz; }
         for (const op of f.opens) {
           const t = ((op.x - A[0]) * ux + (op.y - A[1]) * uz), dist = Math.abs((op.x - A[0]) * -uz + (op.y - A[1]) * ux);
           if (dist > 0.06 || t < -0.05 || t > L + 0.05) continue;
           const sill = op.kind === "window" ? 0.9 : 0, head = op.kind === "opening" ? Math.min(2.4, wallTop) : 2.1;
-          iv.push({ u0: clamp(t - op.w / 2, 0, L), u1: clamp(t + op.w / 2, 0, L), sill, head, op });
+          iv.push({ u0: clamp(t - op.w / 2, 0, L), u1: clamp(t + op.w / 2, 0, L), sill, head });
         }
         iv.sort((p, q) => p.u0 - q.u0);
-        const piece = (u0, u1, y0, y1) => { if (u1 - u0 < 0.005 || y1 - y0 < 0.005) return; const e0 = u0 <= 0 ? -WALL / 2 : 0, e1 = u1 >= L ? WALL / 2 : 0, m = (u0 + e0 + u1 + e1) / 2;
-          obox(VB, A[0] + ux * m, A[1] + uz * m, u1 + e1 - u0 - e0, WALL, elev + y0, elev + y1, ang, WALLC); };
-        let u = 0;
-        for (const v of iv) { if (v.u0 > u) piece(u, v.u0, 0, h); piece(v.u0, v.u1, 0, Math.min(v.sill, h)); piece(v.u0, v.u1, v.head, h); u = Math.max(u, v.u1); }
-        if (u < L) piece(u, L, 0, h);
+        const pieces = (r0, r1) => { const out = []; let u = r0;
+          for (const v of iv) { const a = Math.max(v.u0, r0), b = Math.min(v.u1, r1); if (b <= a) continue; if (a > u) out.push([u, a, 0, h]); out.push([a, b, 0, Math.min(v.sill, h)]); out.push([a, b, v.head, h]); u = Math.max(u, b); }
+          if (u < r1) out.push([u, r1, 0, h]); return out; };
+        const emit = ([u0, u1, y0, y1], side, col) => { if (u1 - u0 < 0.005 || y1 - y0 < 0.005) return;
+          const e0 = side < 0 && u0 <= 0 ? -WALL / 2 : 0, e1 = side < 0 && u1 >= L ? WALL / 2 : 0, m = (u0 + e0 + u1 + e1) / 2, off = side * WALL / 4;
+          obox(VB, A[0] + ux * m + nx * off, A[1] + uz * m + nz * off, u1 + e1 - u0 - e0, WALL / 2, elev + y0, elev + y1, ang, col); };
+        for (const pc of pieces(0, L)) emit(pc, 1, IN);
+        /* exterior runs: sample just outside the wall */
+        const n = Math.max(1, Math.round(L / 0.25)), runs = []; let start = null;
+        for (let j = 0; j < n; j++) { const u = (j + 0.5) * L / n, px = A[0] + ux * u - nx * 0.12, pz = A[1] + uz * u - nz * 0.12;
+          const shared = f.rooms.some(o => o !== r && (o.type !== "porch" || r.type === "porch") && inPoly(px, pz, o.pts));
+          if (!shared && start === null) start = j * L / n; if (shared && start !== null) { runs.push([start, j * L / n]); start = null; } }
+        if (start !== null) runs.push([start, L]);
+        for (const [r0, r1] of runs) for (const pc of pieces(r0, r1)) emit(pc, -1, EXT);
       });
     }
     /* door leaves and glass (once per opening) */
@@ -1402,20 +1504,29 @@ function build3D() {
       }
     }
     if (V3.furn) for (const it of f.items) addItem3(it, elev);
+    FE[i] = { elev, top: elev + wallTop };
     topElev = elev + wallTop; topRooms = f.rooms.filter(r => !SEMI_OUT.has(r.type));
     elev += H;
   });
-  /* hip roof over the top floor shown */
-  if (V3.roof && !V3.cut && topRooms.length) {
-    const [x0, z0, x1, z1] = bbox(topRooms.flatMap(r => r.pts)), o = 0.6, X0 = x0 - o, X1 = x1 + o, Z0 = z0 - o, Z1 = z1 + o, w = X1 - X0, d = Z1 - Z0, rh = Math.min(w, d) * 0.28, y = topElev, col = [...hex3("#B5523B"), 1];
-    obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, y + 0.15, 0, hex3("#E8E2D6"));
-    const yt = y + 0.15;
-    if (w >= d) { const r0 = [X0 + d / 2, yt + rh, (Z0 + Z1) / 2], r1 = [X1 - d / 2, yt + rh, (Z0 + Z1) / 2];
-      quad3(VB, [X0, yt, Z0], [X1, yt, Z0], r1, r0, [0, 0.8, -0.6], col); quad3(VB, [X0, yt, Z1], [X1, yt, Z1], r1, r0, [0, 0.8, 0.6], col);
-      tri3(VB, [X0, yt, Z0], [X0, yt, Z1], r0, [-0.6, 0.8, 0], col); tri3(VB, [X1, yt, Z0], [X1, yt, Z1], r1, [0.6, 0.8, 0], col);
-    } else { const r0 = [(X0 + X1) / 2, yt + rh, Z0 + w / 2], r1 = [(X0 + X1) / 2, yt + rh, Z1 - w / 2];
-      quad3(VB, [X0, yt, Z0], [X0, yt, Z1], r1, r0, [-0.6, 0.8, 0], col); quad3(VB, [X1, yt, Z0], [X1, yt, Z1], r1, r0, [0.6, 0.8, 0], col);
-      tri3(VB, [X0, yt, Z0], [X1, yt, Z0], r0, [0, 0.8, -0.6], col); tri3(VB, [X0, yt, Z1], [X1, yt, Z1], r1, [0, 0.8, 0.6], col); }
+  /* roofs: main roof over the top floor, automatic gables over lower parts left uncovered */
+  if (st.roof !== "none" && !V3.cut && last === plan.floors.length - 1) {
+    const rc = [...hex3(st.roofColor), 1], ext = [...hex3(st.ext), 1], main = topRooms.length ? bbox(topRooms.flatMap(r => r.pts)) : null;
+    const blocks = main ? mergeRects(topRooms.map(r => ({ b: bbox(r.pts), y: topElev }))) : [];
+    for (const q of blocks) roofRect(q.b, q.y, st.roof, st.dir, st.pitch, rc, ext, 0.6);
+    if (st.autoLower) {
+      const rects = [];
+      plan.floors.forEach((f, i) => {
+        const above = plan.floors[i + 1];
+        for (const r of f.rooms) {
+          if (r.type === "porch" && i > 0) continue;
+          if (!above) { if (!SEMI_OUT.has(r.type) || !main) continue; const [cx, cz] = centroid(r.pts); if (blocks.some(q => cx > q.b[0] && cx < q.b[2] && cz > q.b[1] && cz < q.b[3])) continue; rects.push({ b: bbox(r.pts), y: FE[i].top }); continue; }
+          const [a, b, c, d] = bbox(r.pts); let tot = 0, unc = 0;
+          for (let x = a + 0.125; x < c; x += 0.25) for (let z = b + 0.125; z < d; z += 0.25) { if (!inPoly(x, z, r.pts)) continue; tot++; if (!above.rooms.some(o => inPoly(x, z, o.pts))) unc++; }
+          if (tot && unc / tot >= 0.6) rects.push({ b: bbox(r.pts), y: FE[i].top });
+        }
+      });
+      for (const q of mergeRects(rects)) roofRect(q.b, q.y, "gable", 0, st.pitch, rc, ext, 0.4);
+    }
   }
   upload3();
 }
@@ -1469,7 +1580,7 @@ function view3Preset(k) {
 }
 /* orbit / pinch / pan */
 const p3 = new Map(); let g3 = null;
-cv3.addEventListener("pointerdown", e => { try { cv3.setPointerCapture(e.pointerId); } catch (_) {} p3.set(e.pointerId, { x: e.clientX, y: e.clientY }); g3 = null; });
+cv3.addEventListener("pointerdown", e => { try { cv3.setPointerCapture(e.pointerId); } catch (_) {} p3.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, multi: p3.size > 0 }); if (p3.size > 1) for (const q of p3.values()) q.multi = true; g3 = null; });
 cv3.addEventListener("pointermove", e => {
   const q = p3.get(e.pointerId); if (!q) return;
   const dx = e.clientX - q.x, dy = e.clientY - q.y; q.x = e.clientX; q.y = e.clientY;
@@ -1482,7 +1593,22 @@ cv3.addEventListener("pointermove", e => {
   else { V3.yaw -= dx * 0.008; V3.pitch = clamp(V3.pitch + dy * 0.006, 0.03, 1.53); }
   V3.need = true;
 });
-const end3 = e => { p3.delete(e.pointerId); g3 = null; };
+const end3 = e => { const q = p3.get(e.pointerId); p3.delete(e.pointerId); g3 = null;
+  if (q && !q.multi && e.type === "pointerup" && Math.hypot(e.clientX - q.x0, e.clientY - q.y0) < 8) pick3(e.clientX, e.clientY); };
+function pick3(cx, cy) {
+  const r = cv3.getBoundingClientRect(), nx = (cx - r.left) / r.width * 2 - 1, ny = 1 - (cy - r.top) / r.height * 2, e = eye3();
+  let z = [e[0] - V3.t[0], e[1] - V3.t[1], e[2] - V3.t[2]]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+  let x = [z[2], 0, -z[0]]; const xl = Math.hypot(...x) || 1; x = x.map(v => v / xl); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  const t = Math.tan(0.4), asp = r.width / r.height, d = [0, 1, 2].map(i => -z[i] + x[i] * nx * t * asp + y[i] * ny * t);
+  const last = Math.min(V3.upto, plan.floors.length - 1); let elev = 0.15; const levels = [];
+  plan.floors.forEach((f, i) => { if (i <= last) levels.push([i, elev]); elev += f.height || 3; });
+  V3.sel = null;
+  for (const [i, h] of levels.reverse()) { if (Math.abs(d[1]) < 1e-6) break; const s = (h - e[1]) / d[1]; if (s <= 0) continue;
+    const px = e[0] + d[0] * s, pz = e[2] + d[2] * s, f = plan.floors[i];
+    const hit = f.rooms.filter(q => inPoly(px, pz, q.pts) && !(q.type === "stair" && i > 0)).sort((a, b) => areaOf(a.pts) - areaOf(b.pts))[0];
+    if (hit) { V3.sel = { fi: i, id: hit.id }; break; } }
+  updatePanel();
+}
 cv3.addEventListener("pointerup", end3); cv3.addEventListener("pointercancel", end3);
 cv3.addEventListener("contextmenu", e => e.preventDefault());
 cv3.addEventListener("wheel", e => { e.preventDefault(); V3.dist = clamp(V3.dist * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0012)), 2, 400); V3.need = true; }, { passive: false });
@@ -1499,11 +1625,18 @@ function set3D(on) {
 }
 function panel3HTML() {
   const nf = plan.floors.length, up = Math.min(V3.upto, nf - 1);
-  const chip = (on, attr, txt) => `<button ${attr} class="${on ? "on" : ""}">${txt}</button>`;
+  const chip = (on, attr, txt) => `<button ${attr} class="${on ? "on" : ""}">${txt}</button>`, st = styleOf();
+  const sf = V3.sel && plan.floors[V3.sel.fi], sr = sf && sf.rooms.find(r => r.id === V3.sel.id);
   return `<h3>🧊 มุมมอง 3 มิติ</h3>
+    ${sr ? `<div style="background:var(--accent2);border-radius:12px;padding:10px 12px;margin-bottom:6px"><b>${esc(sr.name)}</b> <span class="mute">${esc(sf.name)}</span> <button class="b" data-v3="unsel" style="float:right;padding:4px 10px">✕</button>${roomColorHTML(sr)}</div>` : `<p class="mute" style="margin-top:-4px">แตะห้องในภาพเพื่อเปลี่ยนสีพื้น/ผนัง</p>`}
     <h4>แสดงชั้น</h4><div class="chips">${plan.floors.map((f, i) => chip(i === up, `data-v3="upto" data-v="${i}"`, i === nf - 1 ? (nf > 1 ? "ทั้งหลัง" : esc(f.name)) : i === 0 ? esc(f.name) : "ถึง" + esc(f.name))).join("")}</div>
     <h4>ผนัง</h4><div class="chips">${chip(!V3.cut, 'data-v3="cut" data-v="0"', "เต็มความสูง")}${chip(V3.cut, 'data-v3="cut" data-v="1"', "ตัดเตี้ย ดูภายใน")}</div>
-    <h4>ส่วนประกอบ</h4><div class="chips">${chip(V3.roof, 'data-v3="roof"', "หลังคา")}${chip(V3.furn, 'data-v3="furn"', "เฟอร์นิเจอร์")}</div>
+    <h4>หลังคา</h4><div class="chips">${ROOF_TYPES.map(([k, n]) => chip(st.roof === k, `data-v3="roof" data-v="${k}"`, n)).join("")}</div>
+    ${st.roof !== "none" ? `${st.roof !== "flat" ? `<div class="chips" style="margin-top:8px">${PITCH.map(([v, n]) => chip(st.pitch === v, `data-v3="pitch" data-v="${v}"`, n)).join("")}${chip(0, 'data-v3="dir"', st.roof === "shed" ? "↻ เปลี่ยนทิศลาด" : "↻ หมุนแนวสัน")}</div>` : ""}
+      <div class="chips" style="margin-top:8px">${chip(st.autoLower, 'data-v3="auto"', "เติมจั่วส่วนชั้นล่างอัตโนมัติ")}</div>
+      <h4>สีหลังคา</h4>${swatches("roofc", st.roofColor, ROOF_COLS)}` : ""}
+    <h4>สีผนังภายนอก</h4>${swatches("ext", st.ext, WALL_COLS)}
+    <h4>ส่วนประกอบ</h4><div class="chips">${chip(V3.furn, 'data-v3="furn"', "เฟอร์นิเจอร์")}</div>
     <h4>มุมกล้อง</h4><div class="chips">${chip(0, 'data-v3="view" data-v="iso"', "มุมเฉียง")}${chip(0, 'data-v3="view" data-v="front"', "ด้านหน้า")}${chip(0, 'data-v3="view" data-v="top"', "มุมบน")}</div>
     <h4>ความสูงชั้น</h4>${plan.floors.map((f, i) => `<div class="row"><label>${esc(f.name)}</label><input type="number" step="0.1" min="2.4" max="6" data-v3h="${i}" value="${(f.height || 3).toFixed(1)}"><span class="mute">ม.</span></div>`).join("")}
     <div class="btns"><button class="b" data-v3="png">🖼 บันทึกภาพ 3 มิติ</button></div>
@@ -1511,10 +1644,15 @@ function panel3HTML() {
 }
 document.getElementById("panel").addEventListener("click", e => {
   const b = e.target.closest("[data-v3]"); if (!b || !V3.on) return; const k = b.dataset.v3;
-  if (k === "upto") V3.upto = +b.dataset.v; if (k === "cut") V3.cut = b.dataset.v === "1"; if (k === "roof") V3.roof = !V3.roof; if (k === "furn") V3.furn = !V3.furn;
+  const st = styleOf();
+  if (k === "upto") V3.upto = +b.dataset.v; if (k === "cut") V3.cut = b.dataset.v === "1"; if (k === "furn") V3.furn = !V3.furn;
+  if (k === "unsel") V3.sel = null;
+  if (k === "roof" || k === "pitch" || k === "dir" || k === "auto") { const bf = snapshot();
+    if (k === "roof") st.roof = b.dataset.v; if (k === "pitch") st.pitch = +b.dataset.v; if (k === "dir") st.dir = (st.dir + 1) % 4; if (k === "auto") st.autoLower = !st.autoLower;
+    if (k === "roof" && st.roof !== "none") { V3.upto = plan.floors.length - 1; V3.cut = false; }
+    commit(bf); return; }
   if (k === "view") { V3.lastPreset = b.dataset.v; view3Preset(b.dataset.v); return; }
   if (k === "png") { cv3.toBlob(bl => saveFile(bl, safeName(plan.name) + "-3D.png"), "image/png"); return; }
-  if (k === "roof" && V3.roof) V3.upto = plan.floors.length - 1;
   build3D(); updatePanel();
 });
 document.getElementById("panel").addEventListener("change", e => {
