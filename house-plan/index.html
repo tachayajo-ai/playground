@@ -953,6 +953,7 @@ function summaryHTML() {
     `<tr class="tot"><td>รวมทั้งหมด</td><td>${fmt(all)} ตร.ม.</td></tr><tr><td>พื้นที่ภายใน<br><span class="mute">ไม่รวมโรงรถ/ระเบียง</span></td><td>${fmt(inner)} ตร.ม.</td></tr>`;
   if (plan.land) { const la = plan.land.w * plan.land.h, g = floorArea(plan.floors[0]); h += `<tr><td>ที่ดิน</td><td>${fmt(la, 1)} ตร.ม.<br><span class="mute">${fmt(la / 4, 1)} ตร.ว.</span></td></tr><tr><td>อาคารคลุมที่ดิน (ชั้น 1)</td><td>${la ? fmt(g / la * 100, 0) : 0}%</td></tr>`; }
   h += `</table>`;
+  if (plan.floors.some(fl => fl.rooms.length)) { try { const C = costSummary(); h += `<h4>ประมาณค่าก่อสร้าง</h4><table class="sum"><tr><td>รวม</td><td>${baht(C.T.total)} บาท</td></tr><tr><td>เฉลี่ย/ตร.ม. (พื้นที่รวม)</td><td>${baht(C.perArea)}</td></tr><tr><td>เฉลี่ย/ตร.ม. (พื้นที่ภายใน)</td><td>${baht(C.perInner)}</td></tr></table><p class="mute">${styleOf().roof === "none" ? "ยังไม่รวมหลังคา · " : ""}จากราคาต่อหน่วยใน 📐 ตรวจแบบ/BOQ (ค่าตั้งต้นเป็นค่าประมาณ ปรับได้)</p>`; } catch (e) { console.error(e); } }
   h += `<div class="btns"><button class="b" data-a="renFloor">✎ เปลี่ยนชื่อชั้น</button>${plan.floors.length > 1 ? `<button class="b del" data-a="delFloor">ลบชั้นนี้</button>` : ""}</div>`;
   return h;
 }
@@ -1902,6 +1903,24 @@ function boqTotals(secs) {
   return { base, elec, plumb, oh, vat, total: pre + vat };
 }
 const baht = v => Math.round(v).toLocaleString("th-TH");
+/* cost per square metre: over all floor area, and over interior area (without garage / porch / balcony) */
+function costSummary() {
+  const secs = boqData(), T = boqTotals(secs); let area = 0, inner = 0;
+  for (const f of plan.floors) for (const r of f.rooms) { const a = areaOf(r.pts); area += a; if (!SEMI_OUT.has(r.type)) inner += a; }
+  const k = T.base ? T.total / T.base : 1;   /* spread systems, overhead and VAT over the sections */
+  const parts = secs.map(s => ({ name: s.name.replace(/^\d+\.\s*/, ""), sum: s.items.reduce((a, x) => a + x.qty * rate(x.k), 0) }));
+  parts.push({ name: "งานระบบไฟฟ้า–ประปา", sum: T.elec + T.plumb }, { name: "ค่าดำเนินการ กำไร" + (boqOpts().vat ? " และ VAT" : ""), sum: T.oh + T.vat });
+  return { T, area, inner, perArea: area ? T.total / area : 0, perInner: inner ? T.total / inner : 0, parts };
+}
+function costCardsHTML(C) {
+  const card = (t, v, u) => `<div style="flex:1;min-width:150px;background:#F3F0EA;border-radius:12px;padding:10px 12px"><div class="mute">${t}</div><div class="big" style="font-size:22px">${v}</div><div class="mute">${u}</div></div>`;
+  const max = Math.max(1, ...C.parts.map(p => p.sum));
+  const noRoof = styleOf().roof === "none" ? `<p style="color:#B4561C;margin:4px 0">⚠ ยังไม่รวมค่าหลังคา — เลือกแบบหลังคาในโหมด 🧊 3D</p>` : "";
+  return noRoof + `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${card("ค่าก่อสร้างรวม", baht(C.T.total), "บาท")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, baht(C.perArea), "บาท/ตร.ม.")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, baht(C.perInner), "บาท/ตร.ม. · ไม่รวมโรงรถ/ระเบียง")}</div>
+    <table class="sum"><tr><th style="text-align:left">หมวด</th><th>บาท/ตร.ม.</th><th>สัดส่วน</th></tr>${C.parts.map(p => `<tr><td style="text-align:left">${esc(p.name)}</td><td>${baht(C.area ? p.sum / C.area : 0)}</td>
+      <td style="width:38%"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="height:8px;border-radius:4px;background:#8E7CC3;width:${Math.round(p.sum / max * 100)}%;max-width:120px"></div><span>${C.T.total ? fmt(p.sum / C.T.total * 100, 0) : 0}%</span></div></td></tr>`).join("")}
+      <tr class="tot"><td style="text-align:left">รวม</td><td>${baht(C.perArea)}</td><td>100%</td></tr></table>`;
+}
 let engTab = "eng";
 function engHTML() {
   const E = eng(), I = E.I.slice().sort((a, b) => b.sev - a.sev || a.fi - b.fi), cnt = [0, 0, 0]; for (const x of I) cnt[x.sev]++;
@@ -1918,7 +1937,8 @@ function boqHTML() {
   const B = boqOpts(), secs = boqData(), T = boqTotals(secs), area = plan.floors.reduce((s, f) => s + floorArea(f), 0);
   const row = x => `<tr><td style="text-align:left;white-space:normal">${esc(x.name)}</td><td>${fmt(x.qty)}</td><td>${x.unit}</td><td><input type="number" min="0" step="any" data-rk="${x.k}" value="${rate(x.k)}" style="width:90px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"></td><td>${baht(x.qty * rate(x.k))}</td></tr>`;
   const pct = (k, nm, v) => `<tr><td style="text-align:left">${nm}</td><td colspan="2"></td><td><input type="number" min="0" step="0.5" data-rk="${k}" value="${rate(k)}" style="width:60px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"> %</td><td>${baht(v)}</td></tr>`;
-  return `<div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
+  const C = costSummary();
+  return `${costCardsHTML(C)}<h4>รายละเอียด</h4><div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
       <button data-e="piles">เข็มต่อฐาน: ${B.piles} ต้น ↻</button><button data-e="vat" class="${B.vat ? "on" : ""}">รวม VAT 7%</button></div>
     <div style="overflow-x:auto;margin-top:10px"><table class="sum boq"><tr><th style="text-align:left">รายการ</th><th>ปริมาณ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>รวม (บาท)</th></tr>
     ${secs.map(s => `<tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>${s.name}</b></td></tr>${s.items.map(row).join("")}<tr><td colspan="4" style="text-align:right" class="mute">รวม${s.name.slice(3)}</td><td>${baht(s.items.reduce((a, x) => a + x.qty * rate(x.k), 0))}</td></tr>`).join("")}
@@ -1926,7 +1946,8 @@ function boqHTML() {
     ${pct("elec", "งานระบบไฟฟ้า (% ของงาน 1–4)", T.elec)}${pct("plumb", "งานประปา–สุขาภิบาล (% ของงาน 1–4)", T.plumb)}${pct("oh", "ค่าดำเนินการและกำไรผู้รับเหมา", T.oh)}
     ${B.vat ? `<tr><td style="text-align:left">ภาษีมูลค่าเพิ่ม 7%</td><td colspan="3"></td><td>${baht(T.vat)}</td></tr>` : ""}
     <tr class="tot"><td style="text-align:left">รวมทั้งสิ้น</td><td colspan="3"></td><td>${baht(T.total)}</td></tr>
-    <tr><td style="text-align:left">เฉลี่ยต่อพื้นที่ใช้สอย ${fmt(area, 1)} ตร.ม.</td><td colspan="3"></td><td>${baht(area ? T.total / area : 0)} /ตร.ม.</td></tr></table></div>
+    <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perArea)} /ตร.ม.</td></tr>
+    <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perInner)} /ตร.ม.</td></tr></table></div>
     <div class="btns"><button class="b" data-e="csv">⬇ ส่งออก CSV (Excel)</button><button class="b" data-e="print">🖨 พิมพ์ BOQ</button><button class="b del" data-e="reset">คืนราคาตั้งต้น</button></div>
     <p class="mute">⚠ <b>ปริมาณ</b> ถอดจากแบบนี้โดยตรง แต่ใช้ขนาดโครงสร้างสมมติ (ฐาน 1.0×1.0×0.30 ม. เหล็กเสริมประมาณจากหน้าตัดมาตรฐาน) · <b>ราคาต่อหน่วยที่ใส่ไว้เป็นค่าตั้งต้นที่ประมาณขึ้นเอง ไม่มีแหล่งอ้างอิง</b> ต้องแก้เป็นราคาที่ได้จากผู้รับเหมา/ร้านวัสดุในพื้นที่ หรือเทียบราคากลางงานก่อสร้างของทางราชการก่อนใช้ตัดสินใจ</p>`;
 }
@@ -1940,7 +1961,8 @@ function boqCSV() {
   for (const s of secs) for (const x of s.items) L.push([s.name, x.name, x.qty, x.unit, rate(x.k), Math.round(x.qty * rate(x.k))]);
   L.push(["5", `งานระบบไฟฟ้า ${rate("elec")}%`, "", "", "", Math.round(T.elec)], ["5", `งานประปา ${rate("plumb")}%`, "", "", "", Math.round(T.plumb)], ["5", `ค่าดำเนินการและกำไร ${rate("oh")}%`, "", "", "", Math.round(T.oh)]);
   if (boqOpts().vat) L.push(["5", "VAT 7%", "", "", "", Math.round(T.vat)]);
-  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง", "", "", "", ""]);
+  const C = costSummary();
+  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง", "", "", "", ""]);
   return "﻿" + L.map(r => r.map(q).join(",")).join("\r\n");
 }
 document.getElementById("engBtn").onclick = () => { engTab = engTab || "eng"; renderEng(); openOv("engOv"); };
