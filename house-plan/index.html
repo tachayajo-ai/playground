@@ -170,6 +170,7 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
     <div class="row"><label>ห้องนอน</label><select id="gBed"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
     <div class="row"><label>ห้องน้ำ</label><select id="gBath"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></div>
     <div class="row"><label>จอดรถ</label><select id="gCar"><option value="0">ไม่มี</option><option value="1" selected>1 คัน</option><option value="2">2 คัน</option><option value="3">3 คัน</option></select></div>
+    <div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" id="gBase" step="0.05" min="0" max="2" value="0.5"><span class="mute">ม.</span></div>
     <div class="row"><label>ขนาดห้องนอน</label><select id="gSize"><option value="S">เล็ก ~9 ตร.ม.</option><option value="M" selected>กลาง ~12 ตร.ม.</option><option value="L">ใหญ่ ~15 ตร.ม.</option></select></div>
   </div>
   <div class="chips" style="margin:8px 0 4px">
@@ -177,6 +178,7 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
     <button data-g="pray">ห้องพระ</button>
     <button data-g="bedDown">ห้องนอนชั้นล่าง (ผู้สูงอายุ)</button>
     <button data-g="porch" class="on">ชานหน้าบ้าน</button>
+    <button data-g="ramp" class="on">♿ ทางลาด + บันไดหน้าบ้าน</button>
   </div>
   <p class="mute">⚠ แปลนที่สร้างจะแทนที่แบบปัจจุบัน (ย้อนกลับได้ด้วยปุ่ม ↶)</p>
   <div class="btns" style="justify-content:flex-end"><button class="b" data-close>ยกเลิก</button><button class="b pri" id="genGo">สร้างแปลน</button></div>
@@ -1018,6 +1020,7 @@ function drawIcons() {
 $panel.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.rs) { const o = getSel(); if (o) { const bf = snapshot(); o.shape = b.dataset.rs; commit(bf); } return; }
+  if (b.dataset.a === "rsteps") { const o = getSel(); if (o) { const bf = snapshot(); o.steps = !o.steps; commit(bf); } return; }
   if (b.dataset.a === "rflip") { const o = getSel(); if (o) { const bf = snapshot(); o.flip = !o.flip; commit(bf); } return; }
   if (b.dataset.mv) { if (b.dataset.mv === "center") { const S = setbacks(); if (S) moveHouseBy(r3((S.right - S.left) / 2), 0); } else { const [u, v] = b.dataset.mv.split(",").map(Number); moveHouseBy(u * step, v * step); } return; }
   if (b.dataset.rt) { roomType = b.dataset.rt; updatePanel(); return; }
@@ -1085,7 +1088,7 @@ function openOv(id) { document.querySelectorAll(".ov").forEach(o => o.hidden = o
 function closeOv() { document.querySelectorAll(".ov").forEach(o => o.hidden = true); }
 document.querySelectorAll(".ov").forEach(o => o.addEventListener("click", e => { if (e.target === o || e.target.closest("[data-close]")) closeOv(); }));
 $("menuBtn").onclick = () => openOv("menuOv");
-$("genBtn").onclick = () => { if (plan.land) { $("gLw").value = plan.land.w; $("gLd").value = plan.land.h; } openOv("genOv"); };
+$("genBtn").onclick = () => { $("gBase").value = styleOf().base > 0.16 ? styleOf().base : 0.5; if (plan.land) { $("gLw").value = plan.land.w; $("gLd").value = plan.land.h; } openOv("genOv"); };
 let toastT = 0;
 function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600); }
 $("menuOv").addEventListener("click", e => {
@@ -1122,7 +1125,7 @@ $("impPrompt").onclick = copyPrompt;
 document.querySelectorAll("#genOv .chips button").forEach(b => b.onclick = () => b.classList.toggle("on"));
 $("genGo").onclick = () => {
   const on = k => document.querySelector(`#genOv [data-g="${k}"]`).classList.contains("on");
-  const o = { lw: +$("gLw").value, ld: +$("gLd").value, sf: +$("gSf").value, ss: +$("gSs").value, sb: +$("gSb").value, floors: +$("gF").value, beds: +$("gBed").value, baths: +$("gBath").value, cars: +$("gCar").value, size: $("gSize").value, work: on("work"), pray: on("pray"), bedDown: on("bedDown"), porch: on("porch") };
+  const o = { lw: +$("gLw").value, ld: +$("gLd").value, sf: +$("gSf").value, ss: +$("gSs").value, sb: +$("gSb").value, floors: +$("gF").value, beds: +$("gBed").value, baths: +$("gBath").value, cars: +$("gCar").value, size: $("gSize").value, work: on("work"), pray: on("pray"), bedDown: on("bedDown"), porch: on("porch") || on("ramp"), ramp: on("ramp"), style: JSON.parse(JSON.stringify(styleOf())), base: Math.max(0, Math.min(2, parseFloat($("gBase").value) || 0)) };
   if (!(o.lw >= 5 && o.ld >= 5)) { toast("กรอกขนาดที่ดินอย่างน้อย 5 × 5 ม."); return; }
   const res = generate(o), b = snapshot(); plan = res.plan; cur = 0; sel = null; commit(b); closeOv(); fit();
   setTool("move");
@@ -1277,7 +1280,8 @@ function generate(o) {
   }
   for (const f of F) { if (!f.back.length) f.back.push(R("store", 6)); if (!f.front.length) f.front.push(R("store", 6)); }
   const corr = nF === 1 ? 1.2 : 1.5;
-  const availW = Math.max(4, o.lw - 2 * o.ss), porchD = o.porch ? 2 : 0, availD = Math.max(4, o.ld - o.sf - o.sb - porchD);
+  const RW = 1.2, rampOn = o.ramp && o.base >= 0.05, sl = rampOn ? Math.max(o.ss, 2 * RW + RAMP_GAP + 0.3) : o.ss;
+  const availW = Math.max(4, o.lw - o.ss - sl), porchD = o.porch ? 2 : 0, availD = Math.max(4, o.ld - o.sf - o.sb - porchD);
   const est = Math.max(...F.map(f => [...f.back, ...f.front].reduce((s, r) => s + r.area + (r.fixW || 0) * 5, 0)));
   /* width: rooms in a strip should come out roughly square */
   const stripW = l => l.reduce((s, r) => s + (r.fixW || Math.sqrt(r.area) * 0.95), 0);
@@ -1301,7 +1305,7 @@ function generate(o) {
   F.forEach((f, fi) => { if (!fi) return;
     for (const [key, depth] of [["front", Df], ["back", Db]]) { const l = f[key], cap = (W - l.reduce((s, r) => s + (r.fixW || 0), 0)) * depth, sum = l.reduce((s, r) => s + r.area, 0);
       if (cap - sum > 9) { const fill = key === "front" && !l.some(r => r.type === "living") ? R("living", (cap - sum) * 0.5, { nm: "ห้องนั่งเล่นชั้น " + (fi + 1) }) : R("other", (cap - sum) * 0.5, { nm: "ห้องอเนกประสงค์" }); l.splice(key === "front" ? 1 : l.length, 0, fill); } } });
-  const x0 = q(o.ss + (availW - W) / 2), yb = q(o.ld - o.sf - porchD), y0 = q(yb - D);
+  const x0 = q(sl + (availW - W) / 2), yb = q(o.ld - o.sf - porchD), y0 = q(yb - D);
   const plan = { app: "houseplan", v: 1, name: `บ้าน ${nF} ชั้น ${o.beds} ห้องนอน ${o.baths} ห้องน้ำ`, land: { w: o.lw, h: o.ld }, floors: [] };
   const counters = {}, nameOf = (r) => { if (r.nm) return r.nm; if (r.master) return "ห้องนอนใหญ่"; const base = ROOM_TYPES[r.type].n; if (["bed", "bath", "store"].includes(r.type)) { counters[r.type] = (counters[r.type] || 0) + 1; return base + " " + counters[r.type]; } return base; };
   const strip = (list, y, h) => {
@@ -1346,12 +1350,16 @@ function generate(o) {
     if (o.porch) {
       const host = fi === 0 ? fronts.find(s => s.r.type === "living") : fronts.find(s => s.r.type !== "stair");
       if (host && (fi === 0 || fi === 1)) { const w = q(Math.min(host.w, fi === 0 ? 4.5 : 3.5)), d = fi === 0 ? 2 : 1.5;
-        add(R("porch", 0, { nm: fi === 0 ? "ชานหน้าบ้าน" : "ระเบียง" }), q(host.x + (host.w - w) / 2), yb, w, d);
+        if (fi === 0 && rampOn) { const right = Math.max(host.x + host.w, x0 + 3); add(R("porch", 0, { nm: "ชานหน้าบ้าน" }), x0, yb, q(right - x0), d);
+          plan.ramps0 = { id: uid(), x: x0, y: q(yb + d), a: r3(Math.PI), w: RW, slope: 12, shape: "hug", flip: false, steps: true, sw: 1.5 }; }
+        else add(R("porch", 0, { nm: fi === 0 ? "ชานหน้าบ้าน" : "ระเบียง" }), q(host.x + (host.w - w) / 2), yb, w, d);
         if (fi > 0) door(host.x + host.w / 2, yb, 0, q(Math.min(1.8, w - 0.6)), "slide"); }
     }
     plan.floors.push(FLR);
   });
   if (o.cars && Df < 5) warn.push("ช่องจอดรถลึกน้อยกว่า 5 ม. — ลองขยายห้องจอดรถ");
+  plan.style = { ...(o.style || {}), base: o.base };
+  if (plan.ramps0) { plan.floors[0].ramps = [plan.ramps0]; delete plan.ramps0; }
   return { plan, warn: warn.join(" · ") };
 }
 
@@ -1727,7 +1735,7 @@ document.getElementById("panel").addEventListener("change", e => {
 document.getElementById("v3Btn").onclick = () => set3D(!V3.on);
 
 /* ============================================================ ramps (accessible, auto length to ground) */
-const RAMP_LAND = 1.5, RAMP_RUN = 6, RAMP_GAP = 0.15, RAMP_SHAPES = [["straight", "ตรง"], ["L", "ตัว L"], ["U", "ตัว U (หักกลับ)"]];
+const RAMP_LAND = 1.5, RAMP_RUN = 6, RAMP_GAP = 0.15, RAMP_SHAPES = [["hug", "ชิดผนัง ลงทางหน้า"], ["straight", "ตรง"], ["L", "ตัว L"], ["U", "ตัว U (หักกลับ)"]], STEP_R = 0.17, STEP_T = 0.28;
 const rampsOf = () => (plan.floors[0].ramps = plan.floors[0].ramps || []);
 /* pieces: top landing at floor level, runs ≤ 6 m with 1.5 m landings, a level 1.5 m area at the bottom */
 function rampGeom(rp) {
@@ -1736,6 +1744,24 @@ function rampGeom(rp) {
   const at = (p, u, v, d = dir, s = side) => [p[0] + d[0] * u + s[0] * v, p[1] + d[1] * u + s[1] * v];
   const rect = (type, len, z0, z1) => { pieces.push({ type, pts: [at(o, 0, -w / 2), at(o, len, -w / 2), at(o, len, w / 2), at(o, 0, w / 2)], z0, z1, o: o.slice(), dir: dir.slice(), side: side.slice(), len, w }); o = at(o, len, 0); };
   if (H < 0.02) return { pieces, H, S, w, run: 0, runs: 0, landings: 0 };
+  if (shape === "hug") {
+    /* frame: U = away from the wall, V = along the wall (towards the back). Lane A hugs the wall going back, U-turns, lane B comes back so the bottom opens to the front */
+    const U = dir, V = side, A0 = [rp.x, rp.y], uv = (u, v) => [A0[0] + U[0] * u + V[0] * v, A0[1] + U[1] * u + V[1] * v];
+    const half = H * S / 2, k = Math.max(1, Math.ceil(half / RAMP_RUN - 1e-9)), len = half / k;
+    o = uv(w / 2, 0); dir = V; side = U; rect("landing", RAMP_LAND, H, H);
+    let z = H;
+    for (let i = 0; i < k; i++) { rect("run", len, z, z - len / S); z -= len / S; if (i < k - 1) rect("landing", RAMP_LAND, z, z); }
+    const vEnd = RAMP_LAND + k * len + (k - 1) * RAMP_LAND, q = 2 * w + RAMP_GAP;
+    pieces.push({ type: "landing", pts: [uv(0, vEnd), uv(q, vEnd), uv(q, vEnd + RAMP_LAND), uv(0, vEnd + RAMP_LAND)], z0: z, z1: z });
+    o = uv(w + RAMP_GAP + w / 2, vEnd); dir = [-V[0], -V[1]]; side = U;
+    for (let i = 0; i < k; i++) { rect("run", len, z, Math.max(0, z - len / S)); z = Math.max(0, z - len / S); if (i < k - 1) rect("landing", RAMP_LAND, z, z); }
+    rect("foot", RAMP_LAND, 0, 0);
+    let nSteps = 0;
+    if (rp.steps) { nSteps = Math.max(1, Math.ceil(H / STEP_R - 1e-9)); const sw = rp.sw || 1.5;
+      for (let i = 0; i < nSteps - 1; i++) { const zz = H * (nSteps - 1 - i) / nSteps; pieces.push({ type: "step", pts: [uv(w - sw, -i * STEP_T), uv(w, -i * STEP_T), uv(w, -(i + 1) * STEP_T), uv(w - sw, -(i + 1) * STEP_T)], z0: zz, z1: zz }); }
+      if (nSteps === 1) pieces.push({ type: "step", pts: [uv(w - sw, 0), uv(w, 0), uv(w, -0.02), uv(w - sw, -0.02)], z0: 0.01, z1: 0.01 }); }
+    return { pieces, H, S, w, run: 2 * k * len, runs: 2 * k, landings: 2 * k, nSteps, stepW: rp.sw || 1.5 };
+  }
   rect("landing", RAMP_LAND, H, H);
   let rest = H * S, z = H, runs = 0, landings = 1, turned = false;
   while (rest > 1e-6) {
@@ -1782,9 +1808,11 @@ function drawRamps(fi) {
   if (fi !== 0) return; const list = plan.floors[0].ramps || [];
   for (const rp of list) {
     const G = rampGeom(rp), hi = sel && sel.t === "ramp" && sel.id === rp.id;
+    X.save(); X.globalAlpha = 1; X.restore();
     for (const p of G.pieces) {
       pathPoly(p.pts); X.fillStyle = p.type === "foot" ? "rgba(200,194,182,.35)" : p.type === "run" ? "#E3DDD2" : "#D6CFC2"; X.fill();
       X.save(); if (p.type === "foot") X.setLineDash([5, 4]); X.strokeStyle = hi ? "#2F6FDB" : "#7A7268"; X.lineWidth = hi ? 2.5 : 1.3; X.stroke(); X.restore();
+      if (p.type === "step") { X.strokeStyle = "#7A7268"; X.lineWidth = 1; }
       if (p.type === "run" && p.len * view.s > 40) {
         const a = [p.o[0] + p.dir[0] * 0.25, p.o[1] + p.dir[1] * 0.25], b = [p.o[0] + p.dir[0] * (p.len - 0.25), p.o[1] + p.dir[1] * (p.len - 0.25)], [ax, ay] = w2s(...a), [bx, by] = w2s(...b), ang = Math.atan2(by - ay, bx - ax);
         X.strokeStyle = "#5E5850"; X.lineWidth = 1.5; X.beginPath(); X.moveTo(ax, ay); X.lineTo(bx, by); X.lineTo(bx - 9 * Math.cos(ang - 0.4), by - 9 * Math.sin(ang - 0.4)); X.moveTo(bx, by); X.lineTo(bx - 9 * Math.cos(ang + 0.4), by - 9 * Math.sin(ang + 0.4)); X.stroke();
@@ -1792,18 +1820,24 @@ function drawRamps(fi) {
         X.font = `600 ${pxFont(0.28, 10, 14)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "bottom"; X.fillStyle = "#3A3632"; X.fillText(`ลง 1:${G.S} · ${fmt(p.len)} ม.`, 0, -4); X.restore();
       }
     }
+    drawStepsLabel(rp, G);
   }
 }
+function drawStepsLabel(rp, G) {
+  const st = G.pieces.filter(p => p.type === "step"); if (!st.length || st.length * STEP_T * view.s < 24) return;
+  const c = centroid(st.flatMap(p => p.pts)), [x, y] = w2s(...c); X.font = `600 ${pxFont(0.26, 10, 13)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "middle"; X.fillStyle = "#3A3632";
+  X.fillText(`บันได ${G.nSteps} ขั้น ↓`, x, y);
+}
 function rampPanelHTML(rp) {
-  const G = rampGeom(rp), L = rampChecks(rp), area = G.pieces.filter(p => p.type !== "foot").reduce((a, p) => a + areaOf(p.pts), 0);
+  const G = rampGeom(rp), L = rampChecks(rp), area = G.pieces.filter(p => p.type !== "foot" && p.type !== "step").reduce((a, p) => a + areaOf(p.pts), 0);
   const ext = G.pieces.length ? Math.max(...G.pieces.flatMap(p => p.pts.map(q => (q[0] - rp.x) * Math.cos(rp.a) + (q[1] - rp.y) * Math.sin(rp.a)))) : 0;
   return `<h3>♿ ทางลาด</h3>
     <div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" step="0.05" min="0" max="3" data-base="1" value="${fmt(styleOf().base)}"><span class="mute">ม.</span></div>
     <div class="row"><label>ความชัน</label><select data-rp="slope">${[[12, "1:12 (มาตรฐาน)"], [15, "1:15 (ลาดกว่า)"], [20, "1:20 (ลาดมาก)"]].map(([v, n]) => `<option value="${v}" ${v === (rp.slope || 12) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
     <div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.9" data-rp="w" value="${fmt(G.w)}"></div>
-    <div class="chips">${RAMP_SHAPES.map(([k, n]) => `<button data-rs="${k}" class="${(rp.shape || "straight") === k ? "on" : ""}">${n}</button>`).join("")}${(rp.shape || "straight") !== "straight" ? `<button data-a="rflip">⇆ สลับด้านเลี้ยว</button>` : ""}</div>
+    <div class="chips">${RAMP_SHAPES.map(([k, n]) => `<button data-rs="${k}" class="${(rp.shape || "straight") === k ? "on" : ""}">${n}</button>`).join("")}${(rp.shape || "straight") !== "straight" ? `<button data-a="rflip">⇆ ${rp.shape === "hug" ? "สลับทิศเลียบผนัง" : "สลับด้านเลี้ยว"}</button>` : ""}${rp.shape === "hug" ? `<button data-a="rsteps" class="${rp.steps ? "on" : ""}">บันไดหน้าบ้านติดทางลาด</button>` : ""}</div>
     <table class="sum" style="margin-top:10px"><tr><td>ความสูงที่ต้องลด</td><td>${fmt(G.H)} ม.</td></tr><tr><td>ความยาวช่วงลาดรวม</td><td>${fmt(G.run)} ม.</td></tr>
-      <tr><td>จำนวนช่วง / ชานพัก</td><td>${G.runs} / ${G.landings}</td></tr><tr><td>ยื่นออกจากผนังสูงสุด</td><td>${fmt(ext)} ม.</td></tr><tr><td>พื้นที่ทางลาด</td><td>${fmt(area)} ตร.ม.</td></tr></table>
+      <tr><td>จำนวนช่วง / ชานพัก</td><td>${G.runs} / ${G.landings}</td></tr><tr><td>ยื่นออกจากผนังสูงสุด</td><td>${fmt(ext)} ม.</td></tr><tr><td>พื้นที่ทางลาด</td><td>${fmt(area)} ตร.ม.</td></tr>${G.nSteps ? `<tr><td>บันไดหน้าบ้าน</td><td>${G.nSteps} ลูกตั้ง × ${fmt(G.H / G.nSteps * 100, 1)} ซม. · ลูกนอน ${STEP_T * 100} ซม. · กว้าง ${fmt(G.stepW)} ม.</td></tr>` : ""}</table>
     <table class="sum" style="margin-top:8px">${L.map(([s, t]) => `<tr><td style="width:24px">${["✅", "⚠️", "❌"][s]}</td><td style="text-align:left;white-space:normal">${t}</td></tr>`).join("")}</table>
     <div class="btns"><button class="b del" data-a="del">🗑 ลบ</button></div>
     <p class="mute">ความยาวคำนวณจากความสูงพื้นชั้น 1 อัตโนมัติ (ยาว = สูง × ${G.S}) มีชานพักหน้าประตู ${fmt(RAMP_LAND)} ม. และพื้นที่ราบปลายทาง ${fmt(RAMP_LAND)} ม. · ลากเพื่อย้ายไปตามผนัง · เกณฑ์: กฎกระทรวงสิ่งอำนวยความสะดวกฯ พ.ศ. 2548 (ตามที่จำได้ ควรตรวจกับต้นฉบับ)</p>`;
@@ -2003,7 +2037,7 @@ const FIN_KEY = { "พื้นไม้จริง": "f_wood", "พื้น�
 /* starting unit prices (materials + labour, THB) — rough placeholders, NOT an official price list: edit to local quotes */
 const RATE0 = { pile: 1800, conc: 2700, rebar: 32, form: 380, wall_brick: 480, wall_aac: 560, wall_light: 900, plaster: 230, paint: 130, f_tile: 700, f_wood: 2200, f_lam: 900, f_marble: 2400, f_polish: 280, f_grass: 350,
   ceil: 480, roof_frame: 700, roof_tile: 480, roof_flat: 550, door: 7500, door2: 16000, slide: 20000, opening: 0, window: 3500, stair: 40000,
-  ramp: 2800, rail: 2200, toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
+  ramp: 2800, rail: 2200, estep: 1800, toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
 function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {};
   if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area"; return b; }
 const PCT = new Set(["elec", "plumb", "oh"]);
@@ -2067,8 +2101,9 @@ function boqData() {
     ...["door", "door2", "slide"].filter(k => doors[k]).map(k => it(k, `${OPEN_KINDS[k]} (พร้อมวงกบ อุปกรณ์)`, doors[k], "ชุด")),
     ...(doors.window ? [it("window", "หน้าต่างอะลูมิเนียม + กระจก (สูง 1.20 ม.)", doors.window, "ตร.ม.")] : []),
     ...(stairs ? [it("stair", "บันได คสล. พร้อมผิวและราวจับ", stairs, "ช่วง")] : []),
-    ...(() => { const R = plan.floors[0].ramps || []; if (!R.length) return []; let A = 0, rl = 0; for (const rp of R) for (const p of rampGeom(rp).pieces) { if (p.type === "foot") continue; A += areaOf(p.pts); if (p.type === "run") rl += 2 * p.len; }
-      return [it("ramp", "ทางลาด คสล. พร้อมผิวกันลื่น (รวมชานพัก)", A, "ตร.ม."), it("rail", "ราวจับทางลาดสแตนเลส 2 ด้าน", rl, "ม.")]; })(),
+    ...(() => { const R = plan.floors[0].ramps || []; if (!R.length) return []; let A = 0, rl = 0; for (const rp of R) for (const p of rampGeom(rp).pieces) { if (p.type === "foot" || p.type === "step") continue; A += areaOf(p.pts); if (p.type === "run") rl += 2 * p.len; }
+      const ns = R.reduce((a, rp) => a + (rampGeom(rp).nSteps || 0), 0);
+      return [...(ns ? [it("estep", "บันไดหน้าบ้าน คสล. พร้อมผิว (กว้าง 1.50 ม.)", ns, "ขั้น")] : []), it("ramp", "ทางลาด คสล. พร้อมผิวกันลื่น (รวมชานพัก)", A, "ตร.ม."), it("rail", "ราวจับทางลาดสแตนเลส 2 ด้าน", rl, "ม.")]; })(),
   ];
   secs.push({ name: "2. งานสถาปัตยกรรม", items: arch });
   /* roof */
