@@ -29,6 +29,11 @@ header .ib:disabled { opacity: .35; }
 #floors button { flex: none; border: 0; border-radius: 18px; padding: 7px 14px; background: rgba(255,255,255,.12); color: #fff; font-size: 15px; }
 #floors button.on { background: #fff; color: var(--bar); font-weight: 700; }
 #genBtn { flex: none; border: 0; border-radius: 10px; padding: 9px 14px; background: #F2B33D; color: #2B2A28; font-weight: 700; font-size: 15px; }
+#v3Btn { flex: none; border: 0; border-radius: 10px; padding: 9px 14px; background: #5FA8D3; color: #fff; font-weight: 700; font-size: 15px; }
+#cv3 { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: none; }
+.mode3d #cv3 { display: block; }
+.mode3d #cv, .mode3d #zoomBox { display: none; }
+.mode3d #tools { opacity: .35; pointer-events: none; }
 #tools { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; overflow-y: auto; }
 #tools button { border: 0; background: transparent; border-radius: 12px; padding: 7px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--ink); }
 #tools button svg { width: 28px; height: 28px; }
@@ -82,6 +87,7 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
 .help p { margin: 6px 0; font-size: 15px; line-height: 1.55; }
 #print { display: none; }
 @media (max-width: 900px) and (orientation: portrait), (max-width: 700px) {
+  #v3Btn .long { display: none; }
   #app { grid-template-columns: 70px 1fr; grid-template-rows: 56px 1fr minmax(0, 36vh); }
   #panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
   #tools button { font-size: 11px; }
@@ -106,11 +112,13 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
     <div id="floors"></div>
     <button class="ib" id="undoBtn" title="ย้อนกลับ">↶</button>
     <button class="ib" id="redoBtn" title="ทำซ้ำ">↷</button>
+    <button id="v3Btn">🧊 3D</button>
     <button id="genBtn">✦ <span class="long">สร้างแปลน</span>อัตโนมัติ</button>
   </header>
   <nav id="tools"></nav>
   <main id="stage">
     <canvas id="cv"></canvas>
+    <canvas id="cv3"></canvas>
     <div id="hint"></div>
     <div id="zoomBox">
       <span id="scaleTxt"></span>
@@ -644,7 +652,7 @@ function snapItem(it, cx, cy) {
 /* ============================================================ history / save */
 const snapshot = () => JSON.stringify(plan);
 function commit(before) { if (before === undefined || before === snapshot()) return; undoS.push(before); if (undoS.length > 150) undoS.shift(); redoS.length = 0; changed(); }
-function changed(keepPanel) { save(); if (!keepPanel) updatePanel(); renderFloors(); updUndo(); draw(); }
+function changed(keepPanel) { if (typeof V3 !== "undefined" && V3.on) build3D(); save(); if (!keepPanel) updatePanel(); renderFloors(); updUndo(); draw(); }
 function updUndo() { document.getElementById("undoBtn").disabled = !undoS.length; document.getElementById("redoBtn").disabled = !redoS.length; }
 function doUndo() { if (!undoS.length) return; redoS.push(snapshot()); plan = JSON.parse(undoS.pop()); cur = clamp(cur, 0, plan.floors.length - 1); sel = null; poly = null; changed(); }
 function doRedo() { if (!redoS.length) return; undoS.push(snapshot()); plan = JSON.parse(redoS.pop()); cur = clamp(cur, 0, plan.floors.length - 1); sel = null; changed(); }
@@ -800,6 +808,7 @@ window.addEventListener("keydown", e => {
   if (e.target.matches("input,textarea,select")) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); doRedo(); return; }
+  if (typeof V3 !== "undefined" && V3.on) return;
   if (e.key === "Delete" || e.key === "Backspace") { deleteSel(); return; }
   if (e.key === "Escape") { poly = null; measure = null; setSel(null); return; }
   if (e.key === "Enter" && poly) { finishPoly(); return; }
@@ -865,6 +874,7 @@ const $panel = document.getElementById("panel");
 function typeOptions(v) { return Object.entries(ROOM_TYPES).map(([k, t]) => `<option value="${k}" ${k === v ? "selected" : ""}>${t.n}</option>`).join(""); }
 function updatePanel() {
   panelSnap = snapshot();
+  if (typeof V3 !== "undefined" && V3.on) { $panel.innerHTML = panel3HTML(); return; }
   const o = getSel();
   if (poly) { $panel.innerHTML = `<h3>ห้องอิสระ</h3><p>วางแล้ว ${poly.length} มุม${poly.length >= 3 ? " · " + fmt(areaOf(poly)) + " ตร.ม." : ""}</p>
     <div class="row"><label>ประเภท</label><select data-k="roomType">${typeOptions(roomType)}</select></div>
@@ -1263,6 +1273,255 @@ function generate(o) {
   if (o.cars && Df < 5) warn.push("ช่องจอดรถลึกน้อยกว่า 5 ม. — ลองขยายห้องจอดรถ");
   return { plan, warn: warn.join(" · ") };
 }
+
+/* ============================================================ 3D view (own WebGL, works offline) */
+var V3 = { on: false, upto: 99, cut: false, roof: false, furn: true, yaw: -0.55, pitch: 0.62, dist: 30, t: [0, 0, 0], need: true, gl: null, n: 0, ng: 0 };
+const cv3 = document.getElementById("cv3");
+const hex3 = (h, k) => { h = h.replace("#", ""); const n = parseInt(h, 16); k = k || 1; return [((n >> 16) & 255) / 255 * k, ((n >> 8) & 255) / 255 * k, (n & 255) / 255 * k]; };
+let VB = [], GB = [];                 /* opaque / glass: x y z nx ny nz r g b a */
+function tri3(A, a, b, c, n, col) { for (const p of [a, b, c]) A.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2], col[3] === undefined ? 1 : col[3]); }
+function quad3(A, a, b, c, d, n, col) { tri3(A, a, b, c, n, col); tri3(A, a, c, d, n, col); }
+/* oriented box: centre (cx, cz) on plan, local x along angle a, size lx × lz, height y0..y1 */
+function obox(A, cx, cz, lx, lz, y0, y1, a, col) {
+  const c = Math.cos(a), s = Math.sin(a), hx = lx / 2, hz = lz / 2;
+  const P = (u, v, y) => [cx + u * c - v * s, y, cz + u * s + v * c], N = (u, v) => [u * c - v * s, 0, u * s + v * c];
+  const k = col.length === 4 ? col : [...col, 1];
+  quad3(A, P(-hx, -hz, y1), P(hx, -hz, y1), P(hx, hz, y1), P(-hx, hz, y1), [0, 1, 0], k);
+  quad3(A, P(-hx, -hz, y0), P(hx, -hz, y0), P(hx, hz, y0), P(-hx, hz, y0), [0, -1, 0], k);
+  quad3(A, P(-hx, -hz, y0), P(hx, -hz, y0), P(hx, -hz, y1), P(-hx, -hz, y1), N(0, -1), k);
+  quad3(A, P(-hx, hz, y0), P(hx, hz, y0), P(hx, hz, y1), P(-hx, hz, y1), N(0, 1), k);
+  quad3(A, P(-hx, -hz, y0), P(-hx, hz, y0), P(-hx, hz, y1), P(-hx, -hz, y1), N(-1, 0), k);
+  quad3(A, P(hx, -hz, y0), P(hx, hz, y0), P(hx, hz, y1), P(hx, -hz, y1), N(1, 0), k);
+}
+function triangulate(pts) {
+  const sa = pts.reduce((s, p, i) => { const q = pts[(i + 1) % pts.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0);
+  let P = pts.map((_, i) => i); if (sa < 0) P.reverse();
+  const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const inT = (p, a, b, c) => cr(a, b, p) > 1e-9 && cr(b, c, p) > 1e-9 && cr(c, a, p) > 1e-9;
+  const out = [];
+  for (let guard = 0; P.length > 3 && guard < 500; guard++) {
+    let cut = false;
+    for (let i = 0; i < P.length; i++) {
+      const ia = P[(i + P.length - 1) % P.length], ib = P[i], ic = P[(i + 1) % P.length], a = pts[ia], b = pts[ib], c = pts[ic];
+      if (cr(a, b, c) <= 1e-9) continue;
+      if (P.some(j => j !== ia && j !== ib && j !== ic && inT(pts[j], a, b, c))) continue;
+      out.push([a, b, c]); P.splice(i, 1); cut = true; break;
+    }
+    if (!cut) { P.splice(0, 1); }
+  }
+  if (P.length === 3) out.push(P.map(i => pts[i]));
+  return out;
+}
+const H3 = { bed1: .5, bed5: .5, bed6: .5, hbed: .6, wardrobe: 2.0, sofa: .45, armchair: .45, tv: .5, ctable: .42, dtable4: .75, dtable6: .75, desk: .75, counter: .9, fridge: 1.75, toilet: .42, basin: .85, shower: .04, tub: .55, washer: .85, car: .75, moto: 1.0, stairs: .2, altar: 1.0, plant: .45, wchair: .5, grab: .9 };
+const C3 = { bed1: "#F2EEE6", bed5: "#F2EEE6", bed6: "#F2EEE6", hbed: "#E6EEF4", wardrobe: "#B08458", sofa: "#7C8FA6", armchair: "#7C8FA6", tv: "#5A5048", ctable: "#A57C55", dtable4: "#A57C55", dtable6: "#A57C55", desk: "#A57C55", counter: "#D9D4CB", fridge: "#E8ECEF", toilet: "#FFFFFF", basin: "#FFFFFF", shower: "#BFD9E6", tub: "#FFFFFF", washer: "#F3F5F6", car: "#C8463C", moto: "#3B3F46", stairs: "#BFA383", altar: "#C99A3A", plant: "#7A5232", wchair: "#3E6FB5", grab: "#9AA4AE" };
+function addItem3(it, y) {
+  const a = rad(it.rot || 0), c = Math.cos(a), s = Math.sin(a), col = hex3(C3[it.type] || "#C8C2B8"), h = H3[it.type] || .6;
+  const B = (u0, v0, u1, v1, y0, y1, k) => { const u = (u0 + u1) / 2, v = (v0 + v1) / 2; obox(VB, it.x + u * c - v * s, it.y + u * s + v * c, u1 - u0, v1 - v0, y + y0, y + y1, a, k || col); };
+  const w = it.w / 2, d = it.h / 2;
+  switch (it.type) {
+    case "bed1": case "bed5": case "bed6": case "hbed":
+      B(-w, -d, w, d, 0, .3, hex3("#8A6A4C")); B(-w + .03, -d + .03, w - .03, d - .03, .3, .5, col); B(-w, -d, w, -d + .06, 0, .95, hex3("#8A6A4C"));
+      B(-w + .1, -d + .1, w - .1, -d + .42, .5, .6, hex3("#FFFFFF")); B(-w + .03, -d + .6, w - .03, d - .03, .5, .53, hex3(it.type === "hbed" ? "#9EC0DB" : "#9FB8D8")); break;
+    case "sofa": case "armchair":
+      B(-w, -d, w, d, 0, .42, col); B(-w, -d, w, -d + .22, .42, .85, hex3("#6A7C92")); B(-w, -d, -w + .18, d, .42, .62, hex3("#6A7C92")); B(w - .18, -d, w, d, .42, .62, hex3("#6A7C92")); break;
+    case "car":
+      B(-w + .05, -d, w - .05, d, .15, .75, col); B(-w + .2, -d + 1.2, w - .2, d - 1.1, .75, 1.42, hex3("#2D3B4A"));
+      for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(u * w - (u > 0 ? .25 : 0), v * (d - .95) - .32, u * w + (u < 0 ? .25 : 0), v * (d - .95) + .32, 0, .62, hex3("#222222")); break;
+    case "toilet": B(-w, -d, w, -d + .2, 0, .78, col); B(-w + .02, -d + .2, w - .02, d, 0, .42, col); break;
+    case "basin": B(-w, -d, w, d, .7, .85, col); B(-.08, -d, .08, -d + .15, 0, .7, hex3("#DDDDDD")); break;
+    case "dtable4": case "dtable6": case "desk":
+      B(-w, -d + (it.type === "desk" ? 0 : .22), w, (it.type === "desk" ? d * .2 : d - .22), .7, .75, col);
+      for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(u * (w - .06) - .03, v * (d - (it.type === "desk" ? .4 : .3)) - .03, u * (w - .06) + .03, v * (d - (it.type === "desk" ? .4 : .3)) + .03, 0, .7, col);
+      if (it.type !== "desk") { const n = Math.max(1, Math.round((it.w - .2) / .6)); for (let i = 0; i < n; i++) { const u = -w + (i + .5) * it.w / n; B(u - .2, -d, u + .2, -d + .36, 0, .45, hex3("#8A6A4C")); B(u - .2, d - .36, u + .2, d, 0, .45, hex3("#8A6A4C")); B(u - .2, -d, u + .2, -d + .05, .45, .9, hex3("#8A6A4C")); B(u - .2, d - .05, u + .2, d, .45, .9, hex3("#8A6A4C")); } }
+      else B(-.22, d * .3, .22, d * .3 + .44, 0, .46, hex3("#3B3F46"));
+      break;
+    case "plant": B(-.18, -.18, .18, .18, 0, .4, col); B(-w * .8, -d * .8, w * .8, d * .8, .4, 1.3, hex3("#5E9E4E")); break;
+    case "counter": B(-w, -d, w, d, 0, .86, hex3("#C9B79C")); B(-w, -d, w, d, .86, .9, col); if (!V3.cut) B(-w, -d, w, -d + .35, 1.5, 2.2, hex3("#C9B79C")); break;
+    case "grab": B(-w, -d, w, d, .8, .85, col); break;
+    case "wchair": B(-w + .1, -d + .1, w - .1, d - .1, .45, .52, col); B(-w + .1, -d + .1, w - .1, -d + .16, .52, .95, col); B(-w, -d + .3, -w + .05, -d + .9, 0, .62, hex3("#222222")); B(w - .05, -d + .3, w, -d + .9, 0, .62, hex3("#222222")); break;
+    case "altar": B(-w, -d, w, d, 0, .55, col); B(-w * .7, -d * .8, w * .7, d * .6, .55, .8, col); B(-w * .35, -d * .6, w * .35, d * .2, .8, 1.05, col); break;
+    default: B(-w, -d, w, d, 0, h, col);
+  }
+}
+function build3D() {
+  VB = []; GB = [];
+  const SLAB = 0.15, WALLC = hex3("#F3EFE6"), SIDE = hex3("#BDB6A8"), GLASS = [0.55, 0.75, 0.9, 0.42];
+  /* ground and land */
+  const [a, b, c, d] = planBounds(), cx = (a + c) / 2, cz = (b + d) / 2, R = Math.max(60, (c - a) * 3, (d - b) * 3);
+  quad3(VB, [cx - R, -0.03, cz - R], [cx + R, -0.03, cz - R], [cx + R, -0.03, cz + R], [cx - R, -0.03, cz + R], [0, 1, 0], [...hex3("#A9C99A"), 1]);
+  if (plan.land) quad3(VB, [0, -0.02, 0], [plan.land.w, -0.02, 0], [plan.land.w, -0.02, plan.land.h], [0, -0.02, plan.land.h], [0, 1, 0], [...hex3("#C2DDB2"), 1]);
+  const last = Math.min(V3.upto, plan.floors.length - 1);
+  let elev = SLAB, topElev = SLAB, topRooms = [];
+  plan.floors.forEach((f, i) => {
+    if (i > last) return;
+    const H = f.height || 3, wallTop = H - SLAB;
+    /* floor slabs (stair rooms above ground are holes) */
+    for (const r of f.rooms) {
+      if (r.type === "stair" && i > 0) continue;
+      const col = hex3((ROOM_TYPES[r.type] || ROOM_TYPES.other).c, 0.93);
+      for (const [p, q, s] of triangulate(r.pts)) tri3(VB, [p[0], elev, p[1]], [q[0], elev, q[1]], [s[0], elev, s[1]], [0, 1, 0], [...col, 1]);
+      r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], ex = q[0] - p[0], ez = q[1] - p[1], L = Math.hypot(ex, ez) || 1;
+        quad3(VB, [p[0], elev - SLAB, p[1]], [q[0], elev - SLAB, q[1]], [q[0], elev, q[1]], [p[0], elev, p[1]], [ez / L, 0, -ex / L], [...SIDE, 1]); });
+    }
+    /* walls with door / window cut-outs */
+    for (const r of f.rooms) {
+      let h = r.type === "porch" ? (i > 0 ? 1.0 : 0) : wallTop; if (V3.cut) h = Math.min(h, 1.2); if (h <= 0) continue;
+      r.pts.forEach((A, k) => {
+        const B = r.pts[(k + 1) % r.pts.length], ex = B[0] - A[0], ez = B[1] - A[1], L = Math.hypot(ex, ez); if (L < 0.01) return;
+        const ang = Math.atan2(ez, ex), ux = ex / L, uz = ez / L, iv = [];
+        for (const op of f.opens) {
+          const t = ((op.x - A[0]) * ux + (op.y - A[1]) * uz), dist = Math.abs((op.x - A[0]) * -uz + (op.y - A[1]) * ux);
+          if (dist > 0.06 || t < -0.05 || t > L + 0.05) continue;
+          const sill = op.kind === "window" ? 0.9 : 0, head = op.kind === "opening" ? Math.min(2.4, wallTop) : 2.1;
+          iv.push({ u0: clamp(t - op.w / 2, 0, L), u1: clamp(t + op.w / 2, 0, L), sill, head, op });
+        }
+        iv.sort((p, q) => p.u0 - q.u0);
+        const piece = (u0, u1, y0, y1) => { if (u1 - u0 < 0.005 || y1 - y0 < 0.005) return; const e0 = u0 <= 0 ? -WALL / 2 : 0, e1 = u1 >= L ? WALL / 2 : 0, m = (u0 + e0 + u1 + e1) / 2;
+          obox(VB, A[0] + ux * m, A[1] + uz * m, u1 + e1 - u0 - e0, WALL, elev + y0, elev + y1, ang, WALLC); };
+        let u = 0;
+        for (const v of iv) { if (v.u0 > u) piece(u, v.u0, 0, h); piece(v.u0, v.u1, 0, Math.min(v.sill, h)); piece(v.u0, v.u1, v.head, h); u = Math.max(u, v.u1); }
+        if (u < L) piece(u, L, 0, h);
+      });
+    }
+    /* door leaves and glass (once per opening) */
+    for (const op of f.opens) {
+      const c = Math.cos(op.a), s = Math.sin(op.a), at = (u, v) => [op.x + u * c - v * s, op.y + u * s + v * c], sd = op.flip ? -1 : 1, mh = op.hinge ? -1 : 1, hw = op.w / 2;
+      const wallH = V3.cut ? 1.2 : 99;
+      if (op.kind === "window") { if (wallH > 0.9) { const p = at(0, 0); obox(GB, p[0], p[1], op.w, 0.03, elev + 0.9, elev + Math.min(2.1, wallH), op.a, GLASS); } }
+      else if (op.kind === "door" || op.kind === "door2") {
+        const leaves = op.kind === "door2" ? [[-hw, 1, hw], [hw, -1, hw]] : [[-hw * mh, mh, op.w]];
+        for (const [hx, , len] of leaves) { const p = at(hx, sd * len / 2); obox(VB, p[0], p[1], 0.04, len, elev, elev + Math.min(2.05, wallH), op.a, hex3("#9C6E45")); }
+      } else if (op.kind === "slide") { const p = at(-hw / 2, 0); obox(GB, p[0], p[1], hw, 0.04, elev, elev + Math.min(2.1, wallH), op.a, GLASS); }
+    }
+    /* stairs up to the next floor */
+    if (i < plan.floors.length - 1 && i < last + 1) for (const r of f.rooms.filter(r => r.type === "stair")) {
+      const [x0, z0, x1, z1] = bbox(r.pts), vert = z1 - z0 >= x1 - x0, run = vert ? z1 - z0 : x1 - x0, n = Math.max(8, Math.round(H / 0.18)), rise = H / n, st = run / n;
+      for (let k = 0; k < n; k++) {
+        if (vert) obox(VB, (x0 + x1) / 2, z1 - (k + 0.5) * st, x1 - x0 - 0.1, st, elev, elev + (k + 1) * rise - SLAB * (k === n - 1 ? 1 : 0), 0, hex3(k % 2 ? "#C9AD8C" : "#BFA383"));
+        else obox(VB, x0 + (k + 0.5) * st, (z0 + z1) / 2, st, z1 - z0 - 0.1, elev, elev + (k + 1) * rise - SLAB * (k === n - 1 ? 1 : 0), 0, hex3(k % 2 ? "#C9AD8C" : "#BFA383"));
+      }
+    }
+    if (V3.furn) for (const it of f.items) addItem3(it, elev);
+    topElev = elev + wallTop; topRooms = f.rooms.filter(r => !SEMI_OUT.has(r.type));
+    elev += H;
+  });
+  /* hip roof over the top floor shown */
+  if (V3.roof && !V3.cut && topRooms.length) {
+    const [x0, z0, x1, z1] = bbox(topRooms.flatMap(r => r.pts)), o = 0.6, X0 = x0 - o, X1 = x1 + o, Z0 = z0 - o, Z1 = z1 + o, w = X1 - X0, d = Z1 - Z0, rh = Math.min(w, d) * 0.28, y = topElev, col = [...hex3("#B5523B"), 1];
+    obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, y + 0.15, 0, hex3("#E8E2D6"));
+    const yt = y + 0.15;
+    if (w >= d) { const r0 = [X0 + d / 2, yt + rh, (Z0 + Z1) / 2], r1 = [X1 - d / 2, yt + rh, (Z0 + Z1) / 2];
+      quad3(VB, [X0, yt, Z0], [X1, yt, Z0], r1, r0, [0, 0.8, -0.6], col); quad3(VB, [X0, yt, Z1], [X1, yt, Z1], r1, r0, [0, 0.8, 0.6], col);
+      tri3(VB, [X0, yt, Z0], [X0, yt, Z1], r0, [-0.6, 0.8, 0], col); tri3(VB, [X1, yt, Z0], [X1, yt, Z1], r1, [0.6, 0.8, 0], col);
+    } else { const r0 = [(X0 + X1) / 2, yt + rh, Z0 + w / 2], r1 = [(X0 + X1) / 2, yt + rh, Z1 - w / 2];
+      quad3(VB, [X0, yt, Z0], [X0, yt, Z1], r1, r0, [-0.6, 0.8, 0], col); quad3(VB, [X1, yt, Z0], [X1, yt, Z1], r1, r0, [0.6, 0.8, 0], col);
+      tri3(VB, [X0, yt, Z0], [X1, yt, Z0], r0, [0, 0.8, -0.6], col); tri3(VB, [X0, yt, Z1], [X1, yt, Z1], r1, [0, 0.8, 0.6], col); }
+  }
+  upload3();
+}
+function init3() {
+  if (V3.gl) return true;
+  const gl = cv3.getContext("webgl", { antialias: true, preserveDrawingBuffer: true }); if (!gl) return false;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, `attribute vec3 p; attribute vec3 n; attribute vec4 c; uniform mat4 M; uniform vec3 L; varying vec4 vc;
+    void main(){ gl_Position = M * vec4(p, 1.0); vec3 nn = normalize(n); float d = abs(dot(nn, L)) * (dot(nn, L) > 0.0 ? 1.0 : 0.35); float h = 0.5 + 0.5 * nn.y; vc = vec4(c.rgb * (0.52 + 0.16 * h + 0.42 * d), c.a); }`));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, `precision mediump float; varying vec4 vc; void main(){ gl_FragColor = vec4(min(vc.rgb, vec3(1.0)), vc.a); }`));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  V3.gl = gl; V3.pr = pr; V3.b = gl.createBuffer(); V3.bg = gl.createBuffer();
+  V3.loc = { p: gl.getAttribLocation(pr, "p"), n: gl.getAttribLocation(pr, "n"), c: gl.getAttribLocation(pr, "c"), M: gl.getUniformLocation(pr, "M"), L: gl.getUniformLocation(pr, "L") };
+  return true;
+}
+function upload3() { const gl = V3.gl; if (!gl) return; gl.bindBuffer(gl.ARRAY_BUFFER, V3.b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(VB), gl.STATIC_DRAW); V3.n = VB.length / 10;
+  gl.bindBuffer(gl.ARRAY_BUFFER, V3.bg); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(GB), gl.STATIC_DRAW); V3.ng = GB.length / 10; V3.need = true; }
+function mmul(a, b) { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; }
+function persp(fov, asp, n, f) { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); }
+function lookAt(e, t) { let z = [e[0] - t[0], e[1] - t[1], e[2] - t[2]]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+  let x = [z[2], 0, -z[0]]; const xl = Math.hypot(...x) || 1; x = x.map(v => v / xl); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); }
+function eye3() { const cp = Math.cos(V3.pitch); return [V3.t[0] + V3.dist * cp * Math.sin(V3.yaw), V3.t[1] + V3.dist * Math.sin(V3.pitch), V3.t[2] + V3.dist * cp * Math.cos(V3.yaw)]; }
+function render3() {
+  const gl = V3.gl; if (!gl) return;
+  const r = cv3.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+  if (cv3.width !== W || cv3.height !== H) { cv3.width = W; cv3.height = H; }
+  gl.viewport(0, 0, W, H); gl.clearColor(0.84, 0.91, 0.96, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+  const M = mmul(persp(0.8, W / H, Math.max(0.05, V3.dist * 0.01), V3.dist * 20 + 200), lookAt(eye3(), V3.t));
+  gl.uniformMatrix4fv(V3.loc.M, false, M); const L = [0.45, 0.8, 0.4], ll = Math.hypot(...L); gl.uniform3f(V3.loc.L, L[0] / ll, L[1] / ll, L[2] / ll);
+  const draw = (buf, n) => { if (!n) return; gl.bindBuffer(gl.ARRAY_BUFFER, buf); const st = 40;
+    gl.enableVertexAttribArray(V3.loc.p); gl.vertexAttribPointer(V3.loc.p, 3, gl.FLOAT, false, st, 0);
+    gl.enableVertexAttribArray(V3.loc.n); gl.vertexAttribPointer(V3.loc.n, 3, gl.FLOAT, false, st, 12);
+    gl.enableVertexAttribArray(V3.loc.c); gl.vertexAttribPointer(V3.loc.c, 4, gl.FLOAT, false, st, 24); gl.drawArrays(gl.TRIANGLES, 0, n); };
+  gl.disable(gl.BLEND); gl.depthMask(true); draw(V3.b, V3.n);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); draw(V3.bg, V3.ng); gl.depthMask(true);
+}
+function frame3() { if (V3.on && V3.need) { V3.need = false; try { render3(); } catch (e) { console.error(e); } } requestAnimationFrame(frame3); }
+requestAnimationFrame(frame3);
+function view3Preset(k) {
+  const [a, b, c, d] = planBounds(), ext = Math.max(c - a, d - b, 6), hgt = plan.floors.slice(0, Math.min(V3.upto, plan.floors.length - 1) + 1).reduce((s, f) => s + (f.height || 3), 0);
+  let fa = a, fb = b, fc = c, fd = d; const rs = plan.floors.flatMap(f => f.rooms.flatMap(r => r.pts)); if (rs.length) [fa, fb, fc, fd] = bbox(rs);
+  V3.t = [(fa + fc) / 2, hgt * 0.35, (fb + fd) / 2];
+  const span = Math.max(fc - fa, fd - fb, 6);
+  if (k === "front") { V3.yaw = 0; V3.pitch = 0.22; V3.dist = span * 1.7; }
+  else if (k === "top") { V3.yaw = 0; V3.pitch = 1.5; V3.dist = span * 1.6; }
+  else { V3.yaw = -0.55; V3.pitch = 0.62; V3.dist = span * 1.75; }
+  V3.need = true;
+}
+/* orbit / pinch / pan */
+const p3 = new Map(); let g3 = null;
+cv3.addEventListener("pointerdown", e => { try { cv3.setPointerCapture(e.pointerId); } catch (_) {} p3.set(e.pointerId, { x: e.clientX, y: e.clientY }); g3 = null; });
+cv3.addEventListener("pointermove", e => {
+  const q = p3.get(e.pointerId); if (!q) return;
+  const dx = e.clientX - q.x, dy = e.clientY - q.y; q.x = e.clientX; q.y = e.clientY;
+  if (p3.size >= 2) {
+    const [a, b] = [...p3.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m = [(a.x + b.x) / 2, (a.y + b.y) / 2];
+    if (g3) { V3.dist = clamp(V3.dist * g3.d / Math.max(1, d), 2, 400); pan3(m[0] - g3.m[0], m[1] - g3.m[1]); }
+    g3 = { d, m }; V3.need = true; return;
+  }
+  if (e.buttons === 2 || e.buttons === 4 || e.shiftKey) pan3(dx, dy);
+  else { V3.yaw -= dx * 0.008; V3.pitch = clamp(V3.pitch + dy * 0.006, 0.03, 1.53); }
+  V3.need = true;
+});
+const end3 = e => { p3.delete(e.pointerId); g3 = null; };
+cv3.addEventListener("pointerup", end3); cv3.addEventListener("pointercancel", end3);
+cv3.addEventListener("contextmenu", e => e.preventDefault());
+cv3.addEventListener("wheel", e => { e.preventDefault(); V3.dist = clamp(V3.dist * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0012)), 2, 400); V3.need = true; }, { passive: false });
+function pan3(dx, dy) { const k = V3.dist * 0.0016, cy = Math.cos(V3.yaw), sy = Math.sin(V3.yaw);
+  V3.t[0] -= (cy * dx - sy * dy) * k; V3.t[2] -= (-sy * dx - cy * dy) * k; }
+new ResizeObserver(() => { V3.need = true; }).observe(cv3);
+function set3D(on) {
+  if (on && !init3()) { toast("อุปกรณ์นี้ไม่รองรับ WebGL"); return; }
+  V3.on = on; document.getElementById("app").classList.toggle("mode3d", on);
+  document.getElementById("v3Btn").innerHTML = on ? "✏️ <span class='long'>แปลน </span>2D" : "🧊 3D";
+  document.getElementById("hint").textContent = on ? "ลากเพื่อหมุน • สองนิ้วซูม/เลื่อน • คอม: คลิกขวาลากเพื่อเลื่อน" : (penSeen ? "✏️ ปากกาวาด • นิ้วเลื่อนจอ — " : "") + HINTS[tool];
+  if (on) { poly = null; sel = null; V3.upto = Math.min(V3.upto, plan.floors.length - 1); if (V3.upto < 0) V3.upto = plan.floors.length - 1; build3D(); view3Preset(V3.lastPreset || "iso"); }
+  updatePanel(); draw();
+}
+function panel3HTML() {
+  const nf = plan.floors.length, up = Math.min(V3.upto, nf - 1);
+  const chip = (on, attr, txt) => `<button ${attr} class="${on ? "on" : ""}">${txt}</button>`;
+  return `<h3>🧊 มุมมอง 3 มิติ</h3>
+    <h4>แสดงชั้น</h4><div class="chips">${plan.floors.map((f, i) => chip(i === up, `data-v3="upto" data-v="${i}"`, i === nf - 1 ? (nf > 1 ? "ทั้งหลัง" : esc(f.name)) : i === 0 ? esc(f.name) : "ถึง" + esc(f.name))).join("")}</div>
+    <h4>ผนัง</h4><div class="chips">${chip(!V3.cut, 'data-v3="cut" data-v="0"', "เต็มความสูง")}${chip(V3.cut, 'data-v3="cut" data-v="1"', "ตัดเตี้ย ดูภายใน")}</div>
+    <h4>ส่วนประกอบ</h4><div class="chips">${chip(V3.roof, 'data-v3="roof"', "หลังคา")}${chip(V3.furn, 'data-v3="furn"', "เฟอร์นิเจอร์")}</div>
+    <h4>มุมกล้อง</h4><div class="chips">${chip(0, 'data-v3="view" data-v="iso"', "มุมเฉียง")}${chip(0, 'data-v3="view" data-v="front"', "ด้านหน้า")}${chip(0, 'data-v3="view" data-v="top"', "มุมบน")}</div>
+    <h4>ความสูงชั้น</h4>${plan.floors.map((f, i) => `<div class="row"><label>${esc(f.name)}</label><input type="number" step="0.1" min="2.4" max="6" data-v3h="${i}" value="${(f.height || 3).toFixed(1)}"><span class="mute">ม.</span></div>`).join("")}
+    <div class="btns"><button class="b" data-v3="png">🖼 บันทึกภาพ 3 มิติ</button></div>
+    <p class="mute">แก้แปลนได้ที่โหมด 2D แล้วกลับมาดู 3D ภาพจะอัปเดตเอง · ความสูงชั้นนับจากพื้นถึงพื้นชั้นถัดไป</p>`;
+}
+document.getElementById("panel").addEventListener("click", e => {
+  const b = e.target.closest("[data-v3]"); if (!b || !V3.on) return; const k = b.dataset.v3;
+  if (k === "upto") V3.upto = +b.dataset.v; if (k === "cut") V3.cut = b.dataset.v === "1"; if (k === "roof") V3.roof = !V3.roof; if (k === "furn") V3.furn = !V3.furn;
+  if (k === "view") { V3.lastPreset = b.dataset.v; view3Preset(b.dataset.v); return; }
+  if (k === "png") { cv3.toBlob(bl => saveFile(bl, safeName(plan.name) + "-3D.png"), "image/png"); return; }
+  if (k === "roof" && V3.roof) V3.upto = plan.floors.length - 1;
+  build3D(); updatePanel();
+});
+document.getElementById("panel").addEventListener("change", e => {
+  const i = e.target.dataset.v3h; if (i === undefined || !V3.on) return; const v = parseFloat(e.target.value); if (!(v >= 2.4 && v <= 6)) { updatePanel(); return; }
+  const b = snapshot(); plan.floors[+i].height = Math.round(v * 10) / 10; commit(b); build3D();
+});
+document.getElementById("v3Btn").onclick = () => set3D(!V3.on);
 
 /* ============================================================ boot */
 if (!load()) { plan = newPlan(); }
