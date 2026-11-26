@@ -1831,8 +1831,21 @@ const FIN_KEY = { "พื้นไม้จริง": "f_wood", "พื้น�
 const RATE0 = { pile: 1800, conc: 2700, rebar: 32, form: 380, wall_brick: 480, wall_aac: 560, wall_light: 900, plaster: 230, paint: 130, f_tile: 700, f_wood: 2200, f_lam: 900, f_marble: 2400, f_polish: 280, f_grass: 350,
   ceil: 480, roof_frame: 700, roof_tile: 480, roof_flat: 550, door: 7500, door2: 16000, slide: 20000, opening: 0, window: 3500, stair: 40000,
   toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
-function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {}; return b; }
-const rate = k => { const b = boqOpts(); return b.rates[k] !== undefined ? b.rates[k] : RATE0[k]; };
+function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {};
+  if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area"; return b; }
+const PCT = new Set(["elec", "plumb", "oh"]);
+const rawRate = k => { const b = boqOpts(); return b.rates[k] !== undefined ? b.rates[k] : RATE0[k]; };
+/* target mode: every unit price is multiplied by one factor so that total / area = target (percent lines unchanged) */
+let fCache = { key: null, f: 1 };
+function priceFactor() {
+  const b = boqOpts(); if (!b.targetOn) return 1;
+  const k = snapshot(); if (fCache.key === k) return fCache.f;
+  const secs = boqData(), T = boqTotals(secs, rawRate); let area = 0;
+  for (const f of plan.floors) for (const r of f.rooms) if (b.basis === "area" || !SEMI_OUT.has(r.type)) area += areaOf(r.pts);
+  const f = T.total > 0 && area > 0 ? b.target * area / T.total : 1;
+  fCache = { key: k, f }; return f;
+}
+const rate = k => PCT.has(k) ? rawRate(k) : rawRate(k) * priceFactor();
 function boqData() {
   const E = eng(), S = E.S, FE = floorLevels(), n = plan.floors.length, B = boqOpts(), st = styleOf(), secs = [];
   const it = (k, name, qty, unit, note) => ({ k, name, qty: Math.round(qty * 100) / 100, unit, note });
@@ -1897,9 +1910,9 @@ function boqData() {
   secs.push({ name: "4. สุขภัณฑ์และครัว", items: [["toilet", "ชักโครก"], ["basin", "อ่างล้างหน้า"], ["shower", "ชุดฝักบัว"], ["tub", "อ่างอาบน้ำ"], ["counter", "เคาน์เตอร์ครัว"]].filter(([k]) => cnt[k]).map(([k, nm]) => it(k, nm, cnt[k], "ชุด")) });
   return secs;
 }
-function boqTotals(secs) {
-  const B = boqOpts(); let base = 0; for (const s of secs) for (const x of s.items) base += x.qty * rate(x.k);
-  const elec = base * rate("elec") / 100, plumb = base * rate("plumb") / 100, sub = base + elec + plumb, oh = sub * rate("oh") / 100, pre = sub + oh, vat = B.vat ? pre * 0.07 : 0;
+function boqTotals(secs, R) {
+  R = R || rate; const B = boqOpts(); let base = 0; for (const s of secs) for (const x of s.items) base += x.qty * R(x.k);
+  const elec = base * R("elec") / 100, plumb = base * R("plumb") / 100, sub = base + elec + plumb, oh = sub * R("oh") / 100, pre = sub + oh, vat = B.vat ? pre * 0.07 : 0;
   return { base, elec, plumb, oh, vat, total: pre + vat };
 }
 const baht = v => Math.round(v).toLocaleString("th-TH");
@@ -1935,10 +1948,15 @@ function engHTML() {
 }
 function boqHTML() {
   const B = boqOpts(), secs = boqData(), T = boqTotals(secs), area = plan.floors.reduce((s, f) => s + floorArea(f), 0);
-  const row = x => `<tr><td style="text-align:left;white-space:normal">${esc(x.name)}</td><td>${fmt(x.qty)}</td><td>${x.unit}</td><td><input type="number" min="0" step="any" data-rk="${x.k}" value="${rate(x.k)}" style="width:90px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"></td><td>${baht(x.qty * rate(x.k))}</td></tr>`;
+  const row = x => `<tr><td style="text-align:left;white-space:normal">${esc(x.name)}</td><td>${fmt(x.qty)}</td><td>${x.unit}</td><td><input type="number" min="0" step="any" data-rk="${x.k}" value="${Math.round(rate(x.k) * 100) / 100}" style="width:90px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"></td><td>${baht(x.qty * rate(x.k))}</td></tr>`;
   const pct = (k, nm, v) => `<tr><td style="text-align:left">${nm}</td><td colspan="2"></td><td><input type="number" min="0" step="0.5" data-rk="${k}" value="${rate(k)}" style="width:60px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"> %</td><td>${baht(v)}</td></tr>`;
-  const C = costSummary();
-  return `${costCardsHTML(C)}<h4>รายละเอียด</h4><div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
+  const C = costSummary(), F = priceFactor();
+  const tgt = `<div style="background:#F1ECFA;border-radius:12px;padding:10px 12px;margin-top:4px">
+      <div class="chips" style="align-items:center"><button data-e="tOn" class="${B.targetOn ? "on" : ""}">🎯 ปรับตามเป้า บาท/ตร.ม.</button>
+      ${B.targetOn ? `<input type="number" min="1000" step="500" data-tg="1" value="${B.target}" style="width:110px;padding:7px 8px;border:1px solid var(--line);border-radius:10px;font-size:16px;text-align:right"> บาท/ตร.ม. ของ
+      <button data-e="basis" data-v="area" class="${B.basis === "area" ? "on" : ""}">พื้นที่รวม</button><button data-e="basis" data-v="inner" class="${B.basis === "inner" ? "on" : ""}">พื้นที่ภายใน</button>` : ""}</div>
+      <p class="mute" style="margin:6px 0 0">${B.targetOn ? `ราคาต่อหน่วยทุกรายการถูกคูณด้วย ×${F.toFixed(2)} ให้ได้ตามเป้า (สัดส่วนระหว่างรายการเท่าเดิม) · แก้ราคารายการใด ยอดรวมยังคงตามเป้า แต่สัดส่วนจะเปลี่ยน` : "ใช้ราคาต่อหน่วยตามที่กรอกตรงๆ"}</p></div>`;
+  return `${tgt}${costCardsHTML(C)}<h4>รายละเอียด</h4><div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
       <button data-e="piles">เข็มต่อฐาน: ${B.piles} ต้น ↻</button><button data-e="vat" class="${B.vat ? "on" : ""}">รวม VAT 7%</button></div>
     <div style="overflow-x:auto;margin-top:10px"><table class="sum boq"><tr><th style="text-align:left">รายการ</th><th>ปริมาณ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>รวม (บาท)</th></tr>
     ${secs.map(s => `<tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>${s.name}</b></td></tr>${s.items.map(row).join("")}<tr><td colspan="4" style="text-align:right" class="mute">รวม${s.name.slice(3)}</td><td>${baht(s.items.reduce((a, x) => a + x.qty * rate(x.k), 0))}</td></tr>`).join("")}
@@ -1958,11 +1976,11 @@ function renderEng() {
 }
 function boqCSV() {
   const secs = boqData(), T = boqTotals(secs), q = v => `"${String(v).replace(/"/g, '""')}"`, L = [["หมวด", "รายการ", "ปริมาณ", "หน่วย", "ราคา/หน่วย", "รวม (บาท)"]];
-  for (const s of secs) for (const x of s.items) L.push([s.name, x.name, x.qty, x.unit, rate(x.k), Math.round(x.qty * rate(x.k))]);
+  for (const s of secs) for (const x of s.items) L.push([s.name, x.name, x.qty, x.unit, Math.round(rate(x.k) * 100) / 100, Math.round(x.qty * rate(x.k))]);
   L.push(["5", `งานระบบไฟฟ้า ${rate("elec")}%`, "", "", "", Math.round(T.elec)], ["5", `งานประปา ${rate("plumb")}%`, "", "", "", Math.round(T.plumb)], ["5", `ค่าดำเนินการและกำไร ${rate("oh")}%`, "", "", "", Math.round(T.oh)]);
   if (boqOpts().vat) L.push(["5", "VAT 7%", "", "", "", Math.round(T.vat)]);
   const C = costSummary();
-  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง", "", "", "", ""]);
+  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง" + (boqOpts().targetOn ? ` · ปรับตามเป้า ${boqOpts().target} บาท/ตร.ม. (ตัวคูณ ×${priceFactor().toFixed(2)})` : ""), "", "", "", ""]);
   return "﻿" + L.map(r => r.map(q).join(",")).join("\r\n");
 }
 document.getElementById("engBtn").onclick = () => { engTab = engTab || "eng"; renderEng(); openOv("engOv"); };
@@ -1970,6 +1988,7 @@ document.getElementById("engOv").addEventListener("click", e => {
   const t = e.target.closest("[data-tab]"); if (t) { engTab = t.dataset.tab; renderEng(); return; }
   const b = e.target.closest("[data-e]"); if (!b) return; const k = b.dataset.e, B = boqOpts(), before = snapshot();
   if (k === "layer") { styleOf().struct = !styleOf().struct; commit(before); renderEng(); return; }
+  if (k === "tOn") B.targetOn = !B.targetOn; if (k === "basis") B.basis = b.dataset.v;
   if (k === "wall") B.wall = b.dataset.v; if (k === "piles") B.piles = [0, 1, 2, 4][([0, 1, 2, 4].indexOf(B.piles) + 1) % 4]; if (k === "vat") B.vat = !B.vat;
   if (k === "reset") { if (!confirm("คืนราคาต่อหน่วยทั้งหมดเป็นค่าตั้งต้น?")) return; B.rates = {}; }
   if (k === "csv") { saveFile(new Blob([boqCSV()], { type: "text/csv;charset=utf-8" }), safeName(plan.name) + "-BOQ.csv"); return; }
@@ -1977,8 +1996,9 @@ document.getElementById("engOv").addEventListener("click", e => {
   commit(before); renderEng();
 });
 document.getElementById("engOv").addEventListener("change", e => {
+  if (e.target.dataset.tg) { const v = parseFloat(e.target.value), before = snapshot(); if (v > 0) { boqOpts().target = Math.round(v); commit(before); } renderEng(); return; }
   const k = e.target.dataset.rk; if (!k) return; const v = parseFloat(e.target.value), before = snapshot(), B = boqOpts();
-  if (!(v >= 0)) { renderEng(); return; } B.rates[k] = v; commit(before); renderEng();
+  if (!(v >= 0)) { renderEng(); return; } B.rates[k] = PCT.has(k) ? v : Math.round(v / priceFactor() * 100) / 100; commit(before); renderEng();
 });
 
 /* ============================================================ boot */
