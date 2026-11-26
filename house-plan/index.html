@@ -517,6 +517,11 @@ function drawOverlay() {
     if (poly.length >= 3) { const [sx, sy] = w2s(...centroid(poly)); tag(fmt(areaOf(poly)) + " ตร.ม.", sx, sy); }
     if (poly.length && hoverW) { const p = poly[poly.length - 1], L = Math.hypot(hoverW[0] - p[0], hoverW[1] - p[1]); const [sx, sy] = w2s((p[0] + hoverW[0]) / 2, (p[1] + hoverW[1]) / 2); tag(fmt(L) + " ม.", sx, sy - 18); }
   }
+  if (tool === "move" && !V3.on) { const S = setbacks();
+    if (S) { const [a, b, c, d] = S.B, my = (b + d) / 2, mx = (a + c) / 2, L = plan.land;
+      pathPoly(rectPts(a, b, c - a, d - b)); X.save(); X.setLineDash([8, 5]); X.strokeStyle = "#2F6FDB"; X.lineWidth = 2; X.stroke(); X.restore();
+      const dim = (x1, y1, x2, y2, v) => { const [p, q] = w2s(x1, y1), [r, s2] = w2s(x2, y2); X.strokeStyle = v < 0 ? "#D33A2C" : "#2F6FDB"; X.lineWidth = 1.5; X.beginPath(); X.moveTo(p, q); X.lineTo(r, s2); X.stroke(); tag(`${fmt(v)} ม.`, (p + r) / 2, (q + s2) / 2, v < 0 ? "#D33A2C" : "#2F6FDB"); };
+      dim(0, my, a, my, S.left); dim(c, my, L.w, my, S.right); dim(mx, 0, mx, b, S.back); dim(mx, d, mx, L.h, S.front); } }
   if (measure && measure.b) {
     const [ax, ay] = w2s(...measure.a), [bx, by] = w2s(...measure.b);
     X.strokeStyle = "#D2582F"; X.lineWidth = 2.5; X.setLineDash([8, 5]); line(ax, ay, bx, by); X.setLineDash([]);
@@ -721,6 +726,7 @@ function beginDrag() {
   const [x, y] = a.w;
   if (tool === "room") { a.kind = "drawRect"; a.a = snapPt(x, y); a.b = null; return; }
   if (tool === "measure") { a.kind = "measure"; measure = { a: snapPt(x, y), b: null }; return; }
+  if (tool === "move" && houseBox()) { a.kind = "moveAll"; a.snap = snapshot(); a.orig = JSON.parse(a.snap); return; }
   if (tool === "select") {
     const h = hitAt(x, y), f = FL();
     if (h) {
@@ -744,6 +750,7 @@ function dragTo(p) {
   const a = act, [x, y] = s2w(...p), dx = x - a.w[0], dy = y - a.w[1];
   switch (a.kind) {
     case "pan": view.x = a.vx + p[0] - a.sx; view.y = a.vy + p[1] - a.sy; break;
+    case "moveAll": { const sx = r3(Math.round(dx / step) * step), sy = r3(Math.round(dy / step) * step); shiftHouse(sx, sy, a.orig); break; }
     case "drawRect": a.b = snapPt(x, y); break;
     case "measure": measure.b = snapPt(x, y); break;
     case "vertex": a.room.pts[a.i] = snapPt(x, y, a.room); break;
@@ -820,6 +827,16 @@ function autoName(type) {
   if (["living", "kitchen", "dining", "garage", "stair", "pray", "laundry", "work"].includes(type)) { const exists = plan.floors.some(f => f.rooms.some(r => r.name === base)); if (!exists) return base; }
   let n = 1; const names = new Set(plan.floors.flatMap(f => f.rooms.map(r => r.name))); while (names.has(base + " " + n)) n++; return base + " " + n;
 }
+/* whole house: every floor moves together */
+function houseBox() { const pts = plan.floors.flatMap(f => f.rooms.flatMap(r => r.pts)); return pts.length ? bbox(pts) : null; }
+function shiftHouse(dx, dy, from) {
+  const src = from || plan;
+  plan.floors.forEach((f, i) => { const o = src.floors[i];
+    f.rooms.forEach((r, k) => { r.pts = o.rooms[k].pts.map(p => [r3(p[0] + dx), r3(p[1] + dy)]); });
+    for (const key of ["opens", "items", "labels"]) f[key].forEach((q, k) => { q.x = r3(o[key][k].x + dx); q.y = r3(o[key][k].y + dy); }); });
+}
+function moveHouseBy(dx, dy) { if (!houseBox()) return; const b = snapshot(); shiftHouse(dx, dy, JSON.parse(b)); commit(b); }
+function setbacks() { const B = houseBox(); if (!B || !plan.land) return null; return { left: B[0], right: plan.land.w - B[2], back: B[1], front: plan.land.h - B[3], B }; }
 function deleteSel() { const o = getSel(); if (!o) return; const b = snapshot(), f = FL(), k = { room: "rooms", item: "items", open: "opens", label: "labels" }[sel.t]; f[k] = f[k].filter(q => q !== o); sel = null; commit(b); }
 
 window.addEventListener("keydown", e => {
@@ -828,6 +845,7 @@ window.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); doRedo(); return; }
   if (typeof V3 !== "undefined" && V3.on) return;
   if (e.key === "Delete" || e.key === "Backspace") { deleteSel(); return; }
+  if (tool === "move" && e.key.startsWith("Arrow")) { e.preventDefault(); const m = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; moveHouseBy(m[0] * step, m[1] * step); return; }
   if (e.key === "Escape") { poly = null; measure = null; setSel(null); return; }
   if (e.key === "Enter" && poly) { finishPoly(); return; }
   if (e.key === " ") { spaceDown = true; }
@@ -838,6 +856,7 @@ window.addEventListener("keyup", e => { if (e.key === " ") spaceDown = false; })
 
 /* ============================================================ UI: tools, floors, panel */
 const ICON = {
+  move: '<path d="M12 2l3 3h-2v6h6V9l3 3-3 3v-2h-6v6h2l-3 3-3-3h2v-6H5v2l-3-3 3-3v2h6V5H9z" fill="currentColor"/>',
   select: '<path d="M6 3l14 8-6 1.6L11 19z" fill="currentColor"/>',
   room: '<rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="2.6"/>',
   poly: '<path d="M4 6h9v5h7v8H4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>',
@@ -847,7 +866,7 @@ const ICON = {
   text: '<path d="M5 5h14M12 5v15" stroke="currentColor" stroke-width="2.6" fill="none"/>',
   measure: '<path d="M3 16L16 3l5 5L8 21z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 12l2 2M10 9l2 2M13 6l2 2" stroke="currentColor" stroke-width="1.8"/>',
 };
-const TOOLS = [["select", "เลือก"], ["room", "ห้อง"], ["poly", "ห้องอิสระ"], ["door", "ประตู"], ["window", "หน้าต่าง"], ["furn", "เฟอร์นิเจอร์"], ["text", "ข้อความ"], ["measure", "วัดระยะ"]];
+const TOOLS = [["select", "เลือก"], ["room", "ห้อง"], ["poly", "ห้องอิสระ"], ["door", "ประตู"], ["window", "หน้าต่าง"], ["furn", "เฟอร์นิเจอร์"], ["text", "ข้อความ"], ["measure", "วัดระยะ"], ["move", "ย้ายบ้าน"]];
 const HINTS = {
   select: "แตะเพื่อเลือก • ลากของที่เลือกเพื่อย้าย • สองนิ้วซูม/เลื่อน",
   room: "ลากเพื่อวาดห้องสี่เหลี่ยม",
@@ -857,6 +876,7 @@ const HINTS = {
   furn: "เลือกแบบในแผงด้านข้าง แล้วแตะบนแปลนเพื่อวาง",
   text: "แตะตรงที่ต้องการวางข้อความ",
   measure: "ลากเพื่อวัดระยะ",
+  move: "ลากเพื่อย้ายบ้านทั้งหลัง (ทุกชั้นพร้อมกัน) • ปรับระยะร่นได้ในแผงด้านข้าง",
 };
 const $tools = document.getElementById("tools");
 $tools.innerHTML = TOOLS.map(([k, n]) => `<button data-tool="${k}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${n}</button>`).join("");
@@ -934,6 +954,16 @@ function updatePanel() {
   let h = "";
   if (tool === "room" || tool === "poly") h += `<h3>${tool === "room" ? "วาดห้อง" : "ห้องอิสระ"}</h3><p class="mute" style="margin-top:-4px">เลือกประเภทก่อนวาด</p><div class="chips">${Object.entries(ROOM_TYPES).map(([k, t]) => `<button data-rt="${k}" class="${k === roomType ? "on" : ""}"><span class="dot" style="background:${t.c}"></span>${t.n}</button>`).join("")}</div>`;
   if (tool === "door") h += `<h3>ประตู</h3><div class="chips">${["door", "door2", "slide", "opening"].map(k => `<button data-ok="${k}" class="${k === openKind ? "on" : ""}">${OPEN_KINDS[k]}</button>`).join("")}</div>`;
+  if (tool === "move") { const S = setbacks();
+    h += `<h3>ย้ายบ้านทั้งหลัง</h3><p class="mute" style="margin-top:-4px">ลากบนแปลนได้เลย ทุกชั้นย้ายไปพร้อมกัน</p>
+      <div style="display:grid;grid-template-columns:repeat(3,52px);gap:6px;justify-content:center;margin:8px 0">
+        <span></span><button class="b" data-mv="0,-1">▲</button><span></span>
+        <button class="b" data-mv="-1,0">◀</button><button class="b" data-mv="center" title="กึ่งกลางซ้าย-ขวา">◎</button><button class="b" data-mv="1,0">▶</button>
+        <span></span><button class="b" data-mv="0,1">▼</button><span></span></div>
+      <p class="mute" style="text-align:center;margin:0 0 8px">ปุ่มลูกศรเลื่อนทีละ ${step >= 1 ? step + " ม." : Math.round(step * 100) + " ซม."} (ตามค่าจับตารางมุมขวาล่าง) · ◎ = จัดกึ่งกลางซ้าย-ขวา</p>
+      ${S ? `<h4>ระยะจากแนวเขตที่ดิน (ม.)</h4>
+        ${[["front", "ด้านหน้า"], ["back", "ด้านหลัง"], ["left", "ด้านซ้าย"], ["right", "ด้านขวา"]].map(([k, n]) => `<div class="row"><label>${n}</label><input type="number" step="0.05" data-sb="${k}" value="${fmt(S[k])}"><span class="mute">ม.</span></div>`).join("")}
+        <p class="mute">พิมพ์ระยะด้านใดก็ได้ บ้านจะเลื่อนให้ได้ระยะนั้น (ด้านตรงข้ามเปลี่ยนตาม) · วัดจากขอบนอกสุดของห้องทุกชั้น รวมชาน/ระเบียง · ผนังที่มีหน้าต่าง/ประตูควรห่างแนวเขต ≥ 2 ม.</p>` : `<p class="mute">ยังไม่ได้ตั้งค่าที่ดิน — เมนู ☰ → ตั้งค่าที่ดิน</p>`}`; }
   if (tool === "furn") h += `<h3>เฟอร์นิเจอร์</h3><div class="fgrid">${Object.entries(FURN).map(([k, f]) => `<button data-ft="${k}" class="${k === furnType ? "on" : ""}"><canvas data-ic="${k}" width="108" height="88"></canvas>${f.n}</button>`).join("")}</div>`;
   $panel.innerHTML = h + summaryHTML();
   if (tool === "furn") drawIcons();
@@ -966,6 +996,7 @@ function drawIcons() {
 }
 $panel.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.mv) { if (b.dataset.mv === "center") { const S = setbacks(); if (S) moveHouseBy(r3((S.right - S.left) / 2), 0); } else { const [u, v] = b.dataset.mv.split(",").map(Number); moveHouseBy(u * step, v * step); } return; }
   if (b.dataset.rt) { roomType = b.dataset.rt; updatePanel(); return; }
   if (b.dataset.ok) { openKind = b.dataset.ok; updatePanel(); return; }
   if (b.dataset.ft) { furnType = b.dataset.ft; $panel.querySelectorAll("[data-ft]").forEach(x => x.classList.toggle("on", x === b)); return; }
@@ -1014,7 +1045,11 @@ function panelEdit(e, live) {
   commit(panelSnap); panelSnap = snapshot();
 }
 $panel.addEventListener("input", e => { if (e.target.matches("input[data-k=name], input[data-k=text]")) panelEdit(e, true); });
-$panel.addEventListener("change", e => panelEdit(e, false));
+$panel.addEventListener("change", e => {
+  const k = e.target.dataset.sb; if (k) { const S = setbacks(), v = parseFloat(e.target.value); if (!S || isNaN(v)) { updatePanel(); return; }
+    const d = r3(v - S[k]); moveHouseBy(k === "left" ? d : k === "right" ? -d : 0, k === "back" ? d : k === "front" ? -d : 0); return; }
+  panelEdit(e, false);
+});
 
 /* ============================================================ header buttons / overlays */
 const $ = id => document.getElementById(id);
@@ -1065,7 +1100,8 @@ $("genGo").onclick = () => {
   const o = { lw: +$("gLw").value, ld: +$("gLd").value, sf: +$("gSf").value, ss: +$("gSs").value, sb: +$("gSb").value, floors: +$("gF").value, beds: +$("gBed").value, baths: +$("gBath").value, cars: +$("gCar").value, size: $("gSize").value, work: on("work"), pray: on("pray"), bedDown: on("bedDown"), porch: on("porch") };
   if (!(o.lw >= 5 && o.ld >= 5)) { toast("กรอกขนาดที่ดินอย่างน้อย 5 × 5 ม."); return; }
   const res = generate(o), b = snapshot(); plan = res.plan; cur = 0; sel = null; commit(b); closeOv(); fit();
-  toast(res.warn || `สร้างแล้ว: ${plan.floors.length} ชั้น รวม ${fmt(plan.floors.reduce((s, f) => s + floorArea(f), 0), 0)} ตร.ม.`);
+  setTool("move");
+  toast(res.warn || `สร้างแล้ว — ลากเพื่อย้ายตำแหน่งบ้านได้ · ${plan.floors.length} ชั้น รวม ${fmt(plan.floors.reduce((s, f) => s + floorArea(f), 0), 0)} ตร.ม.`);
 };
 
 /* ============================================================ export image / print */
