@@ -199,6 +199,7 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
   <h2>🌳 ที่ดิน</h2>
   <div class="row"><label>หน้ากว้าง</label><input type="number" id="lW" step="0.5" min="0"><span class="mute">ม.</span></div>
   <div class="row"><label>ลึก</label><input type="number" id="lD" step="0.5" min="0"><span class="mute">ม.</span></div>
+  <div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" id="lB" step="0.05" min="0" max="3"><span class="mute">ม.</span></div>
   <p class="mute" id="lInfo"></p>
   <div class="btns" style="justify-content:flex-end"><button class="b del" id="lNone">ไม่แสดงที่ดิน</button><button class="b" data-close>ยกเลิก</button><button class="b pri" id="lGo">ตกลง</button></div>
 </div></div>
@@ -421,6 +422,7 @@ function drawPlan(fi, o) {
   for (const it of f.items) drawItem(it);
   /* room captions */
   for (const r of f.rooms) drawRoomText(r);
+  drawRamps(fi);
   /* free labels */
   for (const l of f.labels) { const [x, y] = w2s(l.x, l.y); X.fillStyle = "#2B2A28"; X.font = `600 ${pxFont(l.size || 0.4, 10, 60)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(l.text, x, y); }
   if (o.sel && styleOf().struct) drawEngLayer(fi);
@@ -534,7 +536,7 @@ function drawOverlay() {
 function tag(t, x, y, col) { X.font = "600 14px sans-serif"; X.textAlign = "center"; X.textBaseline = "middle"; const w = X.measureText(t).width; X.fillStyle = col || "#2F6FDB"; rr(x - w / 2 - 7, y - 12, w + 14, 24, 8); X.fill(); X.fillStyle = "#fff"; X.fillText(t, x, y); }
 
 /* ============================================================ selection helpers */
-function getSel() { if (!sel) return null; const f = FL(), list = { room: f.rooms, item: f.items, open: f.opens, label: f.labels }[sel.t]; return list ? list.find(o => o.id === sel.id) || null : null; }
+function getSel() { if (!sel) return null; const f = FL(), list = { room: f.rooms, item: f.items, open: f.opens, label: f.labels, ramp: f.ramps || [] }[sel.t]; return list ? list.find(o => o.id === sel.id) || null : null; }
 function setSel(t, id) { sel = t ? { t, id } : null; updatePanel(); draw(); }
 function tolW() { return (lastType === "mouse" ? 10 : 22) / view.s; }
 function hitAt(x, y) {
@@ -551,6 +553,7 @@ function hitAt(x, y) {
     if (Math.hypot(u - o.w / 2 - 3 / view.s, v - o.h / 2 - 3 / view.s) < tol) return { t: "resize", id: o.id };
   }
   for (let i = f.labels.length - 1; i >= 0; i--) { const l = f.labels[i], hw = Math.max(0.6, (l.text.length * 0.55 * (l.size || 0.4)) / 2), hh = (l.size || 0.4) * 0.7; if (Math.abs(l.x - x) < hw && Math.abs(l.y - y) < hh) return { t: "label", id: l.id }; }
+  for (const rp of f.ramps || []) if (rampGeom(rp).pieces.some(p => p.type !== "foot" && inPoly(x, y, p.pts))) return { t: "ramp", id: rp.id };
   for (let i = f.opens.length - 1; i >= 0; i--) { const op = f.opens[i], [u, v] = toLocal(op, x, y); if (Math.abs(u) < op.w / 2 + tol * 0.3 && Math.abs(v) < Math.max(0.25, tol * 0.7)) return { t: "open", id: op.id }; }
   for (let i = f.items.length - 1; i >= 0; i--) { const it = f.items[i], [u, v] = toLocal({ x: it.x, y: it.y, a: rad(it.rot || 0) }, x, y); if (Math.abs(u) < it.w / 2 && Math.abs(v) < it.h / 2) return { t: "item", id: it.id }; }
   let best = null, ba = 1e9;
@@ -771,6 +774,7 @@ function dragTo(p) {
       const o = a.obj;
       if (sel.t === "item") { [o.x, o.y] = snapItem(o, a.o0.x + dx, a.o0.y + dy); }
       else if (sel.t === "open") placeOnWall(o, a.o0.x + dx, a.o0.y + dy);
+      else if (sel.t === "ramp") placeRamp(o, a.o0.x + dx, a.o0.y + dy);
       else { o.x = r3(Math.round((a.o0.x + dx) / 0.05) * 0.05); o.y = r3(Math.round((a.o0.y + dy) / 0.05) * 0.05); }
       break; }
     case "rotate": { const o = a.obj; let deg = Math.atan2(y - o.y, x - o.x) * 180 / Math.PI + 90; deg = Math.round(deg / 15) * 15; o.rot = ((deg % 360) + 360) % 360; break; }
@@ -815,6 +819,18 @@ function tap(a) {
     const b = snapshot(), l = { id: uid(), x: r3(x), y: r3(y), text: t.slice(0, 60), size: 0.4 }; FL().labels.push(l); sel = { t: "label", id: l.id }; commit(b); return;
   }
   if (tool === "measure") { measure = null; draw(); return; }
+  if (tool === "ramp") {
+    if (cur !== 0) { toast("ทางลาดวางที่ชั้น 1 (ชั้นล่างสุด)"); return; }
+    const b = snapshot(), rp = { id: uid(), x, y, a: 0, w: 1.2, slope: 12, shape: "straight", flip: false };
+    if (!placeRamp(rp, x, y)) { toast("แตะใกล้ผนังด้านนอกอาคาร"); return; }
+    rampsOf().push(rp);
+    const f = FL(), c = Math.cos(rp.a), sn = Math.sin(rp.a);
+    if (!f.opens.some(o => o.kind !== "window" && Math.hypot(o.x - rp.x, o.y - rp.y) < Math.max(o.w, rp.w) / 2)) {
+      const op = { id: uid(), kind: "door", x: rp.x, y: rp.y, a: 0, w: ELDER_DOOR, flip: false, hinge: false }; placeOnWall(op, rp.x, rp.y);
+      op.flip = (-Math.sin(op.a)) * -c + Math.cos(op.a) * -sn < 0; f.opens.push(op); toast("วางทางลาด + ประตูกว้าง 1.00 ม. ให้แล้ว"); }
+    if (styleOf().base < 0.05) toast("พื้นชั้น 1 เท่าระดับดิน — ตั้งความสูงพื้นในแผงด้านข้างเพื่อคำนวณความยาวทางลาด");
+    sel = { t: "ramp", id: rp.id }; commit(b); return;
+  }
   if (tool === "room") { const h = hitAt(x, y); if (h && h.t === "room") { setTool("select"); setSel("room", h.id); } else toast("ลากนิ้วเพื่อวาดห้องสี่เหลี่ยม"); }
 }
 function finishPoly() {
@@ -833,11 +849,11 @@ function shiftHouse(dx, dy, from) {
   const src = from || plan;
   plan.floors.forEach((f, i) => { const o = src.floors[i];
     f.rooms.forEach((r, k) => { r.pts = o.rooms[k].pts.map(p => [r3(p[0] + dx), r3(p[1] + dy)]); });
-    for (const key of ["opens", "items", "labels"]) f[key].forEach((q, k) => { q.x = r3(o[key][k].x + dx); q.y = r3(o[key][k].y + dy); }); });
+    for (const key of ["opens", "items", "labels", "ramps"]) if (f[key]) f[key].forEach((q, k) => { q.x = r3(o[key][k].x + dx); q.y = r3(o[key][k].y + dy); }); });
 }
 function moveHouseBy(dx, dy) { if (!houseBox()) return; const b = snapshot(); shiftHouse(dx, dy, JSON.parse(b)); commit(b); }
 function setbacks() { const B = houseBox(); if (!B || !plan.land) return null; return { left: B[0], right: plan.land.w - B[2], back: B[1], front: plan.land.h - B[3], B }; }
-function deleteSel() { const o = getSel(); if (!o) return; const b = snapshot(), f = FL(), k = { room: "rooms", item: "items", open: "opens", label: "labels" }[sel.t]; f[k] = f[k].filter(q => q !== o); sel = null; commit(b); }
+function deleteSel() { const o = getSel(); if (!o) return; const b = snapshot(), f = FL(), k = { room: "rooms", item: "items", open: "opens", label: "labels", ramp: "ramps" }[sel.t]; f[k] = f[k].filter(q => q !== o); sel = null; commit(b); }
 
 window.addEventListener("keydown", e => {
   if (e.target.matches("input,textarea,select")) return;
@@ -856,6 +872,7 @@ window.addEventListener("keyup", e => { if (e.key === " ") spaceDown = false; })
 
 /* ============================================================ UI: tools, floors, panel */
 const ICON = {
+  ramp: '<path d="M2 19h20L22 9z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M7 15l4-2" stroke="currentColor" stroke-width="1.8"/>',
   move: '<path d="M12 2l3 3h-2v6h6V9l3 3-3 3v-2h-6v6h2l-3 3-3-3h2v-6H5v2l-3-3 3-3v2h6V5H9z" fill="currentColor"/>',
   select: '<path d="M6 3l14 8-6 1.6L11 19z" fill="currentColor"/>',
   room: '<rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="2.6"/>',
@@ -866,7 +883,7 @@ const ICON = {
   text: '<path d="M5 5h14M12 5v15" stroke="currentColor" stroke-width="2.6" fill="none"/>',
   measure: '<path d="M3 16L16 3l5 5L8 21z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 12l2 2M10 9l2 2M13 6l2 2" stroke="currentColor" stroke-width="1.8"/>',
 };
-const TOOLS = [["select", "เลือก"], ["room", "ห้อง"], ["poly", "ห้องอิสระ"], ["door", "ประตู"], ["window", "หน้าต่าง"], ["furn", "เฟอร์นิเจอร์"], ["text", "ข้อความ"], ["measure", "วัดระยะ"], ["move", "ย้ายบ้าน"]];
+const TOOLS = [["select", "เลือก"], ["room", "ห้อง"], ["poly", "ห้องอิสระ"], ["door", "ประตู"], ["window", "หน้าต่าง"], ["furn", "เฟอร์นิเจอร์"], ["text", "ข้อความ"], ["ramp", "ทางลาด"], ["measure", "วัดระยะ"], ["move", "ย้ายบ้าน"]];
 const HINTS = {
   select: "แตะเพื่อเลือก • ลากของที่เลือกเพื่อย้าย • สองนิ้วซูม/เลื่อน",
   room: "ลากเพื่อวาดห้องสี่เหลี่ยม",
@@ -876,6 +893,7 @@ const HINTS = {
   furn: "เลือกแบบในแผงด้านข้าง แล้วแตะบนแปลนเพื่อวาง",
   text: "แตะตรงที่ต้องการวางข้อความ",
   measure: "ลากเพื่อวัดระยะ",
+  ramp: "แตะผนังด้านนอกของชั้น 1 เพื่อวางทางลาด — ความยาวคำนวณจากความสูงพื้นอัตโนมัติ",
   move: "ลากเพื่อย้ายบ้านทั้งหลัง (ทุกชั้นพร้อมกัน) • ปรับระยะร่นได้ในแผงด้านข้าง",
 };
 const $tools = document.getElementById("tools");
@@ -946,6 +964,7 @@ function updatePanel() {
       <div class="btns">${o.kind.startsWith("door") ? `<button class="b" data-a="flip">⇅ สลับด้านเปิด</button>` : ""}${o.kind === "door" ? `<button class="b" data-a="hinge">⇆ สลับบานพับ</button>` : ""}<button class="b del" data-a="del">🗑 ลบ</button></div>
       <p class="mute">ลากเพื่อเลื่อนไปตามผนัง หรือย้ายไปผนังอื่น</p>`; return;
   }
+  if (o && sel.t === "ramp") { $panel.innerHTML = rampPanelHTML(o); return; }
   if (o && sel.t === "label") {
     $panel.innerHTML = `<h3>ข้อความ</h3><div class="row"><label>ข้อความ</label><input data-k="text" value="${esc(o.text)}"></div>
       <div class="row"><label>ขนาด</label><select data-k="size">${[[0.25, "เล็ก"], [0.4, "กลาง"], [0.7, "ใหญ่"], [1.2, "ใหญ่มาก"]].map(([v, n]) => `<option value="${v}" ${v === (o.size || 0.4) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -964,6 +983,8 @@ function updatePanel() {
       ${S ? `<h4>ระยะจากแนวเขตที่ดิน (ม.)</h4>
         ${[["front", "ด้านหน้า"], ["back", "ด้านหลัง"], ["left", "ด้านซ้าย"], ["right", "ด้านขวา"]].map(([k, n]) => `<div class="row"><label>${n}</label><input type="number" step="0.05" data-sb="${k}" value="${fmt(S[k])}"><span class="mute">ม.</span></div>`).join("")}
         <p class="mute">พิมพ์ระยะด้านใดก็ได้ บ้านจะเลื่อนให้ได้ระยะนั้น (ด้านตรงข้ามเปลี่ยนตาม) · วัดจากขอบนอกสุดของห้องทุกชั้น รวมชาน/ระเบียง · ผนังที่มีหน้าต่าง/ประตูควรห่างแนวเขต ≥ 2 ม.</p>` : `<p class="mute">ยังไม่ได้ตั้งค่าที่ดิน — เมนู ☰ → ตั้งค่าที่ดิน</p>`}`; }
+  if (tool === "ramp") h += `<h3>♿ ทางลาด</h3><div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" step="0.05" min="0" max="3" data-base="1" value="${fmt(styleOf().base)}"><span class="mute">ม.</span></div>
+    <p class="mute">แตะผนังด้านนอกของชั้น 1 ตรงจุดที่จะเข้าบ้าน · ทางลาดยาว = ความสูง × 12 (1:12) ลาดได้ช่วงละไม่เกิน 6 ม. มีชานพัก 1.50 ม. · ตัวอย่าง: สูง ${fmt(styleOf().base)} ม. → ลาด ${fmt(styleOf().base * 12)} ม.</p>`;
   if (tool === "furn") h += `<h3>เฟอร์นิเจอร์</h3><div class="fgrid">${Object.entries(FURN).map(([k, f]) => `<button data-ft="${k}" class="${k === furnType ? "on" : ""}"><canvas data-ic="${k}" width="108" height="88"></canvas>${f.n}</button>`).join("")}</div>`;
   $panel.innerHTML = h + summaryHTML();
   if (tool === "furn") drawIcons();
@@ -996,6 +1017,8 @@ function drawIcons() {
 }
 $panel.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.rs) { const o = getSel(); if (o) { const bf = snapshot(); o.shape = b.dataset.rs; commit(bf); } return; }
+  if (b.dataset.a === "rflip") { const o = getSel(); if (o) { const bf = snapshot(); o.flip = !o.flip; commit(bf); } return; }
   if (b.dataset.mv) { if (b.dataset.mv === "center") { const S = setbacks(); if (S) moveHouseBy(r3((S.right - S.left) / 2), 0); } else { const [u, v] = b.dataset.mv.split(",").map(Number); moveHouseBy(u * step, v * step); } return; }
   if (b.dataset.rt) { roomType = b.dataset.rt; updatePanel(); return; }
   if (b.dataset.ok) { openKind = b.dataset.ok; updatePanel(); return; }
@@ -1046,6 +1069,8 @@ function panelEdit(e, live) {
 }
 $panel.addEventListener("input", e => { if (e.target.matches("input[data-k=name], input[data-k=text]")) panelEdit(e, true); });
 $panel.addEventListener("change", e => {
+  if (e.target.dataset.base) { const v = parseFloat(e.target.value), bf = snapshot(); if (v >= 0 && v <= 3) { styleOf().base = r3(v); commit(bf); } else updatePanel(); return; }
+  if (e.target.dataset.rp) { const o = getSel(), v = parseFloat(e.target.value), bf = snapshot(); if (o && v > 0) { o[e.target.dataset.rp] = e.target.dataset.rp === "w" ? r3(Math.max(0.9, v)) : v; commit(bf); } else updatePanel(); return; }
   const k = e.target.dataset.sb; if (k) { const S = setbacks(), v = parseFloat(e.target.value); if (!S || isNaN(v)) { updatePanel(); return; }
     const d = r3(v - S[k]); moveHouseBy(k === "left" ? d : k === "right" ? -d : 0, k === "back" ? d : k === "front" ? -d : 0); return; }
   panelEdit(e, false);
@@ -1073,13 +1098,13 @@ $("menuOv").addEventListener("click", e => {
     print: doPrint,
     import() { openOv("impOv"); },
     prompt: copyPrompt,
-    land() { $("lW").value = plan.land ? plan.land.w : 16; $("lD").value = plan.land ? plan.land.h : 20; landInfo(); openOv("landOv"); },
+    land() { $("lW").value = plan.land ? plan.land.w : 16; $("lD").value = plan.land ? plan.land.h : 20; $("lB").value = styleOf().base; landInfo(); openOv("landOv"); },
     help() { openOv("helpOv"); },
   })[b.dataset.m]();
 });
 function landInfo() { const w = +$("lW").value, h = +$("lD").value; $("lInfo").textContent = w > 0 && h > 0 ? `${fmt(w * h, 1)} ตร.ม. = ${fmt(w * h / 4, 1)} ตร.ว. (${Math.floor(w * h / 1600)} ไร่ ${Math.floor((w * h % 1600) / 400)} งาน ${fmt((w * h % 400) / 4, 1)} ตร.ว.)` : ""; }
 $("lW").oninput = landInfo; $("lD").oninput = landInfo;
-$("lGo").onclick = () => { const w = +$("lW").value, h = +$("lD").value, b = snapshot(); plan.land = w > 0 && h > 0 ? { w: r3(w), h: r3(h) } : null; commit(b); closeOv(); fit(); };
+$("lGo").onclick = () => { const w = +$("lW").value, h = +$("lD").value, b = snapshot(), bs = parseFloat($("lB").value); plan.land = w > 0 && h > 0 ? { w: r3(w), h: r3(h) } : null; if (bs >= 0 && bs <= 3) styleOf().base = r3(bs); commit(b); closeOv(); fit(); };
 $("lNone").onclick = () => { const b = snapshot(); plan.land = null; commit(b); closeOv(); };
 const safeName = s => String(s || "plan").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 40);
 async function saveFile(blob, name) {
@@ -1336,7 +1361,7 @@ const FLOOR_COLS = [["#B8865A", "ไม้สัก"], ["#D9B98C", "ไม้อ
 const ROOF_COLS = [["#B5523B", "แดงอิฐ"], ["#C8703F", "ส้มดินเผา"], ["#7A5235", "น้ำตาล"], ["#5A5F66", "เทาเข้ม"], ["#3F5E8C", "น้ำเงิน"], ["#4F7A5A", "เขียว"], ["#C9CCCF", "เทาเงิน"]];
 const ROOF_TYPES = [["none", "ไม่มี"], ["hip", "ปั้นหยา"], ["gable", "จั่ว"], ["shed", "หมาแหงน"], ["flat", "แบน/ดาดฟ้า"]];
 const PITCH = [[0.35, "ลาด"], [0.55, "ปกติ"], [0.9, "ชัน (ทรงไทย)"]];
-function styleOf() { if (!plan.style) plan.style = {}; const s = plan.style; if (!s.roof) s.roof = "none"; if (!s.roofColor) s.roofColor = "#B5523B"; if (!s.ext) s.ext = "#F3EFE6"; if (!s.pitch) s.pitch = 0.55; if (s.dir === undefined) s.dir = 0; if (s.autoLower === undefined) s.autoLower = true; return s; }
+function styleOf() { if (!plan.style) plan.style = {}; const s = plan.style; if (!s.roof) s.roof = "none"; if (!s.roofColor) s.roofColor = "#B5523B"; if (!s.ext) s.ext = "#F3EFE6"; if (!s.pitch) s.pitch = 0.55; if (s.dir === undefined) s.dir = 0; if (s.autoLower === undefined) s.autoLower = true; if (s.base === undefined) s.base = 0.15; return s; }
 function swatches(kind, cur, list, extra) {
   return `<div class="sw">${list.map(([c, n]) => `<button data-col="${kind}" data-c="${c}" title="${n}" class="${(cur || "").toUpperCase() === c ? "on" : ""}" style="background:${c}"></button>`).join("")}</div>${extra || ""}`;
 }
@@ -1493,7 +1518,7 @@ function build3D() {
   quad3(VB, [cx - R, -0.03, cz - R], [cx + R, -0.03, cz - R], [cx + R, -0.03, cz + R], [cx - R, -0.03, cz + R], [0, 1, 0], [...hex3("#A9C99A"), 1]);
   if (plan.land) quad3(VB, [0, -0.02, 0], [plan.land.w, -0.02, 0], [plan.land.w, -0.02, plan.land.h], [0, -0.02, plan.land.h], [0, 1, 0], [...hex3("#C2DDB2"), 1]);
   const last = Math.min(V3.upto, plan.floors.length - 1);
-  let elev = SLAB, topElev = SLAB, topRooms = [];
+  let elev = Math.max(SLAB, st.base), topElev = elev, topRooms = [];
   plan.floors.forEach((f, i) => {
     if (i > last) return;
     const H = f.height || 3, wallTop = H - SLAB;
@@ -1505,6 +1530,9 @@ function build3D() {
       r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], ex = q[0] - p[0], ez = q[1] - p[1], L = Math.hypot(ex, ez) || 1;
         quad3(VB, [p[0], elev - SLAB, p[1]], [q[0], elev - SLAB, q[1]], [q[0], elev, q[1]], [p[0], elev, p[1]], [ez / L, 0, -ex / L], [...SIDE, 1]); });
     }
+    if (i === 0 && elev - SLAB > 0.02) for (const r of f.rooms) r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], ex = q[0] - p[0], ez = q[1] - p[1], L = Math.hypot(ex, ez) || 1;
+      quad3(VB, [p[0], 0, p[1]], [q[0], 0, q[1]], [q[0], elev - SLAB, q[1]], [p[0], elev - SLAB, p[1]], [ez / L, 0, -ex / L], [...hex3("#A39C90"), 1]); });
+    if (i === 0) addRamps3D();
     /* walls with door / window cut-outs: inner skin in the room's colour, outer skin only where no room is next door */
     const EXT = hex3(st.ext);
     for (const r of f.rooms) {
@@ -1637,7 +1665,7 @@ function pick3(cx, cy) {
   let z = [e[0] - V3.t[0], e[1] - V3.t[1], e[2] - V3.t[2]]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
   let x = [z[2], 0, -z[0]]; const xl = Math.hypot(...x) || 1; x = x.map(v => v / xl); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
   const t = Math.tan(0.4), asp = r.width / r.height, d = [0, 1, 2].map(i => -z[i] + x[i] * nx * t * asp + y[i] * ny * t);
-  const last = Math.min(V3.upto, plan.floors.length - 1); let elev = 0.15; const levels = [];
+  const last = Math.min(V3.upto, plan.floors.length - 1); let elev = Math.max(0.15, styleOf().base); const levels = [];
   plan.floors.forEach((f, i) => { if (i <= last) levels.push([i, elev]); elev += f.height || 3; });
   V3.sel = null;
   for (const [i, h] of levels.reverse()) { if (Math.abs(d[1]) < 1e-6) break; const s = (h - e[1]) / d[1]; if (s <= 0) continue;
@@ -1698,9 +1726,116 @@ document.getElementById("panel").addEventListener("change", e => {
 });
 document.getElementById("v3Btn").onclick = () => set3D(!V3.on);
 
+/* ============================================================ ramps (accessible, auto length to ground) */
+const RAMP_LAND = 1.5, RAMP_RUN = 6, RAMP_GAP = 0.15, RAMP_SHAPES = [["straight", "ตรง"], ["L", "ตัว L"], ["U", "ตัว U (หักกลับ)"]];
+const rampsOf = () => (plan.floors[0].ramps = plan.floors[0].ramps || []);
+/* pieces: top landing at floor level, runs ≤ 6 m with 1.5 m landings, a level 1.5 m area at the bottom */
+function rampGeom(rp) {
+  const H = Math.max(0, styleOf().base), S = rp.slope || 12, w = Math.max(0.9, rp.w || 1.2), shape = rp.shape || "straight", pieces = [];
+  let o = [rp.x, rp.y], dir = [Math.cos(rp.a), Math.sin(rp.a)], side = [-dir[1] * (rp.flip ? -1 : 1), dir[0] * (rp.flip ? -1 : 1)];
+  const at = (p, u, v, d = dir, s = side) => [p[0] + d[0] * u + s[0] * v, p[1] + d[1] * u + s[1] * v];
+  const rect = (type, len, z0, z1) => { pieces.push({ type, pts: [at(o, 0, -w / 2), at(o, len, -w / 2), at(o, len, w / 2), at(o, 0, w / 2)], z0, z1, o: o.slice(), dir: dir.slice(), side: side.slice(), len, w }); o = at(o, len, 0); };
+  if (H < 0.02) return { pieces, H, S, w, run: 0, runs: 0, landings: 0 };
+  rect("landing", RAMP_LAND, H, H);
+  let rest = H * S, z = H, runs = 0, landings = 1, turned = false;
+  while (rest > 1e-6) {
+    const len = Math.min(RAMP_RUN, rest), z1 = Math.max(0, z - len / S); rect("run", len, z, z1); z = z1; rest -= len; runs++;
+    if (rest <= 1e-6) break;
+    landings++;
+    if (shape === "U") {
+      const q = 2 * w + RAMP_GAP;
+      pieces.push({ type: "landing", pts: [at(o, 0, -w / 2), at(o, RAMP_LAND, -w / 2), at(o, RAMP_LAND, -w / 2 + q), at(o, 0, -w / 2 + q)], z0: z, z1: z });
+      o = at(o, 0, w + RAMP_GAP); dir = [-dir[0], -dir[1]]; side = [-side[0], -side[1]];
+    } else if (shape === "L" && !turned) {
+      const q = Math.max(RAMP_LAND, w);
+      pieces.push({ type: "landing", pts: [at(o, 0, -w / 2), at(o, q, -w / 2), at(o, q, -w / 2 + q), at(o, 0, -w / 2 + q)], z0: z, z1: z });
+      const c = at(o, q / 2, -w / 2 + q / 2); o = at(c, 0, q / 2); const nd = side.slice(); side = [-dir[0], -dir[1]]; dir = nd; turned = true;
+      side = [-side[0], -side[1]];
+    } else rect("landing", RAMP_LAND, z, z);
+  }
+  rect("foot", RAMP_LAND, 0, 0);
+  const run = pieces.filter(p => p.type === "run").reduce((a, p) => a + p.len, 0);
+  return { pieces, H, S, w, run, runs, landings };
+}
+function rampChecks(rp) {
+  const G = rampGeom(rp), L = [];
+  if (G.H < 0.02) { L.push([1, "พื้นชั้น 1 เกือบเท่าระดับดิน ไม่ต้องใช้ทางลาด — ตั้งความสูงพื้นชั้น 1 ด้านบน"]); return L; }
+  L.push([G.S >= 12 ? 0 : 2, `ความชัน 1:${G.S} ${G.S >= 12 ? "" : "— ชันเกิน "}(เกณฑ์ไม่ชันกว่า 1:12)`]);
+  L.push([G.w >= 0.9 ? 0 : 2, `กว้าง ${fmt(G.w)} ม. (เกณฑ์ ≥ 0.90 ม.${G.w < 1.5 ? " · ถ้าต้องสวนกันใช้ ≥ 1.50 ม." : ""})`]);
+  L.push([0, `ลาดแต่ละช่วงยาว ≤ ${RAMP_RUN} ม. มีชานพัก ${fmt(RAMP_LAND)} ม. คั่น (${G.runs} ช่วง ${G.landings} ชานพัก)`]);
+  L.push([0, "ราวจับ 2 ด้าน สูง 0.80–0.90 ม. และขอบกันตก (สร้างให้แล้วใน 3D)"]);
+  const pts = G.pieces.flatMap(p => p.pts);
+  if (plan.land && pts.some(p => p[0] < -0.01 || p[1] < -0.01 || p[0] > plan.land.w + 0.01 || p[1] > plan.land.h + 0.01)) L.push([2, "ทางลาดยื่นออกนอกที่ดิน — ลองเปลี่ยนเป็นตัว L/U หรือย้ายไปผนังด้านอื่น"]);
+  const f0 = plan.floors[0].rooms;
+  if (G.pieces.some(p => { const c = centroid(p.pts); return f0.some(r => inPoly(c[0], c[1], r.pts)); })) L.push([2, "ทางลาดทับห้อง — สลับด้าน/รูปแบบ หรือย้ายตำแหน่ง"]);
+  return L;
+}
+function placeRamp(rp, x, y) {
+  const rooms = plan.floors[0].rooms, wl = nearestWall(x, y, Math.max(0.8, 34 / view.s)); if (!wl) return false;
+  const L = wl.L, ux = wl.ex / L, uy = wl.ey / L, u = clamp(wl.t * L, 0, L), px = wl.a[0] + ux * u, py = wl.a[1] + uy * u, nx = -uy, ny = ux;
+  const ins = (qx, qy) => rooms.some(r => inPoly(qx, qy, r.pts)), a = ins(px + nx * 0.2, py + ny * 0.2), b = ins(px - nx * 0.2, py - ny * 0.2);
+  if (a && b) return false;
+  const sx = a ? -1 : 1, w = Math.max(0.9, rp.w || 1.2), uu = L > w ? clamp(Math.round(u / 0.05) * 0.05, w / 2, L - w / 2) : L / 2;
+  rp.x = r3(wl.a[0] + ux * uu); rp.y = r3(wl.a[1] + uy * uu); rp.a = r3(Math.atan2(ny * sx, nx * sx)); return true;
+}
+function drawRamps(fi) {
+  if (fi !== 0) return; const list = plan.floors[0].ramps || [];
+  for (const rp of list) {
+    const G = rampGeom(rp), hi = sel && sel.t === "ramp" && sel.id === rp.id;
+    for (const p of G.pieces) {
+      pathPoly(p.pts); X.fillStyle = p.type === "foot" ? "rgba(200,194,182,.35)" : p.type === "run" ? "#E3DDD2" : "#D6CFC2"; X.fill();
+      X.save(); if (p.type === "foot") X.setLineDash([5, 4]); X.strokeStyle = hi ? "#2F6FDB" : "#7A7268"; X.lineWidth = hi ? 2.5 : 1.3; X.stroke(); X.restore();
+      if (p.type === "run" && p.len * view.s > 40) {
+        const a = [p.o[0] + p.dir[0] * 0.25, p.o[1] + p.dir[1] * 0.25], b = [p.o[0] + p.dir[0] * (p.len - 0.25), p.o[1] + p.dir[1] * (p.len - 0.25)], [ax, ay] = w2s(...a), [bx, by] = w2s(...b), ang = Math.atan2(by - ay, bx - ax);
+        X.strokeStyle = "#5E5850"; X.lineWidth = 1.5; X.beginPath(); X.moveTo(ax, ay); X.lineTo(bx, by); X.lineTo(bx - 9 * Math.cos(ang - 0.4), by - 9 * Math.sin(ang - 0.4)); X.moveTo(bx, by); X.lineTo(bx - 9 * Math.cos(ang + 0.4), by - 9 * Math.sin(ang + 0.4)); X.stroke();
+        const [mx, my] = w2s(p.o[0] + p.dir[0] * p.len / 2, p.o[1] + p.dir[1] * p.len / 2); X.save(); X.translate(mx, my); let r = ang; if (r > Math.PI / 2 || r < -Math.PI / 2) r += Math.PI; X.rotate(r);
+        X.font = `600 ${pxFont(0.28, 10, 14)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "bottom"; X.fillStyle = "#3A3632"; X.fillText(`ลง 1:${G.S} · ${fmt(p.len)} ม.`, 0, -4); X.restore();
+      }
+    }
+  }
+}
+function rampPanelHTML(rp) {
+  const G = rampGeom(rp), L = rampChecks(rp), area = G.pieces.filter(p => p.type !== "foot").reduce((a, p) => a + areaOf(p.pts), 0);
+  const ext = G.pieces.length ? Math.max(...G.pieces.flatMap(p => p.pts.map(q => (q[0] - rp.x) * Math.cos(rp.a) + (q[1] - rp.y) * Math.sin(rp.a)))) : 0;
+  return `<h3>♿ ทางลาด</h3>
+    <div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" step="0.05" min="0" max="3" data-base="1" value="${fmt(styleOf().base)}"><span class="mute">ม.</span></div>
+    <div class="row"><label>ความชัน</label><select data-rp="slope">${[[12, "1:12 (มาตรฐาน)"], [15, "1:15 (ลาดกว่า)"], [20, "1:20 (ลาดมาก)"]].map(([v, n]) => `<option value="${v}" ${v === (rp.slope || 12) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+    <div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.9" data-rp="w" value="${fmt(G.w)}"></div>
+    <div class="chips">${RAMP_SHAPES.map(([k, n]) => `<button data-rs="${k}" class="${(rp.shape || "straight") === k ? "on" : ""}">${n}</button>`).join("")}${(rp.shape || "straight") !== "straight" ? `<button data-a="rflip">⇆ สลับด้านเลี้ยว</button>` : ""}</div>
+    <table class="sum" style="margin-top:10px"><tr><td>ความสูงที่ต้องลด</td><td>${fmt(G.H)} ม.</td></tr><tr><td>ความยาวช่วงลาดรวม</td><td>${fmt(G.run)} ม.</td></tr>
+      <tr><td>จำนวนช่วง / ชานพัก</td><td>${G.runs} / ${G.landings}</td></tr><tr><td>ยื่นออกจากผนังสูงสุด</td><td>${fmt(ext)} ม.</td></tr><tr><td>พื้นที่ทางลาด</td><td>${fmt(area)} ตร.ม.</td></tr></table>
+    <table class="sum" style="margin-top:8px">${L.map(([s, t]) => `<tr><td style="width:24px">${["✅", "⚠️", "❌"][s]}</td><td style="text-align:left;white-space:normal">${t}</td></tr>`).join("")}</table>
+    <div class="btns"><button class="b del" data-a="del">🗑 ลบ</button></div>
+    <p class="mute">ความยาวคำนวณจากความสูงพื้นชั้น 1 อัตโนมัติ (ยาว = สูง × ${G.S}) มีชานพักหน้าประตู ${fmt(RAMP_LAND)} ม. และพื้นที่ราบปลายทาง ${fmt(RAMP_LAND)} ม. · ลากเพื่อย้ายไปตามผนัง · เกณฑ์: กฎกระทรวงสิ่งอำนวยความสะดวกฯ พ.ศ. 2548 (ตามที่จำได้ ควรตรวจกับต้นฉบับ)</p>`;
+}
+/* 3D: concrete ramp with handrails */
+function addRamps3D() {
+  const list = plan.floors[0].ramps || [], C = hex3("#CFC8BC"), SIDE = hex3("#B9B2A6"), RAIL = hex3("#9AA4AE");
+  for (const rp of list) {
+    const G = rampGeom(rp);
+    for (const p of G.pieces) {
+      if (p.type === "foot") { poly3(VB, p.pts.map(q => [q[0], 0.01, q[1]]), [...hex3("#D9D3C7"), 1], [0, 1, 0]); continue; }
+      const P = p.pts, hz = i => p.type === "run" ? (i === 0 || i === 3 ? p.z0 : p.z1) : p.z0;
+      poly3(VB, P.map((q, i) => [q[0], hz(i), q[1]]), [...C, 1], [0, 1, 0]);
+      for (let i = 0; i < 4; i++) { const a = P[i], b = P[(i + 1) % 4], m = centroid(P), out = [(a[0] + b[0]) / 2 - m[0], 0, (a[1] + b[1]) / 2 - m[1]];
+        poly3(VB, [[a[0], 0, a[1]], [b[0], 0, b[1]], [b[0], hz((i + 1) % 4), b[1]], [a[0], hz(i), a[1]]], [...SIDE, 1], out); }
+      if (p.type === "run" || p.z0 > 0.05) for (const v of [-1, 1]) {
+        if (!p.dir) continue;
+        const n = Math.max(2, Math.ceil(p.len / 0.25));
+        for (let k = 0; k < n; k++) { const u0 = k * p.len / n, u1 = (k + 1) * p.len / n, um = (u0 + u1) / 2, z = p.z0 + (p.z1 - p.z0) * um / p.len;
+          const c = [p.o[0] + p.dir[0] * um + p.side[0] * v * (p.w / 2 - 0.05), p.o[1] + p.dir[1] * um + p.side[1] * v * (p.w / 2 - 0.05)];
+          obox(VB, c[0], c[1], u1 - u0 + 0.01, 0.05, z + 0.85, z + 0.9, Math.atan2(p.dir[1], p.dir[0]), RAIL);
+          if (k % 4 === 0) obox(VB, c[0], c[1], 0.04, 0.04, z, z + 0.88, 0, RAIL);
+          obox(VB, c[0], c[1], u1 - u0 + 0.01, 0.06, z, z + 0.08, Math.atan2(p.dir[1], p.dir[0]), SIDE);
+        }
+      }
+    }
+  }
+}
+
 /* ============================================================ engineering checks + BOQ */
 const MAXSPAN = 4.0, COL = 0.2, BEAM_W = 0.2, BEAM_D = 0.4;
-function floorLevels() { let e = 0.15; return plan.floors.map(f => { const H = f.height || 3, o = { elev: e, top: e + H - 0.15, H }; e += H; return o; }); }
+function floorLevels() { let e = Math.max(0.15, styleOf().base); return plan.floors.map(f => { const H = f.height || 3, o = { elev: e, top: e + H - 0.15, H }; e += H; return o; }); }
 function roofPlan() {
   const st = styleOf(); if (st.roof === "none") return [];
   const FE = floorLevels(), n = plan.floors.length, topRooms = plan.floors[n - 1].rooms.filter(r => !SEMI_OUT.has(r.type)), out = [];
@@ -1841,6 +1976,8 @@ function engChecks(S) {
     const cov = floorArea(plan.floors[0]) / (plan.land.w * plan.land.h);
     add(cov > 0.7 ? 2 : 0, 0, "ที่ดิน", `อาคารคลุมที่ดิน ${fmt(cov * 100, 0)}% — ที่ว่าง ${fmt((1 - cov) * 100, 0)}% (บ้านอยู่อาศัยต้องมีที่ว่าง ≥ 30%)`, null);
   }
+  for (const rp of plan.floors[0].ramps || []) for (const [sv, t] of rampChecks(rp)) if (sv) add(sv, 0, "ทางลาด", t, [rp.x, rp.y]);
+  if ((plan.floors[0].ramps || []).length) { const G = rampGeom(plan.floors[0].ramps[0]); add(0, 0, "ทางลาด", `ทางลาด ${plan.floors[0].ramps.length} จุด · ลด ${fmt(G.H)} ม. ที่ความชัน 1:${G.S}`, null); }
   add(0, n - 1, "ภาพรวม", `ความสูงอาคารประมาณ ${fmt(bH, 1)} ม. → ระยะร่นผนังมีช่องเปิดใช้ ${setReq} ม.`, null);
   return I;
 }
@@ -1866,7 +2003,7 @@ const FIN_KEY = { "พื้นไม้จริง": "f_wood", "พื้น�
 /* starting unit prices (materials + labour, THB) — rough placeholders, NOT an official price list: edit to local quotes */
 const RATE0 = { pile: 1800, conc: 2700, rebar: 32, form: 380, wall_brick: 480, wall_aac: 560, wall_light: 900, plaster: 230, paint: 130, f_tile: 700, f_wood: 2200, f_lam: 900, f_marble: 2400, f_polish: 280, f_grass: 350,
   ceil: 480, roof_frame: 700, roof_tile: 480, roof_flat: 550, door: 7500, door2: 16000, slide: 20000, opening: 0, window: 3500, stair: 40000,
-  toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
+  ramp: 2800, rail: 2200, toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
 function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {};
   if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area"; return b; }
 const PCT = new Set(["elec", "plumb", "oh"]);
@@ -1930,6 +2067,8 @@ function boqData() {
     ...["door", "door2", "slide"].filter(k => doors[k]).map(k => it(k, `${OPEN_KINDS[k]} (พร้อมวงกบ อุปกรณ์)`, doors[k], "ชุด")),
     ...(doors.window ? [it("window", "หน้าต่างอะลูมิเนียม + กระจก (สูง 1.20 ม.)", doors.window, "ตร.ม.")] : []),
     ...(stairs ? [it("stair", "บันได คสล. พร้อมผิวและราวจับ", stairs, "ช่วง")] : []),
+    ...(() => { const R = plan.floors[0].ramps || []; if (!R.length) return []; let A = 0, rl = 0; for (const rp of R) for (const p of rampGeom(rp).pieces) { if (p.type === "foot") continue; A += areaOf(p.pts); if (p.type === "run") rl += 2 * p.len; }
+      return [it("ramp", "ทางลาด คสล. พร้อมผิวกันลื่น (รวมชานพัก)", A, "ตร.ม."), it("rail", "ราวจับทางลาดสแตนเลส 2 ด้าน", rl, "ม.")]; })(),
   ];
   secs.push({ name: "2. งานสถาปัตยกรรม", items: arch });
   /* roof */
