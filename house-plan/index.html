@@ -1,0 +1,2014 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2F3A4A">
+<title>แปลนบ้าน</title>
+<style>
+:root {
+  --bg: #F7F5F0; --panel: #FFFFFF; --ink: #2B2A28; --mute: #7A756D; --line: #E3DED5;
+  --accent: #2F6FDB; --accent2: #E8F0FD; --bar: #2F3A4A; --danger: #C8443A; --ok: #2E8B57;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none;
+  font-family: -apple-system, "Sukhumvit Set", "Thonburi", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
+#app { display: grid; height: 100vh; height: 100dvh; grid-template-columns: 84px 1fr 310px; grid-template-rows: 56px 1fr;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+header { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: var(--bar); color: #fff; min-width: 0; }
+header .ib { background: transparent; border: 0; color: #fff; font-size: 22px; width: 44px; height: 44px; border-radius: 10px; flex: none; }
+header .ib:active { background: rgba(255,255,255,.15); }
+header .ib:disabled { opacity: .35; }
+#planName { background: transparent; border: 0; color: #fff; font-size: 17px; font-weight: 600; width: 170px; min-width: 60px; padding: 6px; border-radius: 8px; }
+#planName:focus { background: rgba(255,255,255,.12); outline: none; }
+#floors { display: flex; gap: 4px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+#floors::-webkit-scrollbar { display: none; }
+#floors button { flex: none; border: 0; border-radius: 18px; padding: 7px 14px; background: rgba(255,255,255,.12); color: #fff; font-size: 15px; }
+#floors button.on { background: #fff; color: var(--bar); font-weight: 700; }
+#genBtn { flex: none; border: 0; border-radius: 10px; padding: 9px 14px; background: #F2B33D; color: #2B2A28; font-weight: 700; font-size: 15px; }
+#v3Btn { flex: none; border: 0; border-radius: 10px; padding: 9px 14px; background: #5FA8D3; color: #fff; font-weight: 700; font-size: 15px; }
+#engBtn { flex: none; border: 0; border-radius: 10px; padding: 9px 14px; background: #8E7CC3; color: #fff; font-weight: 700; font-size: 15px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tabs button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 16px; font-size: 15px; font-weight: 600; }
+.tabs button.on { background: var(--bar); color: #fff; border-color: var(--bar); }
+table.boq th { font-size: 13px; color: var(--mute); font-weight: 600; padding: 6px 4px; border-bottom: 2px solid var(--ink); text-align: right; }
+table.boq td { padding: 6px 4px; }
+#print table { width: 100%; border-collapse: collapse; font-size: 12px; } #print td, #print th { border-bottom: 1px solid #ccc; padding: 4px; text-align: right; }
+#cv3 { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: none; }
+.mode3d #cv3 { display: block; }
+.mode3d #cv, .mode3d #zoomBox { display: none; }
+.mode3d #tools { opacity: .35; pointer-events: none; }
+#tools { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; overflow-y: auto; }
+#tools button { border: 0; background: transparent; border-radius: 12px; padding: 7px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--ink); }
+#tools button svg { width: 28px; height: 28px; }
+#tools button.on { background: var(--accent2); color: var(--accent); font-weight: 700; }
+#stage { position: relative; overflow: hidden; min-width: 0; min-height: 0; }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+#hint { position: absolute; left: 10px; bottom: 12px; background: rgba(43,42,40,.82); color: #fff; padding: 7px 14px; border-radius: 18px; font-size: 14px; pointer-events: none; white-space: nowrap; max-width: calc(100% - 330px); overflow: hidden; text-overflow: ellipsis; }
+#zoomBox { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; align-items: center; }
+#zoomBox button, #zoomBox select { height: 44px; min-width: 44px; border: 1px solid var(--line); background: #fff; border-radius: 12px; font-size: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+#zoomBox select { font-size: 14px; padding: 0 6px; }
+#scaleTxt { background: rgba(255,255,255,.9); border-radius: 8px; padding: 4px 8px; font-size: 12px; color: var(--mute); }
+#panel { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
+#panel h3 { margin: 4px 0 10px; font-size: 16px; }
+#panel h4 { margin: 14px 0 6px; font-size: 14px; color: var(--mute); }
+.row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.row label { flex: none; width: 74px; font-size: 14px; color: var(--mute); }
+.row input, .row select { flex: 1; min-width: 0; font-size: 16px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.row input[type=number] { width: 80px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.b { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 12px; font-size: 14px; }
+.b:active { background: var(--accent2); }
+.b.pri { background: var(--accent); color: #fff; border-color: var(--accent); }
+.b.del { color: var(--danger); }
+.big { font-size: 26px; font-weight: 700; }
+.mute { color: var(--mute); font-size: 13px; }
+table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.sum td { padding: 5px 2px; border-bottom: 1px solid var(--line); }
+table.sum td:last-child { text-align: right; white-space: nowrap; }
+table.sum tr.tot td { font-weight: 700; border-bottom: 2px solid var(--ink); }
+.dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+.sw { display: flex; flex-wrap: wrap; gap: 7px; }
+.sw button { width: 34px; height: 34px; border-radius: 9px; border: 2px solid rgba(0,0,0,.12); padding: 0; }
+.sw button.on { border-color: var(--accent); box-shadow: 0 0 0 2px #fff inset, 0 0 0 1px var(--accent); }
+.fgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fgrid button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 4px 2px 6px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.fgrid button.on { border-color: var(--accent); background: var(--accent2); }
+.fgrid canvas { width: 54px; height: 44px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { border: 1px solid var(--line); background: #fff; border-radius: 16px; padding: 7px 11px; font-size: 13.5px; }
+.chips button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ov { position: fixed; inset: 0; background: rgba(20,24,30,.45); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.ov[hidden] { display: none; }
+.card { background: #fff; border-radius: 18px; width: min(560px, 100%); max-height: 100%; overflow-y: auto; padding: 18px 18px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.card h2 { margin: 0 0 12px; font-size: 20px; }
+.card .row label { width: 120px; }
+.menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 13px 10px; font-size: 16px; border-radius: 10px; }
+.menu button:active { background: var(--accent2); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.g2 .row label { width: 92px; }
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #2B2A28; color: #fff; padding: 10px 18px; border-radius: 12px; z-index: 40; font-size: 15px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+#toast.show { opacity: 1; }
+.help p { margin: 6px 0; font-size: 15px; line-height: 1.55; }
+#print { display: none; }
+@media (max-width: 900px) and (orientation: portrait), (max-width: 700px) {
+  #v3Btn .long, #engBtn .long { display: none; }
+  #app { grid-template-columns: 70px 1fr; grid-template-rows: 56px 1fr minmax(0, 36vh); }
+  #panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+  #tools button { font-size: 11px; }
+  #genBtn .long { display: none; }
+  #planName { width: 110px; }
+}
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body { overflow: visible; height: auto; background: #fff; }
+  #app, .ov, #toast { display: none !important; }
+  #print { display: block; }
+  #print .pg { page-break-after: always; text-align: center; }
+  #print img { max-width: 100%; max-height: 180mm; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <button class="ib" id="menuBtn" title="เมนู">☰</button>
+    <input id="planName" maxlength="40" aria-label="ชื่อแบบ">
+    <div id="floors"></div>
+    <button class="ib" id="undoBtn" title="ย้อนกลับ">↶</button>
+    <button class="ib" id="redoBtn" title="ทำซ้ำ">↷</button>
+    <button id="v3Btn">🧊 3D</button>
+    <button id="engBtn">📐 <span class="long">ตรวจแบบ/BOQ</span></button>
+    <button id="genBtn">✦ <span class="long">สร้างแปลน</span>อัตโนมัติ</button>
+  </header>
+  <nav id="tools"></nav>
+  <main id="stage">
+    <canvas id="cv"></canvas>
+    <canvas id="cv3"></canvas>
+    <div id="hint"></div>
+    <div id="zoomBox">
+      <span id="scaleTxt"></span>
+      <select id="stepSel" title="ระยะจับตาราง">
+        <option value="0.05">จับ 5 ซม.</option><option value="0.1">จับ 10 ซม.</option><option value="0.25">จับ 25 ซม.</option><option value="0.5">จับ 50 ซม.</option><option value="1">จับ 1 ม.</option>
+      </select>
+      <button id="zOut">−</button><button id="zFit" title="พอดีจอ">⤢</button><button id="zIn">+</button>
+    </div>
+  </main>
+  <aside id="panel"></aside>
+</div>
+
+<div class="ov" id="menuOv" hidden><div class="card menu" style="width:min(380px,100%)">
+  <button data-m="new">📄 แบบใหม่</button>
+  <button data-m="open">📂 เปิดไฟล์แบบ (.json)</button>
+  <button data-m="save">💾 บันทึกไฟล์แบบ</button>
+  <hr>
+  <button data-m="png">🖼 ส่งออกรูป (ชั้นนี้)</button>
+  <button data-m="print">🖨 พิมพ์ / บันทึก PDF (ทุกชั้น)</button>
+  <hr>
+  <button data-m="import">🤖 นำเข้าแปลนจาก AI</button>
+  <button data-m="prompt">📋 คัดลอกคำสั่งสำหรับถาม AI</button>
+  <hr>
+  <button data-m="land">🌳 ตั้งค่าที่ดิน</button>
+  <button data-m="help">❔ วิธีใช้</button>
+</div></div>
+
+<div class="ov" id="genOv" hidden><div class="card">
+  <h2>✦ สร้างแปลนอัตโนมัติ</h2>
+  <p class="mute" style="margin-top:-6px">ได้แปลนคร่าวๆ แล้วแก้ต่อเองได้ทุกส่วน · ด้านหน้าบ้าน (ถนน) อยู่ด้านล่างของจอ</p>
+  <div class="g2">
+    <div class="row"><label>ที่ดินกว้าง</label><input type="number" id="gLw" step="0.5" min="5" value="16"><span class="mute">ม.</span></div>
+    <div class="row"><label>ที่ดินลึก</label><input type="number" id="gLd" step="0.5" min="5" value="20"><span class="mute">ม.</span></div>
+    <div class="row"><label>ร่นด้านหน้า</label><input type="number" id="gSf" step="0.5" min="0" value="3"><span class="mute">ม.</span></div>
+    <div class="row"><label>ร่นด้านข้าง</label><input type="number" id="gSs" step="0.5" min="0" value="2"><span class="mute">ม.</span></div>
+    <div class="row"><label>ร่นด้านหลัง</label><input type="number" id="gSb" step="0.5" min="0" value="2"><span class="mute">ม.</span></div>
+    <div class="row"><label>จำนวนชั้น</label><select id="gF"><option>1</option><option selected>2</option><option>3</option></select></div>
+    <div class="row"><label>ห้องนอน</label><select id="gBed"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
+    <div class="row"><label>ห้องน้ำ</label><select id="gBath"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></div>
+    <div class="row"><label>จอดรถ</label><select id="gCar"><option value="0">ไม่มี</option><option value="1" selected>1 คัน</option><option value="2">2 คัน</option><option value="3">3 คัน</option></select></div>
+    <div class="row"><label>ขนาดห้องนอน</label><select id="gSize"><option value="S">เล็ก ~9 ตร.ม.</option><option value="M" selected>กลาง ~12 ตร.ม.</option><option value="L">ใหญ่ ~15 ตร.ม.</option></select></div>
+  </div>
+  <div class="chips" style="margin:8px 0 4px">
+    <button data-g="work">ห้องทำงาน</button>
+    <button data-g="pray">ห้องพระ</button>
+    <button data-g="bedDown">ห้องนอนชั้นล่าง (ผู้สูงอายุ)</button>
+    <button data-g="porch" class="on">ชานหน้าบ้าน</button>
+  </div>
+  <p class="mute">⚠ แปลนที่สร้างจะแทนที่แบบปัจจุบัน (ย้อนกลับได้ด้วยปุ่ม ↶)</p>
+  <div class="btns" style="justify-content:flex-end"><button class="b" data-close>ยกเลิก</button><button class="b pri" id="genGo">สร้างแปลน</button></div>
+</div></div>
+
+<div class="ov" id="impOv" hidden><div class="card">
+  <h2>🤖 นำเข้าแปลนจาก AI</h2>
+  <p class="mute" style="margin-top:-4px">1) กด "คัดลอกคำสั่ง" แล้วไปวางในแชท Claude พร้อมเขียนความต้องการ · 2) คัดลอก JSON ที่ได้มาวางที่นี่ หรือเลือกไฟล์ .json</p>
+  <textarea id="impTxt" placeholder='{"name":"บ้านของฉัน","floors":[{"name":"ชั้น 1","rooms":[...]}]}'></textarea>
+  <div class="btns">
+    <button class="b" id="impPrompt">📋 คัดลอกคำสั่ง</button>
+    <button class="b" id="impFile">📂 เลือกไฟล์</button>
+    <span style="flex:1"></span>
+    <button class="b" data-close>ยกเลิก</button>
+    <button class="b pri" id="impGo">นำเข้า</button>
+  </div>
+</div></div>
+
+<div class="ov" id="landOv" hidden><div class="card" style="width:min(420px,100%)">
+  <h2>🌳 ที่ดิน</h2>
+  <div class="row"><label>หน้ากว้าง</label><input type="number" id="lW" step="0.5" min="0"><span class="mute">ม.</span></div>
+  <div class="row"><label>ลึก</label><input type="number" id="lD" step="0.5" min="0"><span class="mute">ม.</span></div>
+  <p class="mute" id="lInfo"></p>
+  <div class="btns" style="justify-content:flex-end"><button class="b del" id="lNone">ไม่แสดงที่ดิน</button><button class="b" data-close>ยกเลิก</button><button class="b pri" id="lGo">ตกลง</button></div>
+</div></div>
+
+<div class="ov" id="engOv" hidden><div class="card" style="width:min(1000px,100%)">
+  <div style="display:flex;align-items:center;gap:8px"><h2 style="margin:0;flex:1">📐 ตรวจแบบ / BOQ</h2><button class="b" data-close>ปิด</button></div>
+  <div class="tabs" style="margin-top:12px"><button data-tab="eng">ตรวจความเป็นไปได้ทางวิศวกรรม</button><button data-tab="boq">BOQ ประมาณราคา</button></div>
+  <div id="engBody"></div>
+</div></div>
+
+<div class="ov" id="helpOv" hidden><div class="card help">
+  <h2>❔ วิธีใช้</h2>
+  <p><b>ซูม/เลื่อนจอ:</b> ใช้สองนิ้วถ่าง-หุบ-ลาก · ลากที่ว่างด้วยนิ้วเดียวในโหมด "เลือก" ก็เลื่อนจอได้ · คอมพิวเตอร์ใช้ล้อเมาส์</p>
+  <p><b>วาดห้อง:</b> เลือก "ห้อง" แล้วลากเป็นสี่เหลี่ยม · ห้องรูปทรงอื่นใช้ "ห้องอิสระ" แตะทีละมุม · ขนาดและพื้นที่ (ตร.ม.) ขึ้นทันที</p>
+  <p><b>ปรับขนาด:</b> แตะห้องให้เลือก แล้วลากจุดกลางผนัง (■) เพื่อขยับผนัง หรือลากมุม (●) · พิมพ์ขนาดตรงๆ ได้ในแผงด้านข้าง</p>
+  <p><b>ประตู/หน้าต่าง:</b> แตะใกล้ผนัง ระบบจะจับเข้าผนังให้เอง · สลับด้านเปิดได้ในแผง</p>
+  <p><b>หลายชั้น:</b> แตะ "+ ชั้น" ด้านบน · ขณะวาดชั้นบนจะเห็นเส้นประของชั้นล่างไว้อ้างอิง</p>
+  <p><b>ปากกา (Apple Pencil):</b> ถ้าใช้ปากกา แอปจะให้ปากกาวาด ส่วนนิ้วใช้เลื่อนจอ ฝ่ามือที่วางบนจอจะไม่ทำให้วาดผิด</p>
+  <p><b>ให้ AI ช่วย:</b> ปุ่ม "✦ สร้างแปลนอัตโนมัติ" ทำงานในเครื่องทันที หรือใช้เมนู ☰ → "คัดลอกคำสั่งสำหรับถาม AI" ไปถาม Claude แล้วนำ JSON กลับมาวาง</p>
+  <p><b>บันทึก:</b> แอปบันทึกอัตโนมัติในเครื่องนี้ · เก็บเป็นไฟล์หรือส่งต่อได้จากเมนู ☰</p>
+  <p class="mute">แปลนนี้ใช้วางผังและประเมินพื้นที่เบื้องต้น ไม่ใช่แบบสำหรับยื่นขออนุญาตก่อสร้าง</p>
+  <div class="btns" style="justify-content:flex-end"><button class="b pri" data-close>เข้าใจแล้ว</button></div>
+</div></div>
+
+<input type="file" id="fileIn" accept=".json,application/json,text/plain" hidden>
+<div id="toast"></div>
+<div id="print"></div>
+
+<script>
+"use strict";
+/* ============================================================ data */
+const WALL = 0.15;                      /* wall thickness, metres */
+const ROOM_TYPES = {
+  bed:     { n: "ห้องนอน",       c: "#DCE8F7" },
+  bath:    { n: "ห้องน้ำ",        c: "#D3EEEE" },
+  living:  { n: "ห้องนั่งเล่น",    c: "#FCEBD0" },
+  dining:  { n: "ห้องทานข้าว",    c: "#FBE1C0" },
+  kitchen: { n: "ครัว",          c: "#F8D9CF" },
+  garage:  { n: "โรงรถ",         c: "#E2E2E2" },
+  porch:   { n: "ระเบียง/ชาน",    c: "#E1EFD5" },
+  stair:   { n: "บันได",         c: "#E7DFF3" },
+  hall:    { n: "โถง/ทางเดิน",    c: "#F1EDE5" },
+  work:    { n: "ห้องทำงาน",      c: "#E0E5F8" },
+  pray:    { n: "ห้องพระ",        c: "#FFF2C2" },
+  laundry: { n: "ซักล้าง",        c: "#DAEAF0" },
+  store:   { n: "ห้องเก็บของ",     c: "#E9E3D8" },
+  other:   { n: "ห้อง",          c: "#EFEFEF" },
+};
+const SEMI_OUT = new Set(["garage", "porch"]);
+const OPEN_KINDS = { door: "ประตูบานเปิด", door2: "ประตูบานคู่", slide: "ประตูบานเลื่อน", window: "หน้าต่าง", opening: "ช่องเปิดโล่ง" };
+
+/* furniture: drawn in metres around their centre, -w/2..w/2 x -h/2..h/2 (top = -h/2) */
+let X = null;                          /* current 2D context while drawing */
+function rr(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); X.beginPath(); X.moveTo(x + r, y); X.arcTo(x + w, y, x + w, y + h, r); X.arcTo(x + w, y + h, x, y + h, r); X.arcTo(x, y + h, x, y, r); X.arcTo(x, y, x + w, y, r); X.closePath(); }
+function box(w, h) { X.beginPath(); X.rect(-w / 2, -h / 2, w, h); X.fill(); X.stroke(); }
+function line(x1, y1, x2, y2) { X.beginPath(); X.moveTo(x1, y1); X.lineTo(x2, y2); X.stroke(); }
+function circ(x, y, r, fill) { X.beginPath(); X.arc(x, y, r, 0, Math.PI * 2); if (fill) X.fill(); X.stroke(); }
+const FD = {
+  bed(w, h) { box(w, h); const n = w >= 1.3 ? 2 : 1, pw = (w - 0.2 - (n - 1) * 0.1) / n;
+    for (let i = 0; i < n; i++) { rr(-w / 2 + 0.1 + i * (pw + 0.1), -h / 2 + 0.08, pw, 0.32, 0.08); X.fill(); X.stroke(); }
+    line(-w / 2, -h / 2 + 0.55, w / 2, -h / 2 + 0.55); line(-w / 2, -h / 2 + 0.55, -w / 2 + 0.35, -h / 2 + 0.85); },
+  wardrobe(w, h) { box(w, h); line(-w / 2, 0, w / 2, 0); for (let x = -w / 2 + 0.15; x < w / 2 - 0.05; x += 0.2) line(x - 0.05, -0.12, x + 0.05, 0.12); },
+  sofa(w, h) { rr(-w / 2, -h / 2, w, h, 0.1); X.fill(); X.stroke(); rr(-w / 2 + 0.18, -h / 2 + 0.22, w - 0.36, h - 0.27, 0.06); X.stroke();
+    const n = Math.max(1, Math.round((w - 0.36) / 0.65)); for (let i = 1; i < n; i++) { const x = -w / 2 + 0.18 + i * (w - 0.36) / n; line(x, -h / 2 + 0.22, x, h / 2 - 0.05); } },
+  tv(w, h) { box(w, h); X.save(); X.lineWidth *= 2.2; line(-w / 2 + 0.15, h / 2 - 0.1, w / 2 - 0.15, h / 2 - 0.1); X.restore(); },
+  dtable(w, h) { const n = Math.max(1, Math.round((w - 0.2) / 0.6));
+    for (let i = 0; i < n; i++) { const cx = -w / 2 + (i + 0.5) * w / n; rr(cx - 0.2, -h / 2, 0.4, 0.34, 0.06); X.fill(); X.stroke(); rr(cx - 0.2, h / 2 - 0.34, 0.4, 0.34, 0.06); X.fill(); X.stroke(); }
+    rr(-w / 2 + 0.05, -h / 2 + 0.22, w - 0.1, h - 0.44, 0.04); X.fill(); X.stroke(); },
+  desk(w, h) { box(w, h * 0.6); circ(0, h * 0.3, 0.2, true); },
+  counter(w, h) { box(w, h); rr(-w / 2 + 0.15, -h / 2 + 0.1, Math.min(0.75, w * 0.35), h - 0.2, 0.05); X.stroke();
+    const sx = w / 2 - 0.45; circ(sx - 0.18, 0, 0.11); circ(sx + 0.18, 0, 0.11); },
+  fridge(w, h) { box(w, h); line(-w / 2, -h / 2, w / 2, h / 2); line(-w / 2 + 0.06, h / 2 - 0.08, w / 2 - 0.06, h / 2 - 0.08); },
+  toilet(w, h) { rr(-w / 2, -h / 2, w, 0.2, 0.04); X.fill(); X.stroke(); X.beginPath(); X.ellipse(0, -h / 2 + 0.2 + (h - 0.22) / 2, w / 2 - 0.02, (h - 0.22) / 2, 0, 0, Math.PI * 2); X.fill(); X.stroke(); },
+  basin(w, h) { rr(-w / 2, -h / 2, w, h, 0.05); X.fill(); X.stroke(); X.beginPath(); X.ellipse(0, 0.03, w / 2 - 0.09, h / 2 - 0.09, 0, 0, Math.PI * 2); X.stroke(); },
+  shower(w, h) { box(w, h); line(-w / 2, -h / 2, w / 2, h / 2); line(w / 2, -h / 2, -w / 2, h / 2); circ(0, 0, 0.05, true); },
+  tub(w, h) { rr(-w / 2, -h / 2, w, h, 0.12); X.fill(); X.stroke(); rr(-w / 2 + 0.08, -h / 2 + 0.08, w - 0.16, h - 0.16, 0.25); X.stroke(); circ(0, h / 2 - 0.25, 0.04); },
+  washer(w, h) { box(w, h); circ(0, 0.04, Math.min(w, h) * 0.32); },
+  car(w, h) { rr(-w / 2 + 0.05, -h / 2, w - 0.1, h, 0.35); X.fill(); X.stroke();
+    X.beginPath(); X.moveTo(-w / 2 + 0.2, -h / 2 + 1.25); X.lineTo(w / 2 - 0.2, -h / 2 + 1.25); X.lineTo(w / 2 - 0.3, -h / 2 + 1.75); X.lineTo(-w / 2 + 0.3, -h / 2 + 1.75); X.closePath(); X.stroke();
+    rr(-w / 2 + 0.3, -h / 2 + 1.9, w - 0.6, h - 3.2, 0.1); X.stroke();
+    for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { X.save(); X.fillStyle = X.strokeStyle; X.fillRect(x * (w / 2) - (x > 0 ? 0.08 : 0), y * (h / 2 - 0.95) - 0.3, 0.08, 0.6); X.restore(); } },
+  moto(w, h) { X.beginPath(); X.ellipse(0, 0, w / 2 - 0.1, h / 2, 0, 0, Math.PI * 2); X.fill(); X.stroke(); line(-w / 2, -h / 2 + 0.45, w / 2, -h / 2 + 0.45); },
+  stairs(w, h) { box(w, h); const n = Math.max(3, Math.round(h / 0.25)); for (let i = 1; i < n; i++) line(-w / 2, -h / 2 + i * h / n, w / 2, -h / 2 + i * h / n);
+    line(0, h / 2 - 0.15, 0, -h / 2 + 0.25); line(0, -h / 2 + 0.15, -0.12, -h / 2 + 0.35); line(0, -h / 2 + 0.15, 0.12, -h / 2 + 0.35); },
+  plant(w, h) { const r = Math.min(w, h) / 2; X.save(); X.fillStyle = "#E3F1D9"; circ(0, 0, r, true); X.restore(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; line(0, 0, Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85); } },
+  altar(w, h) { box(w, h); rr(-w / 2 + 0.12, -h / 2 + 0.08, w - 0.24, h - 0.16, 0.02); X.stroke(); rr(-w / 4, -h / 2 + 0.14, w / 2, h - 0.28, 0.02); X.stroke(); },
+  table(w, h) { rr(-w / 2, -h / 2, w, h, 0.05); X.fill(); X.stroke(); },
+  grab(w, h) { X.save(); X.fillStyle = "#2F6FDB"; X.strokeStyle = "#1E4FA8"; rr(-w / 2, -h / 2, w, h, Math.min(w, h) / 2); X.fill(); X.stroke(); X.restore(); },
+  wchair(w, h) { rr(-w / 2 + 0.1, -h / 2 + 0.25, w - 0.2, h - 0.35, 0.06); X.fill(); X.stroke(); rr(-w / 2 + 0.1, -h / 2 + 0.1, w - 0.2, 0.15, 0.04); X.fill(); X.stroke();
+    X.save(); X.fillStyle = X.strokeStyle; X.fillRect(-w / 2, -h / 2 + 0.3, 0.07, 0.6); X.fillRect(w / 2 - 0.07, -h / 2 + 0.3, 0.07, 0.6); X.restore(); line(-w / 2 + 0.2, h / 2, -w / 2 + 0.2, h / 2 - 0.12); line(w / 2 - 0.2, h / 2, w / 2 - 0.2, h / 2 - 0.12); },
+};
+const FURN = {
+  bed1:     { n: "เตียง 3.5 ฟุต", w: 1.05, h: 2.0, d: "bed" },
+  bed5:     { n: "เตียง 5 ฟุต",   w: 1.5, h: 2.0, d: "bed" },
+  bed6:     { n: "เตียง 6 ฟุต",   w: 1.8, h: 2.0, d: "bed" },
+  wardrobe: { n: "ตู้เสื้อผ้า",     w: 1.2, h: 0.6, d: "wardrobe" },
+  sofa:     { n: "โซฟา",         w: 2.0, h: 0.9, d: "sofa" },
+  armchair: { n: "เก้าอี้นวม",     w: 0.9, h: 0.85, d: "sofa" },
+  tv:       { n: "ชั้นทีวี",       w: 1.6, h: 0.45, d: "tv" },
+  ctable:   { n: "โต๊ะกลาง",      w: 1.0, h: 0.55, d: "table" },
+  dtable4:  { n: "โต๊ะทานข้าว 4",  w: 1.2, h: 1.5, d: "dtable" },
+  dtable6:  { n: "โต๊ะทานข้าว 6",  w: 1.8, h: 1.6, d: "dtable" },
+  desk:     { n: "โต๊ะทำงาน",     w: 1.2, h: 1.0, d: "desk" },
+  counter:  { n: "เคาน์เตอร์ครัว",  w: 2.4, h: 0.6, d: "counter" },
+  fridge:   { n: "ตู้เย็น",        w: 0.7, h: 0.7, d: "fridge" },
+  toilet:   { n: "ชักโครก",       w: 0.42, h: 0.7, d: "toilet" },
+  basin:    { n: "อ่างล้างหน้า",    w: 0.6, h: 0.45, d: "basin" },
+  shower:   { n: "ที่อาบน้ำ",       w: 0.9, h: 0.9, d: "shower" },
+  tub:      { n: "อ่างอาบน้ำ",     w: 0.75, h: 1.6, d: "tub" },
+  washer:   { n: "เครื่องซักผ้า",   w: 0.6, h: 0.6, d: "washer" },
+  car:      { n: "รถยนต์",        w: 1.85, h: 4.6, d: "car" },
+  moto:     { n: "มอเตอร์ไซค์",    w: 0.7, h: 1.9, d: "moto" },
+  stairs:   { n: "บันได",         w: 1.1, h: 3.0, d: "stairs" },
+  altar:    { n: "โต๊ะหมู่บูชา",    w: 1.2, h: 0.5, d: "altar" },
+  plant:    { n: "ต้นไม้",        w: 0.9, h: 0.9, d: "plant" },
+  hbed:     { n: "เตียงผู้ป่วย",    w: 1.0, h: 2.15, d: "bed" },
+  wchair:   { n: "วีลแชร์",        w: 0.65, h: 1.05, d: "wchair" },
+  grab:     { n: "ราวจับ",        w: 0.7, h: 0.06, d: "grab" },
+};
+
+/* ============================================================ state */
+const LS = "houseplan.v1";
+let plan, cur = 0, sel = null, tool = "select", step = 0.25;
+let roomType = "bed", openKind = "door", furnType = "bed5";
+let undoS = [], redoS = [];
+let poly = null, measure = null, hoverW = null, panelSnap = null;
+const view = { x: 0, y: 0, s: 40 };
+const uid = () => Math.random().toString(36).slice(2, 9);
+const r3 = v => Math.round(v * 1000) / 1000;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, d = 2) => (Math.round(v * 10 ** d) / 10 ** d).toFixed(d);
+const FL = () => plan.floors[cur];
+function newFloor(name) { return { id: uid(), name, height: 3, rooms: [], opens: [], items: [], labels: [] }; }
+function newPlan() { return { app: "houseplan", v: 1, name: "แบบบ้านของฉัน", land: { w: 16, h: 20 }, floors: [newFloor("ชั้น 1")] }; }
+
+/* ============================================================ geometry */
+function areaOf(p) { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; } return Math.abs(a) / 2; }
+function bbox(p) { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const [x, y] of p) { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); } return [a, b, c, d]; }
+function centroid(p) { let a = 0, cx = 0, cy = 0; for (let i = 0; i < p.length; i++) { const [x1, y1] = p[i], [x2, y2] = p[(i + 1) % p.length], c = x1 * y2 - x2 * y1; a += c; cx += (x1 + x2) * c; cy += (y1 + y2) * c; }
+  if (Math.abs(a) < 1e-9) { const b = bbox(p); return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; } return [cx / (3 * a), cy / (3 * a)]; }
+function inPoly(x, y, p) { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
+function isRect(p) { if (p.length !== 4) return false; const xs = new Set(p.map(q => r3(q[0]))), ys = new Set(p.map(q => r3(q[1]))); if (xs.size !== 2 || ys.size !== 2) return false;
+  for (let i = 0; i < 4; i++) { const q = p[(i + 1) % 4]; if (Math.abs(p[i][0] - q[0]) > 1e-6 && Math.abs(p[i][1] - q[1]) > 1e-6) return false; } return true; }
+function rectPts(x, y, w, h) { return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(q => q.map(r3)); }
+function floorArea(f) { return f.rooms.reduce((s, r) => s + areaOf(r.pts), 0); }
+function toLocal(o, x, y) { const c = Math.cos(o.a), s = Math.sin(o.a), dx = x - o.x, dy = y - o.y; return [dx * c + dy * s, -dx * s + dy * c]; }
+const rad = d => d * Math.PI / 180;
+
+/* ============================================================ canvas / view */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+let DPR = 1, CW = 0, CH = 0, needDraw = true;
+function w2s(x, y) { return [x * view.s + view.x, y * view.s + view.y]; }
+function s2w(x, y) { return [(x - view.x) / view.s, (y - view.y) / view.s]; }
+function resize() { const r = cv.getBoundingClientRect(); DPR = Math.min(3, window.devicePixelRatio || 1); CW = r.width; CH = r.height; cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR); draw(); }
+new ResizeObserver(resize).observe(document.getElementById("stage"));
+function draw() { needDraw = true; }
+function frame() { if (needDraw) { needDraw = false; try { render(); } catch (e) { console.error(e); } } requestAnimationFrame(frame); }
+function zoomAt(f, sx, sy) { const [wx, wy] = s2w(sx, sy); view.s = clamp(view.s * f, 4, 600); view.x = sx - wx * view.s; view.y = sy - wy * view.s; draw(); }
+function planBounds(fi) {
+  let pts = [];
+  const fs = fi === undefined ? plan.floors : [plan.floors[fi]];
+  for (const f of fs) { for (const r of f.rooms) pts = pts.concat(r.pts); for (const it of f.items) pts.push([it.x, it.y]); }
+  if (plan.land) pts.push([0, 0], [plan.land.w, plan.land.h]);
+  if (!pts.length) pts = [[0, 0], [10, 10]];
+  return bbox(pts);
+}
+function fit() { const [a, b, c, d] = planBounds(); const m = 1.6, w = c - a + 2 * m, h = d - b + 2 * m;
+  view.s = clamp(Math.min(CW / w, CH / h), 4, 300); view.x = CW / 2 - (a + c) / 2 * view.s; view.y = CH / 2 - (b + d) / 2 * view.s; draw(); }
+
+/* ============================================================ rendering */
+function render() {
+  X = ctx; X.setTransform(DPR, 0, 0, DPR, 0, 0);
+  X.fillStyle = "#F7F5F0"; X.fillRect(0, 0, CW, CH);
+  drawGrid();
+  drawPlan(cur, { ghost: true, sel: true });
+  drawOverlay();
+  document.getElementById("scaleTxt").textContent = scaleLabel();
+}
+function scaleLabel() { return "1 ช่อง = " + (gridMinor() >= 1 ? gridMinor() + " ม." : Math.round(gridMinor() * 100) + " ซม."); }
+function gridMinor() { for (const g of [0.1, 0.25, 0.5, 1, 2, 5]) if (g * view.s >= 14) return g; return 10; }
+function drawGrid() {
+  const [x0, y0] = s2w(0, 0), [x1, y1] = s2w(CW, CH), g = gridMinor();
+  const pass = (gs, col, lw) => { X.strokeStyle = col; X.lineWidth = lw; X.beginPath();
+    for (let x = Math.floor(x0 / gs) * gs; x <= x1; x += gs) { const sx = Math.round(w2s(x, 0)[0]) + 0.5; X.moveTo(sx, 0); X.lineTo(sx, CH); }
+    for (let y = Math.floor(y0 / gs) * gs; y <= y1; y += gs) { const sy = Math.round(w2s(0, y)[1]) + 0.5; X.moveTo(0, sy); X.lineTo(CW, sy); } X.stroke(); };
+  pass(g, "#ECE8E0", 1);
+  const major = g < 1 ? 1 : g * 5;
+  pass(major, "#DDD7CB", 1);
+}
+function pxFont(m, min, max) { return clamp(m * view.s, min, max); }
+function drawPlan(fi, o) {
+  const f = plan.floors[fi], s = view.s;
+  /* land */
+  if (plan.land) {
+    const [ax, ay] = w2s(0, 0), lw = plan.land.w * s, lh = plan.land.h * s;
+    X.save(); X.setLineDash([10, 6]); X.strokeStyle = "#4E9A5B"; X.lineWidth = 2; X.strokeRect(ax, ay, lw, lh); X.restore();
+    X.fillStyle = "#4E9A5B"; X.font = `600 ${pxFont(0.42, 11, 15)}px sans-serif`; X.textAlign = "left"; X.textBaseline = "bottom";
+    const la = plan.land.w * plan.land.h;
+    X.fillText(`ที่ดิน ${fmt(plan.land.w, 1)} × ${fmt(plan.land.h, 1)} ม. = ${fmt(la, 1)} ตร.ม. (${fmt(la / 4, 1)} ตร.ว.)`, ax, ay - 4);
+    X.textAlign = "center"; X.textBaseline = "top"; X.fillText("▼ ด้านหน้า / ถนน ▼", ax + lw / 2, ay + lh + 5);
+  }
+  /* lower floor ghost */
+  if (o.ghost && fi > 0) {
+    X.save(); X.setLineDash([6, 5]); X.strokeStyle = "#B4AEA4"; X.lineWidth = 1.5;
+    for (const r of plan.floors[fi - 1].rooms) { pathPoly(r.pts); X.stroke(); }
+    X.restore();
+  }
+  /* room fills */
+  for (const r of f.rooms) { pathPoly(r.pts); X.fillStyle = (ROOM_TYPES[r.type] || ROOM_TYPES.other).c; X.fill(); }
+  /* stair treads */
+  for (const r of f.rooms) if (r.type === "stair") drawTreads(r);
+  for (const r of f.rooms) if (r.elder) { const sp = turnSpot(r, f); if (!sp) continue; const [x, y] = w2s(...sp);
+    X.save(); X.setLineDash([5, 4]); X.strokeStyle = "#2E8B57"; X.fillStyle = "rgba(46,139,87,.07)"; X.lineWidth = 1.5; X.beginPath(); X.arc(x, y, TURN_R * view.s, 0, Math.PI * 2); X.fill(); X.stroke(); X.restore(); }
+  /* walls */
+  X.strokeStyle = "#3A3632"; X.lineWidth = Math.max(2, WALL * s); X.lineJoin = "miter"; X.miterLimit = 3;
+  for (const r of f.rooms) { pathPoly(r.pts); X.stroke(); }
+  /* openings */
+  for (const op of f.opens) drawOpen(op, o.sel && sel && sel.t === "open" && sel.id === op.id);
+  /* furniture */
+  for (const it of f.items) drawItem(it);
+  /* room captions */
+  for (const r of f.rooms) drawRoomText(r);
+  /* free labels */
+  for (const l of f.labels) { const [x, y] = w2s(l.x, l.y); X.fillStyle = "#2B2A28"; X.font = `600 ${pxFont(l.size || 0.4, 10, 60)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(l.text, x, y); }
+  if (o.sel && styleOf().struct) drawEngLayer(fi);
+  if (o.sel) drawSelection(f);
+}
+function pathPoly(p) { X.beginPath(); p.forEach(([x, y], i) => { const [sx, sy] = w2s(x, y); i ? X.lineTo(sx, sy) : X.moveTo(sx, sy); }); X.closePath(); }
+function drawTreads(r) {
+  const [a, b, c, d] = bbox(r.pts), vert = d - b >= c - a, n = Math.max(4, Math.round((vert ? d - b : c - a) / 0.27));
+  X.save(); pathPoly(r.pts); X.clip(); X.strokeStyle = "#9C93A8"; X.lineWidth = 1; X.beginPath();
+  for (let i = 1; i < n; i++) { const t = i / n; if (vert) { const y = b + (d - b) * t; X.moveTo(...w2s(a, y)); X.lineTo(...w2s(c, y)); } else { const x = a + (c - a) * t; X.moveTo(...w2s(x, b)); X.lineTo(...w2s(x, d)); } }
+  X.stroke(); X.strokeStyle = "#6E6480"; X.lineWidth = 1.5; X.beginPath();
+  if (vert) { const x = (a + c) / 2; X.moveTo(...w2s(x, d - 0.2)); X.lineTo(...w2s(x, b + 0.25)); } else { const y = (b + d) / 2; X.moveTo(...w2s(a + 0.2, y)); X.lineTo(...w2s(c - 0.25, y)); }
+  X.stroke(); X.restore();
+}
+function drawRoomText(r) {
+  const s = view.s, [a, b, c, d] = bbox(r.pts); if (Math.min(c - a, d - b) * s < 34) return;
+  let [cx, cy] = centroid(r.pts); if (!inPoly(cx, cy, r.pts)) { cx = (a + c) / 2; cy = (b + d) / 2; }
+  const [sx, sy] = w2s(cx, cy), fs = pxFont(0.36, 10, 17), rect = isRect(r.pts), maxW = (c - a) * s - 8;
+  X.textAlign = "center"; X.textBaseline = "middle";
+  X.font = `700 ${fs}px sans-serif`; X.fillStyle = "#2B2A28"; fitText((r.elder ? "♿ " : "") + r.name, sx, sy - fs * (rect ? 0.95 : 0.55), maxW);
+  X.font = `${fs * 0.85}px sans-serif`; X.fillStyle = "#5E5850"; fitText(fmt(areaOf(r.pts)) + " ตร.ม.", sx, sy + fs * (rect ? 0.2 : 0.6), maxW);
+  if (rect) fitText(fmt(c - a) + " × " + fmt(d - b) + " ม.", sx, sy + fs * 1.2, maxW);
+}
+function fitText(t, x, y, maxW) { if (maxW < 20) return; const w = X.measureText(t).width, k = w > maxW ? maxW / w : 1; X.save(); X.translate(x, y); X.scale(k, k);
+  X.lineJoin = "round"; X.lineWidth = 3.5; X.strokeStyle = "rgba(255,255,255,.85)"; X.strokeText(t, 0, 0); X.fillText(t, 0, 0); X.restore(); }
+function arc90(cx, cy, r, a0, a1) { let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; X.beginPath(); X.arc(cx, cy, r, a0, a0 + d, d < 0); X.stroke(); }
+function drawOpen(op, hi) {
+  const s = view.s, hw = op.w / 2 * s, ht = Math.max(2, WALL * s) / 2 + 1.2, sd = op.flip ? -1 : 1, mh = op.hinge ? -1 : 1;
+  X.save(); X.translate(...w2s(op.x, op.y)); X.rotate(op.a);
+  X.fillStyle = "#FFFFFF"; X.fillRect(-hw, -ht, 2 * hw, 2 * ht);
+  X.strokeStyle = hi ? "#2F6FDB" : "#3A3632"; X.lineWidth = hi ? 2.5 : 1.4;
+  line(-hw, -ht, -hw, ht); line(hw, -ht, hw, ht);
+  if (op.kind === "door" || op.kind === "door2") {
+    const leaves = op.kind === "door2" ? [[-hw, 1], [hw, -1]] : [[-hw * mh, mh]];
+    const L = op.kind === "door2" ? hw : 2 * hw;
+    for (const [hx, dir] of leaves) { X.save(); X.lineWidth *= 1.6; line(hx, 0, hx, sd * L); X.restore();
+      X.save(); X.setLineDash([4, 3]); arc90(hx, 0, L, Math.atan2(sd * L, 0), Math.atan2(0, dir * L)); X.restore(); }
+  } else if (op.kind === "slide") {
+    X.strokeRect(-hw, -ht * 0.55, hw * 1.1, ht * 0.45); X.strokeRect(-hw * 0.1, ht * 0.1, hw * 1.1, ht * 0.45);
+  } else if (op.kind === "window") {
+    X.strokeRect(-hw, -ht, 2 * hw, 2 * ht); line(-hw, 0, hw, 0); X.save(); X.lineWidth = 0.8; line(-hw, -ht / 2.4, hw, -ht / 2.4); line(-hw, ht / 2.4, hw, ht / 2.4); X.restore();
+  } else { X.save(); X.setLineDash([3, 3]); line(-hw, 0, hw, 0); X.restore(); }
+  X.restore();
+}
+function drawItem(it, c2) {
+  const def = FURN[it.type] || FURN.ctable, s = view.s;
+  X.save(); X.translate(...w2s(it.x, it.y)); X.rotate(rad(it.rot || 0)); X.scale(s, s);
+  X.lineWidth = 1.1 / s; X.strokeStyle = "#5B544C"; X.fillStyle = "rgba(255,255,255,.92)"; X.lineJoin = "round";
+  FD[def.d](it.w, it.h); X.restore();
+}
+function handlePx() { return lastType === "mouse" ? 7 : 11; }
+function drawSelection(f) {
+  if (!sel) return;
+  const o = getSel(); if (!o) return;
+  X.save(); X.strokeStyle = "#2F6FDB"; X.fillStyle = "#fff"; X.lineWidth = 2;
+  if (sel.t === "room") {
+    pathPoly(o.pts); X.lineWidth = 3; X.stroke();
+    const n = o.pts.length, hp = handlePx();
+    /* edge lengths */
+    X.font = `600 ${pxFont(0.3, 11, 14)}px sans-serif`; X.textAlign = "center"; X.textBaseline = "middle";
+    const [cx, cy] = centroid(o.pts);
+    for (let i = 0; i < n; i++) { const a = o.pts[i], b = o.pts[(i + 1) % n], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L * view.s < 40) continue;
+      let nx = -(b[1] - a[1]) / L, ny = (b[0] - a[0]) / L; const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; if ((cx - mx) * nx + (cy - my) * ny > 0) { nx = -nx; ny = -ny; }
+      const [tx, ty] = w2s(mx + nx * 34 / view.s, my + ny * 34 / view.s), t = fmt(L) + " ม.", tw = X.measureText(t).width;
+      X.fillStyle = "#2F6FDB"; rr(tx - tw / 2 - 5, ty - 10, tw + 10, 20, 6); X.fill(); X.fillStyle = "#fff"; X.fillText(t, tx, ty); }
+    X.fillStyle = "#fff"; X.lineWidth = 2;
+    for (let i = 0; i < n; i++) { const a = o.pts[i], b = o.pts[(i + 1) % n], [mx, my] = w2s((a[0] + b[0]) / 2, (a[1] + b[1]) / 2); X.fillRect(mx - hp, my - hp, 2 * hp, 2 * hp); X.strokeRect(mx - hp, my - hp, 2 * hp, 2 * hp); }
+    for (const p of o.pts) { const [sx, sy] = w2s(...p); X.beginPath(); X.arc(sx, sy, hp, 0, Math.PI * 2); X.fill(); X.stroke(); }
+  } else if (sel.t === "item") {
+    const hp = handlePx(); X.translate(...w2s(o.x, o.y)); X.rotate(rad(o.rot || 0));
+    const w = o.w * view.s, h = o.h * view.s; X.setLineDash([5, 4]); X.strokeRect(-w / 2 - 3, -h / 2 - 3, w + 6, h + 6); X.setLineDash([]);
+    line(0, -h / 2 - 3, 0, -h / 2 - 3 - rotOff()); X.beginPath(); X.arc(0, -h / 2 - 3 - rotOff(), hp, 0, Math.PI * 2); X.fill(); X.stroke();
+    X.fillStyle = "#2F6FDB"; X.font = `${hp * 1.5}px sans-serif`; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText("⟳", 0, -h / 2 - 3 - rotOff() + 1);
+    X.fillStyle = "#fff"; X.fillRect(w / 2 + 3 - hp, h / 2 + 3 - hp, 2 * hp, 2 * hp); X.strokeRect(w / 2 + 3 - hp, h / 2 + 3 - hp, 2 * hp, 2 * hp);
+  } else if (sel.t === "label") {
+    const [x, y] = w2s(o.x, o.y); X.font = `600 ${pxFont(o.size || 0.4, 10, 60)}px sans-serif`; const tw = X.measureText(o.text).width, th = pxFont(o.size || 0.4, 10, 60);
+    X.setLineDash([5, 4]); X.strokeRect(x - tw / 2 - 5, y - th / 2 - 4, tw + 10, th + 8);
+  }
+  X.restore();
+}
+const rotOff = () => (lastType === "mouse" ? 22 : 34);
+function drawOverlay() {
+  X.save();
+  if (act && act.kind === "drawRect" && act.b) {
+    const [x0, y0] = act.a, [x1, y1] = act.b, p = rectPts(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
+    pathPoly(p); X.fillStyle = "rgba(47,111,219,.15)"; X.fill(); X.strokeStyle = "#2F6FDB"; X.lineWidth = Math.max(2, WALL * view.s); X.stroke();
+    const [sx, sy] = w2s((x0 + x1) / 2, (y0 + y1) / 2), w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
+    tag(`${fmt(w)} × ${fmt(h)} ม. = ${fmt(w * h)} ตร.ม.`, sx, sy);
+  }
+  if (poly) {
+    X.strokeStyle = "#2F6FDB"; X.lineWidth = 3; X.beginPath(); poly.forEach((p, i) => { const [sx, sy] = w2s(...p); i ? X.lineTo(sx, sy) : X.moveTo(sx, sy); });
+    if (hoverW) X.lineTo(...w2s(...hoverW)); X.stroke();
+    poly.forEach((p, i) => { const [sx, sy] = w2s(...p); X.fillStyle = i ? "#fff" : "#2F6FDB"; X.beginPath(); X.arc(sx, sy, i ? 6 : 9, 0, Math.PI * 2); X.fill(); X.stroke(); });
+    if (poly.length >= 3) { const [sx, sy] = w2s(...centroid(poly)); tag(fmt(areaOf(poly)) + " ตร.ม.", sx, sy); }
+    if (poly.length && hoverW) { const p = poly[poly.length - 1], L = Math.hypot(hoverW[0] - p[0], hoverW[1] - p[1]); const [sx, sy] = w2s((p[0] + hoverW[0]) / 2, (p[1] + hoverW[1]) / 2); tag(fmt(L) + " ม.", sx, sy - 18); }
+  }
+  if (measure && measure.b) {
+    const [ax, ay] = w2s(...measure.a), [bx, by] = w2s(...measure.b);
+    X.strokeStyle = "#D2582F"; X.lineWidth = 2.5; X.setLineDash([8, 5]); line(ax, ay, bx, by); X.setLineDash([]);
+    for (const [x, y] of [[ax, ay], [bx, by]]) { X.fillStyle = "#D2582F"; X.beginPath(); X.arc(x, y, 5, 0, Math.PI * 2); X.fill(); }
+    const dx = measure.b[0] - measure.a[0], dy = measure.b[1] - measure.a[1];
+    tag(`${fmt(Math.hypot(dx, dy))} ม.` + (Math.abs(dx) > 0.01 && Math.abs(dy) > 0.01 ? `  (${fmt(Math.abs(dx))} × ${fmt(Math.abs(dy))})` : ""), (ax + bx) / 2, (ay + by) / 2 - 18, "#D2582F");
+  }
+  X.restore();
+}
+function tag(t, x, y, col) { X.font = "600 14px sans-serif"; X.textAlign = "center"; X.textBaseline = "middle"; const w = X.measureText(t).width; X.fillStyle = col || "#2F6FDB"; rr(x - w / 2 - 7, y - 12, w + 14, 24, 8); X.fill(); X.fillStyle = "#fff"; X.fillText(t, x, y); }
+
+/* ============================================================ selection helpers */
+function getSel() { if (!sel) return null; const f = FL(), list = { room: f.rooms, item: f.items, open: f.opens, label: f.labels }[sel.t]; return list ? list.find(o => o.id === sel.id) || null : null; }
+function setSel(t, id) { sel = t ? { t, id } : null; updatePanel(); draw(); }
+function tolW() { return (lastType === "mouse" ? 10 : 22) / view.s; }
+function hitAt(x, y) {
+  const f = FL(), tol = tolW();
+  const o = getSel();
+  if (o && sel.t === "room") {
+    const n = o.pts.length;
+    for (let i = 0; i < n; i++) if (Math.hypot(o.pts[i][0] - x, o.pts[i][1] - y) < tol) return { t: "vertex", id: o.id, i };
+    for (let i = 0; i < n; i++) { const a = o.pts[i], b = o.pts[(i + 1) % n]; if (Math.hypot((a[0] + b[0]) / 2 - x, (a[1] + b[1]) / 2 - y) < tol) return { t: "edge", id: o.id, i }; }
+  }
+  if (o && sel.t === "item") {
+    const [u, v] = toLocal({ x: o.x, y: o.y, a: rad(o.rot || 0) }, x, y), ro = (rotOff() + 3) / view.s;
+    if (Math.hypot(u, v + o.h / 2 + ro) < tol) return { t: "rotate", id: o.id };
+    if (Math.hypot(u - o.w / 2 - 3 / view.s, v - o.h / 2 - 3 / view.s) < tol) return { t: "resize", id: o.id };
+  }
+  for (let i = f.labels.length - 1; i >= 0; i--) { const l = f.labels[i], hw = Math.max(0.6, (l.text.length * 0.55 * (l.size || 0.4)) / 2), hh = (l.size || 0.4) * 0.7; if (Math.abs(l.x - x) < hw && Math.abs(l.y - y) < hh) return { t: "label", id: l.id }; }
+  for (let i = f.opens.length - 1; i >= 0; i--) { const op = f.opens[i], [u, v] = toLocal(op, x, y); if (Math.abs(u) < op.w / 2 + tol * 0.3 && Math.abs(v) < Math.max(0.25, tol * 0.7)) return { t: "open", id: op.id }; }
+  for (let i = f.items.length - 1; i >= 0; i--) { const it = f.items[i], [u, v] = toLocal({ x: it.x, y: it.y, a: rad(it.rot || 0) }, x, y); if (Math.abs(u) < it.w / 2 && Math.abs(v) < it.h / 2) return { t: "item", id: it.id }; }
+  let best = null, ba = 1e9;
+  for (const r of f.rooms) if (inPoly(x, y, r.pts)) { const a = areaOf(r.pts); if (a < ba) { ba = a; best = r; } }
+  return best ? { t: "room", id: best.id } : null;
+}
+
+/* ============================================================ snapping */
+function alignTargets(excl, extra) {
+  const t = [];
+  for (const r of FL().rooms) if (r !== excl) t.push(...r.pts);
+  if (cur > 0) for (const r of plan.floors[cur - 1].rooms) t.push(...r.pts);
+  if (plan.land) t.push([0, 0], [plan.land.w, plan.land.h]);
+  if (extra) t.push(...extra);
+  return t;
+}
+function snapPt(x, y, excl, extra) {
+  let sx = Math.round(x / step) * step, sy = Math.round(y / step) * step, bx = 12 / view.s, by = bx;
+  for (const [vx, vy] of alignTargets(excl, extra)) { const dx = Math.abs(vx - x), dy = Math.abs(vy - y); if (dx < bx) { bx = dx; sx = vx; } if (dy < by) { by = dy; sy = vy; } }
+  return [r3(sx), r3(sy)];
+}
+function snap1(v, axis, excl) { let s = Math.round(v / step) * step, b = 12 / view.s; for (const p of alignTargets(excl)) { const d = Math.abs(p[axis] - v); if (d < b) { b = d; s = p[axis]; } } return r3(s); }
+function nearestWall(x, y, maxD) {
+  let best = null, bd = maxD;
+  for (const r of FL().rooms) { const p = r.pts, n = p.length;
+    for (let i = 0; i < n; i++) { const a = p[i], b = p[(i + 1) % n], ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey; if (L2 < 1e-6) continue;
+      const t = clamp(((x - a[0]) * ex + (y - a[1]) * ey) / L2, 0, 1), px = a[0] + ex * t, py = a[1] + ey * t, d = Math.hypot(px - x, py - y);
+      if (d < bd) { bd = d; best = { a, ex, ey, L: Math.sqrt(L2), t, r }; } } }
+  return best;
+}
+function placeOnWall(op, x, y) {
+  const wl = nearestWall(x, y, Math.max(0.7, 34 / view.s));
+  if (!wl) { op.x = r3(Math.round(x / 0.05) * 0.05); op.y = r3(Math.round(y / 0.05) * 0.05); return false; }
+  if (op.w > wl.L - 0.1) op.w = r3(Math.max(0.4, Math.floor((wl.L - 0.1) * 20) / 20));
+  let u = clamp(Math.round(wl.t * wl.L / 0.05) * 0.05, op.w / 2, wl.L - op.w / 2);
+  op.x = r3(wl.a[0] + wl.ex / wl.L * u); op.y = r3(wl.a[1] + wl.ey / wl.L * u);
+  const na = Math.atan2(wl.ey, wl.ex), norm = a => Math.round(((a % Math.PI) + Math.PI) % Math.PI * 1e6) / 1e6;
+  if (norm(na) !== norm(op.a || 0)) op.a = r3(na);
+  return true;
+}
+/* ============================================================ elderly / wheelchair rooms */
+const ELDER_DOOR = 1.0, TURN_R = 0.75;      /* leaf 1.00 m gives ~0.90 m clear; turning circle Ø 1.50 m */
+function onRoomEdge(r, x, y) { const p = r.pts, n = p.length;
+  for (let i = 0; i < n; i++) { const a = p[i], b = p[(i + 1) % n], ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey; if (!L2) continue;
+    const t = ((x - a[0]) * ex + (y - a[1]) * ey) / L2; if (t < -0.01 || t > 1.01) continue; if (Math.hypot(a[0] + ex * t - x, a[1] + ey * t - y) < 0.06) return true; } return false; }
+const roomOpens = (r, f) => f.opens.filter(o => onRoomEdge(r, o.x, o.y));
+function swingsInto(op, r) { if (!op.kind.startsWith("door")) return false; const v = (op.flip ? -1 : 1) * 0.3, c = Math.cos(op.a), s = Math.sin(op.a); return inPoly(op.x - v * s, op.y + v * c, r.pts); }
+function circleFree(r, f, cx, cy) {
+  const R = TURN_R + WALL / 2;
+  if (!inPoly(cx, cy, r.pts)) return false;
+  for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; if (!inPoly(cx + Math.cos(a) * R, cy + Math.sin(a) * R, r.pts)) return false; }
+  for (const it of f.items) { if (it.type === "wchair" || it.type === "grab") continue; const [u, v] = toLocal({ x: it.x, y: it.y, a: rad(it.rot || 0) }, cx, cy);
+    const dx = Math.max(0, Math.abs(u) - it.w / 2), dy = Math.max(0, Math.abs(v) - it.h / 2); if (Math.hypot(dx, dy) < TURN_R) return false; }
+  return true;
+}
+function turnSpot(r, f) {
+  const [cx, cy] = centroid(r.pts); if (circleFree(r, f, cx, cy)) return [cx, cy];
+  const [a, b, c, d] = bbox(r.pts), cand = [];
+  for (let x = a + 0.8; x <= c - 0.8 + 1e-9; x += 0.1) for (let y = b + 0.8; y <= d - 0.8 + 1e-9; y += 0.1) cand.push([x, y, Math.hypot(x - cx, y - cy)]);
+  cand.sort((p, q) => p[2] - q[2]); for (const [x, y] of cand) if (circleFree(r, f, x, y)) return [x, y]; return null;
+}
+function elderCheck(r, f, fi) {
+  const L = [], ops = roomOpens(r, f).filter(o => o.kind !== "window"), bath = r.type === "bath";
+  if (!ops.length) L.push([1, "ยังไม่มีประตูเข้าห้อง"]);
+  for (const op of ops) L.push([op.w >= 0.9 ? 0 : 2, `${OPEN_KINDS[op.kind]} กว้าง ${fmt(op.w)} ม. (เกณฑ์ ≥ 0.90 ม.)`]);
+  const sp = turnSpot(r, f); L.push(sp ? [0, "มีที่ว่างหมุนวีลแชร์ Ø 1.50 ม."] : [2, "ที่ว่างไม่พอหมุนวีลแชร์ Ø 1.50 ม."]);
+  if (bath) {
+    const inward = ops.filter(o => swingsInto(o, r));
+    if (ops.length) L.push(inward.length ? [2, "ประตูเปิดเข้าห้องน้ำ — ควรเปิดออกหรือเป็นบานเลื่อน"] : [0, "ประตูเปิดออก/บานเลื่อน"]);
+    L.push(f.items.some(it => it.type === "grab" && inPoly(it.x, it.y, r.pts)) ? [0, "มีราวจับ"] : [2, "ยังไม่มีราวจับข้างชักโครก"]);
+  }
+  if (fi > 0 && (r.type === "bed" || bath)) L.push([1, "อยู่ชั้นบน — ห้องผู้สูงอายุควรอยู่ชั้นล่าง"]);
+  return L;
+}
+function elderFix(r) {
+  const f = FL(), before = snapshot(), msg = [];
+  for (const op of roomOpens(r, f)) {
+    if (op.kind === "window") continue;
+    if (op.w < ELDER_DOOR) { op.w = ELDER_DOOR; placeOnWall(op, op.x, op.y); }
+    if (r.type === "bath" && swingsInto(op, r)) op.kind = "slide";
+  }
+  if (!roomOpens(r, f).some(o => o.kind !== "window")) msg.push("ยังไม่มีประตู — วางประตูที่ผนังห้องนี้ จะได้ความกว้าง 1.00 ม. ให้เอง");
+  if (!turnSpot(r, f)) {
+    if (isRect(r.pts)) {
+      /* grow the side that has no door and does not run into a neighbour; windows on that side move with it */
+      const onSide = (o, side) => { const [a, b, c, d] = bbox(r.pts); return side === "L" ? Math.abs(o.x - a) < 0.06 : side === "R" ? Math.abs(o.x - c) < 0.06 : side === "T" ? Math.abs(o.y - b) < 0.06 : Math.abs(o.y - d) < 0.06; };
+      const grown = (side, k) => { let [a, b, c, d] = bbox(r.pts); if (side === "L") a -= k; if (side === "R") c += k; if (side === "T") b -= k; if (side === "B") d += k; return rectPts(a, b, r3(c - a), r3(d - b)); };
+      const hits = pts => { const [A, B, C, D] = bbox(pts); return f.rooms.some(o => o !== r && (() => { const [p, q, s2, t] = bbox(o.pts); return Math.min(C, s2) - Math.max(A, p) > 0.05 && Math.min(D, t) - Math.max(B, q) > 0.05; })()); };
+      for (let k = 0; k < 40 && !turnSpot(r, f); k++) {
+        const [a, b, c, d] = bbox(r.pts), ops = roomOpens(r, f);
+        const score = side => (ops.some(o => o.kind !== "window" && onSide(o, side)) ? 10 : 0) + (hits(grown(side, 0.1)) ? 5 : 0) + ((side === "L" || side === "R") === (c - a > d - b) ? 1 : 0);
+        const side = ["R", "B", "L", "T"].sort((p, q) => score(p) - score(q))[0], near = it => { const e = side === "L" ? it.x - a : side === "R" ? c - it.x : side === "T" ? it.y - b : d - it.y; return e < 0.6 && inPoly(it.x, it.y, r.pts); };
+        const mv = [...ops.filter(o => onSide(o, side)), ...f.items.filter(near)];
+        r.pts = grown(side, 0.1);
+        for (const o of mv) { if (side === "L") o.x = r3(o.x - 0.1); if (side === "R") o.x = r3(o.x + 0.1); if (side === "T") o.y = r3(o.y - 0.1); if (side === "B") o.y = r3(o.y + 0.1); }
+      }
+      const [A, B, C, D] = bbox(r.pts);
+      if (f.rooms.some(o => o !== r && (() => { const [p, q, s2, t] = bbox(o.pts); return Math.min(C, s2) - Math.max(A, p) > 0.05 && Math.min(D, t) - Math.max(B, q) > 0.05; })())) msg.push("ขยายห้องแล้วทับห้องข้างเคียง — ลากผนังห้องข้างๆ ออก");
+      else msg.push(`ขยายห้องเป็น ${fmt(C - A)} × ${fmt(D - B)} ม.`);
+    } else msg.push("ห้องรูปทรงอิสระ — ลากมุมขยายห้องเอง หรือย้ายเฟอร์นิเจอร์ออก");
+  }
+  if (r.type === "bath" && !f.items.some(it => it.type === "grab" && inPoly(it.x, it.y, r.pts))) {
+    const t = f.items.find(it => it.type === "toilet" && inPoly(it.x, it.y, r.pts)), g = { id: uid(), type: "grab", w: FURN.grab.w, h: FURN.grab.h };
+    if (t) { const a = rad(t.rot || 0), u = t.w / 2 + 0.18, v = 0.1; g.x = r3(t.x + u * Math.cos(a) - v * Math.sin(a)); g.y = r3(t.y + u * Math.sin(a) + v * Math.cos(a)); g.rot = ((t.rot || 0) + 90) % 360; }
+    else { const [a, b, c] = bbox(r.pts); g.x = r3((a + c) / 2); g.y = r3(b + WALL / 2 + 0.06); g.rot = 0; }
+    f.items.push(g); msg.push("เพิ่มราวจับแล้ว");
+  }
+  commit(before); updatePanel(); toast(msg.join(" · ") || "ปรับแล้ว");
+}
+function snapItem(it, cx, cy) {
+  let x = r3(Math.round(cx / 0.05) * 0.05), y = r3(Math.round(cy / 0.05) * 0.05);
+  const rot = (((it.rot || 0) % 360) + 360) % 360; if (rot % 90) return [x, y];
+  const sw = rot % 180 ? it.h : it.w, sh = rot % 180 ? it.w : it.h, tol = 14 / view.s, off = WALL / 2;
+  let bx = tol, by = tol;
+  for (const r of FL().rooms) { const p = r.pts, n = p.length;
+    for (let i = 0; i < n; i++) { const a = p[i], b = p[(i + 1) % n];
+      if (Math.abs(a[0] - b[0]) < 1e-6 && cy > Math.min(a[1], b[1]) - sh / 2 && cy < Math.max(a[1], b[1]) + sh / 2) for (const c of [a[0] + off + sw / 2, a[0] - off - sw / 2]) { const d = Math.abs(c - cx); if (d < bx) { bx = d; x = r3(c); } }
+      if (Math.abs(a[1] - b[1]) < 1e-6 && cx > Math.min(a[0], b[0]) - sw / 2 && cx < Math.max(a[0], b[0]) + sw / 2) for (const c of [a[1] + off + sh / 2, a[1] - off - sh / 2]) { const d = Math.abs(c - cy); if (d < by) { by = d; y = r3(c); } } } }
+  return [x, y];
+}
+
+/* ============================================================ history / save */
+const snapshot = () => JSON.stringify(plan);
+function commit(before) { if (before === undefined || before === snapshot()) return; undoS.push(before); if (undoS.length > 150) undoS.shift(); redoS.length = 0; changed(); }
+function changed(keepPanel) { if (typeof V3 !== "undefined" && V3.on) build3D(); save(); if (!keepPanel) updatePanel(); renderFloors(); updUndo(); draw(); }
+function updUndo() { document.getElementById("undoBtn").disabled = !undoS.length; document.getElementById("redoBtn").disabled = !redoS.length; }
+function doUndo() { if (!undoS.length) return; redoS.push(snapshot()); plan = JSON.parse(undoS.pop()); cur = clamp(cur, 0, plan.floors.length - 1); sel = null; poly = null; changed(); }
+function doRedo() { if (!redoS.length) return; undoS.push(snapshot()); plan = JSON.parse(redoS.pop()); cur = clamp(cur, 0, plan.floors.length - 1); sel = null; changed(); }
+let saveT = 0;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(LS, JSON.stringify({ plan, cur, step })); } catch (e) {} }, 300); }
+function load() { try { const d = JSON.parse(localStorage.getItem(LS)); if (d && d.plan && d.plan.floors && d.plan.floors.length) { plan = d.plan; cur = clamp(d.cur || 0, 0, plan.floors.length - 1); step = d.step || 0.25; return true; } } catch (e) {} return false; }
+
+/* ============================================================ input */
+const ptrs = new Map();
+let act = null, pinch = null, penSeen = false, lastType = "mouse", spaceDown = false;
+function lxy(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+cv.addEventListener("pointerdown", e => {
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  lastType = e.pointerType || "mouse"; if (e.pointerType === "pen") penSeen = true;
+  const p = lxy(e); ptrs.set(e.pointerId, { x: p[0], y: p[1], type: e.pointerType });
+  const touches = [...ptrs.values()].filter(q => q.type === "touch");
+  if (touches.length === 2 && (!act || act.type === "touch")) { if (act && act.started && act.snap) { plan = JSON.parse(act.snap); } act = null; startPinch(); return; }
+  if (ptrs.size > 1 && act) return;
+  const panOnly = e.button === 1 || e.button === 2 || spaceDown || (penSeen && e.pointerType === "touch");
+  act = { id: e.pointerId, sx: p[0], sy: p[1], w: s2w(...p), started: false, pan: panOnly, type: e.pointerType, shift: e.shiftKey };
+  if (tool === "room" && !panOnly && e.pointerType !== "touch") beginDrag();
+});
+cv.addEventListener("pointermove", e => {
+  const p = lxy(e); if (ptrs.has(e.pointerId)) { const q = ptrs.get(e.pointerId); q.x = p[0]; q.y = p[1]; }
+  if (pinch) { movePinch(); return; }
+  if (!act || act.id !== e.pointerId) { if (poly && e.pointerType !== "touch") { hoverW = snapPt(...s2w(...p), null, poly); draw(); } return; }
+  if (!act.started && Math.hypot(p[0] - act.sx, p[1] - act.sy) > (act.type === "touch" ? 9 : 4)) beginDrag();
+  if (act && act.started) dragTo(p);
+});
+function endPtr(e) {
+  ptrs.delete(e.pointerId);
+  if (pinch) { if ([...ptrs.values()].filter(q => q.type === "touch").length < 2) pinch = null; return; }
+  if (!act || act.id !== e.pointerId) return;
+  const a = act; act = null;
+  if (!a.started) { if (e.type === "pointerup") tap(a); } else endDrag(a);
+  draw();
+}
+cv.addEventListener("pointerup", endPtr); cv.addEventListener("pointercancel", endPtr);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("wheel", e => { e.preventDefault(); const p = lxy(e); const wheelLike = e.deltaMode !== 0 || (!e.deltaX && Math.abs(e.deltaY) >= 40); if (e.ctrlKey || wheelLike) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), ...p); else { view.x -= e.deltaX; view.y -= e.deltaY; draw(); } }, { passive: false });
+function startPinch() { const t = [...ptrs.values()].filter(q => q.type === "touch"), [a, b] = t; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, c: [(a.x + b.x) / 2, (a.y + b.y) / 2], s: view.s, vx: view.x, vy: view.y }; pinch.w = s2w(...pinch.c); }
+function movePinch() { const t = [...ptrs.values()].filter(q => q.type === "touch"); if (t.length < 2) return; const [a, b] = t, d = Math.hypot(a.x - b.x, a.y - b.y), c = [(a.x + b.x) / 2, (a.y + b.y) / 2];
+  view.s = clamp(pinch.s * d / pinch.d, 4, 600); view.x = c[0] - pinch.w[0] * view.s; view.y = c[1] - pinch.w[1] * view.s; draw(); }
+
+function beginDrag() {
+  const a = act; a.started = true;
+  if (a.pan) { a.kind = "pan"; a.vx = view.x; a.vy = view.y; return; }
+  const [x, y] = a.w;
+  if (tool === "room") { a.kind = "drawRect"; a.a = snapPt(x, y); a.b = null; return; }
+  if (tool === "measure") { a.kind = "measure"; measure = { a: snapPt(x, y), b: null }; return; }
+  if (tool === "select") {
+    const h = hitAt(x, y), f = FL();
+    if (h) {
+      a.snap = snapshot();
+      if (h.t === "vertex" || h.t === "edge") { const r = f.rooms.find(r => r.id === h.id); a.kind = h.t; a.room = r; a.i = h.i; a.orig = r.pts.map(p => p.slice()); return; }
+      if (h.t === "rotate" || h.t === "resize") { a.kind = h.t; a.obj = f.items.find(o => o.id === h.id); a.o0 = { ...a.obj }; return; }
+      const already = sel && sel.t === h.t && sel.id === h.id;
+      if (h.t === "room" && !already) { a.kind = "pan"; a.vx = view.x; a.vy = view.y; delete a.snap; return; }
+      setSel(h.t, h.id); const o = getSel();
+      if (h.t === "room") {
+        a.kind = "moveRoom"; a.room = o; a.orig = o.pts.map(p => p.slice());
+        const onEdge = op => { const n = o.pts.length; for (let i = 0; i < n; i++) { const p = o.pts[i], q = o.pts[(i + 1) % n], ex = q[0] - p[0], ey = q[1] - p[1], L2 = ex * ex + ey * ey; if (!L2) continue; const t = ((op.x - p[0]) * ex + (op.y - p[1]) * ey) / L2; if (t < -0.01 || t > 1.01) continue; if (Math.hypot(p[0] + ex * t - op.x, p[1] + ey * t - op.y) < 0.06) return true; } return false; };
+        a.carry = [...f.items.filter(it => inPoly(it.x, it.y, o.pts)), ...f.opens.filter(onEdge), ...f.labels.filter(l => inPoly(l.x, l.y, o.pts))].map(q => ({ q, x: q.x, y: q.y }));
+      } else { a.kind = "move"; a.obj = o; a.o0 = { x: o.x, y: o.y }; }
+      return;
+    }
+  }
+  a.kind = "pan"; a.vx = view.x; a.vy = view.y;
+}
+function dragTo(p) {
+  const a = act, [x, y] = s2w(...p), dx = x - a.w[0], dy = y - a.w[1];
+  switch (a.kind) {
+    case "pan": view.x = a.vx + p[0] - a.sx; view.y = a.vy + p[1] - a.sy; break;
+    case "drawRect": a.b = snapPt(x, y); break;
+    case "measure": measure.b = snapPt(x, y); break;
+    case "vertex": a.room.pts[a.i] = snapPt(x, y, a.room); break;
+    case "edge": {
+      const n = a.orig.length, i = a.i, j = (i + 1) % n, A = a.orig[i], B = a.orig[j], P = a.room.pts;
+      if (Math.abs(A[1] - B[1]) < 1e-6) { const ny = snap1(A[1] + dy, 1, a.room); P[i] = [A[0], ny]; P[j] = [B[0], ny]; }
+      else if (Math.abs(A[0] - B[0]) < 1e-6) { const nx = snap1(A[0] + dx, 0, a.room); P[i] = [nx, A[1]]; P[j] = [nx, B[1]]; }
+      else { const L = Math.hypot(B[0] - A[0], B[1] - A[1]), nx = -(B[1] - A[1]) / L, ny = (B[0] - A[0]) / L, d = Math.round((dx * nx + dy * ny) / step) * step; P[i] = [r3(A[0] + nx * d), r3(A[1] + ny * d)]; P[j] = [r3(B[0] + nx * d), r3(B[1] + ny * d)]; }
+      break; }
+    case "moveRoom": {
+      const [bx, by] = bbox(a.orig); let mx = r3(Math.round((bx + dx) / step) * step - bx), my = r3(Math.round((by + dy) / step) * step - by), ex = 12 / view.s, ey = ex;
+      const T = alignTargets(a.room);
+      for (const v of a.orig) for (const t of T) { const ddx = Math.abs(v[0] + dx - t[0]), ddy = Math.abs(v[1] + dy - t[1]); if (ddx < ex) { ex = ddx; mx = r3(t[0] - v[0]); } if (ddy < ey) { ey = ddy; my = r3(t[1] - v[1]); } }
+      a.room.pts = a.orig.map(v => [r3(v[0] + mx), r3(v[1] + my)]);
+      for (const c of a.carry) { c.q.x = r3(c.x + mx); c.q.y = r3(c.y + my); }
+      break; }
+    case "move": {
+      const o = a.obj;
+      if (sel.t === "item") { [o.x, o.y] = snapItem(o, a.o0.x + dx, a.o0.y + dy); }
+      else if (sel.t === "open") placeOnWall(o, a.o0.x + dx, a.o0.y + dy);
+      else { o.x = r3(Math.round((a.o0.x + dx) / 0.05) * 0.05); o.y = r3(Math.round((a.o0.y + dy) / 0.05) * 0.05); }
+      break; }
+    case "rotate": { const o = a.obj; let deg = Math.atan2(y - o.y, x - o.x) * 180 / Math.PI + 90; deg = Math.round(deg / 15) * 15; o.rot = ((deg % 360) + 360) % 360; break; }
+    case "resize": { const o = a.obj, [u, v] = toLocal({ x: o.x, y: o.y, a: rad(o.rot || 0) }, x, y); o.w = r3(Math.max(0.2, Math.round(Math.abs(u) * 2 / 0.05) * 0.05)); o.h = r3(Math.max(0.2, Math.round(Math.abs(v) * 2 / 0.05) * 0.05)); break; }
+  }
+  draw();
+}
+function endDrag(a) {
+  if (a.kind === "drawRect") {
+    if (!a.b) return;
+    const w = Math.abs(a.b[0] - a.a[0]), h = Math.abs(a.b[1] - a.a[1]); if (w < 0.3 || h < 0.3) return;
+    const before = snapshot(), r = { id: uid(), name: autoName(roomType), type: roomType, pts: rectPts(Math.min(a.a[0], a.b[0]), Math.min(a.a[1], a.b[1]), w, h) };
+    FL().rooms.push(r); sel = { t: "room", id: r.id }; commit(before); return;
+  }
+  if (a.snap) commit(a.snap); else updatePanel();
+}
+function tap(a) {
+  const [x, y] = a.w;
+  if (a.pan) return;
+  if (tool === "select") { const h = hitAt(x, y); if (!h) return setSel(null); if (h.t === "vertex" || h.t === "edge") return; if (h.t === "rotate") { const o = getSel(), b = snapshot(); o.rot = ((o.rot || 0) + 90) % 360; commit(b); return; } if (h.t === "resize") return; return setSel(h.t, h.id); }
+  if (tool === "poly") {
+    const p = snapPt(x, y, null, poly || []);
+    if (!poly) poly = [];
+    if (poly.length >= 3 && Math.hypot(p[0] - poly[0][0], p[1] - poly[0][1]) < tolW()) return finishPoly();
+    const last = poly[poly.length - 1]; if (last && last[0] === p[0] && last[1] === p[1]) return;
+    poly.push(p); hoverW = null; updatePanel(); draw(); return;
+  }
+  if (tool === "door" || tool === "window") {
+    const b = snapshot(), kind = tool === "window" ? (openKind === "window" ? "window" : "window") : openKind;
+    const op = { id: uid(), kind, x, y, a: 0, w: kind === "window" ? 1.2 : kind === "door2" ? 1.6 : kind === "slide" ? 1.8 : kind === "opening" ? 1.2 : 0.9, flip: false, hinge: false };
+    placeOnWall(op, x, y);
+    const er = FL().rooms.filter(r => r.elder && onRoomEdge(r, op.x, op.y));
+    if (er.length && kind !== "window" && op.w < ELDER_DOOR) { op.w = ELDER_DOOR; placeOnWall(op, op.x, op.y); if (er.some(r => r.type === "bath") && kind === "door" && er.some(r => r.type === "bath" && swingsInto(op, r))) op.flip = !op.flip; toast("ห้องผู้สูงอายุ: ประตูกว้าง 1.00 ม." + (er.some(r => r.type === "bath") ? " เปิดออกนอกห้องน้ำ" : "")); }
+    FL().opens.push(op); sel = { t: "open", id: op.id }; commit(b); return;
+  }
+  if (tool === "furn") {
+    const def = FURN[furnType], b = snapshot(), it = { id: uid(), type: furnType, x: 0, y: 0, w: def.w, h: def.h, rot: 0 };
+    [it.x, it.y] = snapItem(it, x, y); FL().items.push(it); sel = { t: "item", id: it.id }; commit(b); return;
+  }
+  if (tool === "text") {
+    const t = prompt("ข้อความ", ""); if (!t) return;
+    const b = snapshot(), l = { id: uid(), x: r3(x), y: r3(y), text: t.slice(0, 60), size: 0.4 }; FL().labels.push(l); sel = { t: "label", id: l.id }; commit(b); return;
+  }
+  if (tool === "measure") { measure = null; draw(); return; }
+  if (tool === "room") { const h = hitAt(x, y); if (h && h.t === "room") { setTool("select"); setSel("room", h.id); } else toast("ลากนิ้วเพื่อวาดห้องสี่เหลี่ยม"); }
+}
+function finishPoly() {
+  if (!poly || poly.length < 3) { toast("ต้องมีอย่างน้อย 3 มุม"); return; }
+  const b = snapshot(), r = { id: uid(), name: autoName(roomType), type: roomType, pts: poly.map(p => p.slice()) };
+  FL().rooms.push(r); poly = null; hoverW = null; sel = { t: "room", id: r.id }; commit(b);
+}
+function autoName(type) {
+  const base = (ROOM_TYPES[type] || ROOM_TYPES.other).n;
+  if (["living", "kitchen", "dining", "garage", "stair", "pray", "laundry", "work"].includes(type)) { const exists = plan.floors.some(f => f.rooms.some(r => r.name === base)); if (!exists) return base; }
+  let n = 1; const names = new Set(plan.floors.flatMap(f => f.rooms.map(r => r.name))); while (names.has(base + " " + n)) n++; return base + " " + n;
+}
+function deleteSel() { const o = getSel(); if (!o) return; const b = snapshot(), f = FL(), k = { room: "rooms", item: "items", open: "opens", label: "labels" }[sel.t]; f[k] = f[k].filter(q => q !== o); sel = null; commit(b); }
+
+window.addEventListener("keydown", e => {
+  if (e.target.matches("input,textarea,select")) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); doRedo(); return; }
+  if (typeof V3 !== "undefined" && V3.on) return;
+  if (e.key === "Delete" || e.key === "Backspace") { deleteSel(); return; }
+  if (e.key === "Escape") { poly = null; measure = null; setSel(null); return; }
+  if (e.key === "Enter" && poly) { finishPoly(); return; }
+  if (e.key === " ") { spaceDown = true; }
+  const k = { v: "select", r: "room", p: "poly", d: "door", w: "window", f: "furn", t: "text", m: "measure" }[e.key.toLowerCase()];
+  if (k && !e.ctrlKey && !e.metaKey) setTool(k);
+});
+window.addEventListener("keyup", e => { if (e.key === " ") spaceDown = false; });
+
+/* ============================================================ UI: tools, floors, panel */
+const ICON = {
+  select: '<path d="M6 3l14 8-6 1.6L11 19z" fill="currentColor"/>',
+  room: '<rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="2.6"/>',
+  poly: '<path d="M4 6h9v5h7v8H4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>',
+  door: '<path d="M4 20h16M6 20V6M6 6a14 14 0 0 1 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="0"/>',
+  window: '<rect x="3" y="9" width="18" height="6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6"/>',
+  furn: '<rect x="3" y="10" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 10V7h14v3M5 17v2M19 17v2" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+  text: '<path d="M5 5h14M12 5v15" stroke="currentColor" stroke-width="2.6" fill="none"/>',
+  measure: '<path d="M3 16L16 3l5 5L8 21z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 12l2 2M10 9l2 2M13 6l2 2" stroke="currentColor" stroke-width="1.8"/>',
+};
+const TOOLS = [["select", "เลือก"], ["room", "ห้อง"], ["poly", "ห้องอิสระ"], ["door", "ประตู"], ["window", "หน้าต่าง"], ["furn", "เฟอร์นิเจอร์"], ["text", "ข้อความ"], ["measure", "วัดระยะ"]];
+const HINTS = {
+  select: "แตะเพื่อเลือก • ลากของที่เลือกเพื่อย้าย • สองนิ้วซูม/เลื่อน",
+  room: "ลากเพื่อวาดห้องสี่เหลี่ยม",
+  poly: "แตะทีละมุม • แตะจุดแรกเพื่อปิดห้อง",
+  door: "แตะใกล้ผนังเพื่อวางประตู",
+  window: "แตะใกล้ผนังเพื่อวางหน้าต่าง",
+  furn: "เลือกแบบในแผงด้านข้าง แล้วแตะบนแปลนเพื่อวาง",
+  text: "แตะตรงที่ต้องการวางข้อความ",
+  measure: "ลากเพื่อวัดระยะ",
+};
+const $tools = document.getElementById("tools");
+$tools.innerHTML = TOOLS.map(([k, n]) => `<button data-tool="${k}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${n}</button>`).join("");
+$tools.onclick = e => { const b = e.target.closest("button"); if (b) setTool(b.dataset.tool); };
+function setTool(t) {
+  if (t !== "poly") poly = null; if (t !== "measure") measure = null;
+  if (t === "door" && openKind === "window") openKind = "door";
+  tool = t; $tools.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.tool === t));
+  document.getElementById("hint").textContent = (penSeen ? "✏️ ปากกาวาด • นิ้วเลื่อนจอ — " : "") + HINTS[t];
+  if (t !== "select") sel = null;
+  updatePanel(); draw();
+}
+function renderFloors() {
+  const el = document.getElementById("floors");
+  el.innerHTML = plan.floors.map((f, i) => `<button data-f="${i}" class="${i === cur ? "on" : ""}">${esc(f.name)}</button>`).join("") + `<button data-f="add">+ ชั้น</button>`;
+  document.getElementById("planName").value = plan.name;
+}
+document.getElementById("floors").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.f === "add") {
+    const copy = FL().rooms.length && confirm(`คัดลอกห้องจาก "${FL().name}" ไปเป็นชั้นใหม่ด้วยไหม?\n\nตกลง = คัดลอก • ยกเลิก = ชั้นว่าง (เห็นเส้นประชั้นล่างไว้อ้างอิง)`);
+    const before = snapshot(), nf = copy ? JSON.parse(JSON.stringify(FL())) : newFloor("");
+    nf.id = uid(); nf.name = "ชั้น " + (plan.floors.length + 1); if (copy) { for (const k of ["rooms", "opens", "items", "labels"]) nf[k].forEach(q => q.id = uid()); nf.items = nf.items.filter(it => it.type !== "car"); nf.rooms.forEach(r => r.name = autoNameFloor(r, plan.floors.length + 1)); }
+    plan.floors.push(nf); cur = plan.floors.length - 1; sel = null; commit(before); toast("เพิ่ม " + nf.name); return;
+  }
+  cur = +b.dataset.f; sel = null; poly = null; changed();
+};
+function autoNameFloor(r, n) { return r.name; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+document.getElementById("planName").addEventListener("change", e => { const b = snapshot(); plan.name = e.target.value.trim() || "แบบบ้าน"; commit(b); });
+
+const $panel = document.getElementById("panel");
+function typeOptions(v) { return Object.entries(ROOM_TYPES).map(([k, t]) => `<option value="${k}" ${k === v ? "selected" : ""}>${t.n}</option>`).join(""); }
+function updatePanel() {
+  panelSnap = snapshot();
+  if (typeof V3 !== "undefined" && V3.on) { $panel.innerHTML = panel3HTML(); return; }
+  const o = getSel();
+  if (poly) { $panel.innerHTML = `<h3>ห้องอิสระ</h3><p>วางแล้ว ${poly.length} มุม${poly.length >= 3 ? " · " + fmt(areaOf(poly)) + " ตร.ม." : ""}</p>
+    <div class="row"><label>ประเภท</label><select data-k="roomType">${typeOptions(roomType)}</select></div>
+    <div class="btns"><button class="b pri" data-a="polyDone">✓ ปิดห้อง</button><button class="b" data-a="polyBack">ลบมุมล่าสุด</button><button class="b del" data-a="polyCancel">ยกเลิก</button></div>`; return; }
+  if (o && sel.t === "room") {
+    const rect = isRect(o.pts), [a, b, c, d] = bbox(o.pts);
+    $panel.innerHTML = `<h3><span class="dot" style="background:${(ROOM_TYPES[o.type] || ROOM_TYPES.other).c}"></span>ห้อง</h3>
+      <div class="row"><label>ชื่อ</label><input data-k="name" value="${esc(o.name)}"></div>
+      <div class="row"><label>ประเภท</label><select data-k="type">${typeOptions(o.type)}</select></div>
+      <div class="chips"><button data-a="elder" class="${o.elder ? "on" : ""}">♿ ผู้สูงอายุ/วีลแชร์</button></div>
+      ${o.elder ? elderHTML(o) : ""}
+      ${rect ? `<div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.3" data-k="rw" value="${fmt(c - a)}"></div>
+      <div class="row"><label>ลึก (ม.)</label><input type="number" step="0.05" min="0.3" data-k="rh" value="${fmt(d - b)}"></div>` : `<p class="mute">ห้องรูปทรงอิสระ ${o.pts.length} มุม · ลากจุด ● เพื่อปรับ</p>`}
+      <p>พื้นที่ <span class="big">${fmt(areaOf(o.pts))}</span> ตร.ม.</p>
+      ${roomColorHTML(o)}
+      <div class="btns"><button class="b" data-a="dup">⧉ ทำซ้ำ (วางข้างกัน)</button><button class="b" data-a="toFloor">ย้ายไปชั้นอื่น</button><button class="b del" data-a="del">🗑 ลบ</button></div>
+      <p class="mute">ลาก ■ กลางผนังเพื่อขยับผนัง · ลาก ● เพื่อย้ายมุม · ลากในห้องเพื่อย้ายทั้งห้อง</p>`; return;
+  }
+  if (o && sel.t === "item") {
+    $panel.innerHTML = `<h3>${esc((FURN[o.type] || {}).n || "เฟอร์นิเจอร์")}</h3>
+      <div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.1" data-k="iw" value="${fmt(o.w)}"></div>
+      <div class="row"><label>ยาว (ม.)</label><input type="number" step="0.05" min="0.1" data-k="ih" value="${fmt(o.h)}"></div>
+      <div class="row"><label>หมุน (°)</label><input type="number" step="15" data-k="rot" value="${o.rot || 0}"></div>
+      <div class="btns"><button class="b" data-a="rot90">⟳ หมุน 90°</button><button class="b" data-a="dup">⧉ ทำซ้ำ</button><button class="b del" data-a="del">🗑 ลบ</button></div>
+      <p class="mute">ลากวงกลม ⟳ เพื่อหมุน · ลากมุม □ เพื่อปรับขนาด · ของจะชิดผนังเองเมื่อเข้าใกล้</p>`; return;
+  }
+  if (o && sel.t === "open") {
+    $panel.innerHTML = `<h3>${OPEN_KINDS[o.kind]}</h3>
+      <div class="row"><label>ชนิด</label><select data-k="kind">${Object.entries(OPEN_KINDS).map(([k, n]) => `<option value="${k}" ${k === o.kind ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="row"><label>กว้าง (ม.)</label><input type="number" step="0.05" min="0.4" data-k="ow" value="${fmt(o.w)}"></div>
+      <div class="btns">${o.kind.startsWith("door") ? `<button class="b" data-a="flip">⇅ สลับด้านเปิด</button>` : ""}${o.kind === "door" ? `<button class="b" data-a="hinge">⇆ สลับบานพับ</button>` : ""}<button class="b del" data-a="del">🗑 ลบ</button></div>
+      <p class="mute">ลากเพื่อเลื่อนไปตามผนัง หรือย้ายไปผนังอื่น</p>`; return;
+  }
+  if (o && sel.t === "label") {
+    $panel.innerHTML = `<h3>ข้อความ</h3><div class="row"><label>ข้อความ</label><input data-k="text" value="${esc(o.text)}"></div>
+      <div class="row"><label>ขนาด</label><select data-k="size">${[[0.25, "เล็ก"], [0.4, "กลาง"], [0.7, "ใหญ่"], [1.2, "ใหญ่มาก"]].map(([v, n]) => `<option value="${v}" ${v === (o.size || 0.4) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="btns"><button class="b del" data-a="del">🗑 ลบ</button></div>`; return;
+  }
+  let h = "";
+  if (tool === "room" || tool === "poly") h += `<h3>${tool === "room" ? "วาดห้อง" : "ห้องอิสระ"}</h3><p class="mute" style="margin-top:-4px">เลือกประเภทก่อนวาด</p><div class="chips">${Object.entries(ROOM_TYPES).map(([k, t]) => `<button data-rt="${k}" class="${k === roomType ? "on" : ""}"><span class="dot" style="background:${t.c}"></span>${t.n}</button>`).join("")}</div>`;
+  if (tool === "door") h += `<h3>ประตู</h3><div class="chips">${["door", "door2", "slide", "opening"].map(k => `<button data-ok="${k}" class="${k === openKind ? "on" : ""}">${OPEN_KINDS[k]}</button>`).join("")}</div>`;
+  if (tool === "furn") h += `<h3>เฟอร์นิเจอร์</h3><div class="fgrid">${Object.entries(FURN).map(([k, f]) => `<button data-ft="${k}" class="${k === furnType ? "on" : ""}"><canvas data-ic="${k}" width="108" height="88"></canvas>${f.n}</button>`).join("")}</div>`;
+  $panel.innerHTML = h + summaryHTML();
+  if (tool === "furn") drawIcons();
+}
+function elderHTML(r) {
+  const L = elderCheck(r, FL(), cur), bad = L.some(q => q[0] === 2);
+  return `<table class="sum" style="margin-top:8px">${L.map(([s, t]) => `<tr><td style="width:24px">${["✅", "⚠️", "❌"][s]}</td><td style="text-align:left;white-space:normal">${t}</td></tr>`).join("")}</table>
+    ${bad ? `<div class="btns"><button class="b pri" data-a="elderFix">✓ ปรับให้ผ่านเกณฑ์</button></div>` : ""}
+    <p class="mute">อ้างอิง: กฎกระทรวงสิ่งอำนวยความสะดวกสำหรับผู้พิการหรือทุพพลภาพ และคนชรา พ.ศ. 2548 (บังคับกับอาคารสาธารณะ ใช้เป็นแนวทางสำหรับบ้าน)</p>`;
+}
+function summaryHTML() {
+  const f = FL(); let h = `<h3>สรุปพื้นที่ · ${esc(f.name)}</h3>`;
+  if (!f.rooms.length) h += `<p class="mute">ยังไม่มีห้องในชั้นนี้ — เลือกเครื่องมือ "ห้อง" แล้วลากบนตาราง หรือกด "✦ สร้างแปลนอัตโนมัติ"</p>`;
+  else { h += `<table class="sum">` + f.rooms.map(r => `<tr><td><span class="dot" style="background:${(ROOM_TYPES[r.type] || ROOM_TYPES.other).c}"></span>${esc(r.name)}</td><td>${fmt(areaOf(r.pts))}</td></tr>`).join("") + `<tr class="tot"><td>รวมชั้นนี้</td><td>${fmt(floorArea(f))} ตร.ม.</td></tr></table>`; }
+  let all = 0, inner = 0; for (const fl of plan.floors) for (const r of fl.rooms) { const a = areaOf(r.pts); all += a; if (!SEMI_OUT.has(r.type)) inner += a; }
+  h += `<h4>ทั้งหลัง (${plan.floors.length} ชั้น)</h4><table class="sum">` + plan.floors.map(fl => `<tr><td>${esc(fl.name)}</td><td>${fmt(floorArea(fl))}</td></tr>`).join("") +
+    `<tr class="tot"><td>รวมทั้งหมด</td><td>${fmt(all)} ตร.ม.</td></tr><tr><td>พื้นที่ภายใน<br><span class="mute">ไม่รวมโรงรถ/ระเบียง</span></td><td>${fmt(inner)} ตร.ม.</td></tr>`;
+  if (plan.land) { const la = plan.land.w * plan.land.h, g = floorArea(plan.floors[0]); h += `<tr><td>ที่ดิน</td><td>${fmt(la, 1)} ตร.ม.<br><span class="mute">${fmt(la / 4, 1)} ตร.ว.</span></td></tr><tr><td>อาคารคลุมที่ดิน (ชั้น 1)</td><td>${la ? fmt(g / la * 100, 0) : 0}%</td></tr>`; }
+  h += `</table>`;
+  if (plan.floors.some(fl => fl.rooms.length)) { try { const C = costSummary(); h += `<h4>ประมาณค่าก่อสร้าง</h4><table class="sum"><tr><td>รวม</td><td>${baht(C.T.total)} บาท</td></tr><tr><td>เฉลี่ย/ตร.ม. (พื้นที่รวม)</td><td>${baht(C.perArea)}</td></tr><tr><td>เฉลี่ย/ตร.ม. (พื้นที่ภายใน)</td><td>${baht(C.perInner)}</td></tr></table><p class="mute">${styleOf().roof === "none" ? "ยังไม่รวมหลังคา · " : ""}จากราคาต่อหน่วยใน 📐 ตรวจแบบ/BOQ (ค่าตั้งต้นเป็นค่าประมาณ ปรับได้)</p>`; } catch (e) { console.error(e); } }
+  h += `<div class="btns"><button class="b" data-a="renFloor">✎ เปลี่ยนชื่อชั้น</button>${plan.floors.length > 1 ? `<button class="b del" data-a="delFloor">ลบชั้นนี้</button>` : ""}</div>`;
+  return h;
+}
+function drawIcons() {
+  $panel.querySelectorAll("canvas[data-ic]").forEach(c => {
+    const def = FURN[c.dataset.ic], g = c.getContext("2d"), sc = Math.min(96 / def.w, 76 / def.h, 70);
+    X = g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 108, 88); g.translate(54, 44); g.scale(sc, sc); g.lineWidth = 1.6 / sc; g.strokeStyle = "#5B544C"; g.fillStyle = "#fff"; FD[def.d](def.w, def.h);
+  });
+  X = ctx;
+}
+$panel.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.rt) { roomType = b.dataset.rt; updatePanel(); return; }
+  if (b.dataset.ok) { openKind = b.dataset.ok; updatePanel(); return; }
+  if (b.dataset.ft) { furnType = b.dataset.ft; $panel.querySelectorAll("[data-ft]").forEach(x => x.classList.toggle("on", x === b)); return; }
+  const o = getSel(), bf = snapshot(), f = FL();
+  switch (b.dataset.a) {
+    case "polyDone": finishPoly(); break;
+    case "polyBack": poly.pop(); if (!poly.length) poly = null; updatePanel(); draw(); break;
+    case "polyCancel": poly = null; updatePanel(); draw(); break;
+    case "del": deleteSel(); break;
+    case "elder": o.elder = !o.elder; commit(bf); if (o.elder && elderCheck(o, f, cur).some(q => q[0] === 2)) toast("มีบางข้อยังไม่ผ่าน — กด \"ปรับให้ผ่านเกณฑ์\""); break;
+    case "elderFix": elderFix(o); break;
+    case "rot90": o.rot = ((o.rot || 0) + 90) % 360; commit(bf); break;
+    case "flip": o.flip = !o.flip; commit(bf); break;
+    case "hinge": o.hinge = !o.hinge; commit(bf); break;
+    case "dup": {
+      const c = JSON.parse(JSON.stringify(o)); c.id = uid();
+      if (sel.t === "room") { const [a, , cc] = bbox(o.pts); c.pts = c.pts.map(p => [r3(p[0] + cc - a), p[1]]); c.name = autoName(c.type); f.rooms.push(c); }
+      else { c.x = r3(c.x + (sel.t === "item" ? o.w + 0.1 : 0.5)); f[sel.t === "item" ? "items" : "labels"].push(c); }
+      sel = { t: sel.t, id: c.id }; commit(bf); break; }
+    case "toFloor": {
+      if (plan.floors.length < 2) { toast("มีชั้นเดียว — เพิ่มชั้นก่อนด้วยปุ่ม + ชั้น"); break; }
+      const names = plan.floors.map((fl, i) => `${i + 1} = ${fl.name}`).join("\n"), n = parseInt(prompt("ย้ายไปชั้นไหน?\n" + names, String(cur === 0 ? 2 : 1)), 10) - 1;
+      if (isNaN(n) || n < 0 || n >= plan.floors.length || n === cur) break;
+      f.rooms = f.rooms.filter(r => r !== o); plan.floors[n].rooms.push(o); cur = n; commit(bf); break; }
+    case "renFloor": { const n = prompt("ชื่อชั้น", f.name); if (n && n.trim()) { f.name = n.trim().slice(0, 24); commit(bf); } break; }
+    case "delFloor": if (confirm(`ลบ "${f.name}" ทั้งชั้น?`)) { plan.floors.splice(cur, 1); cur = clamp(cur, 0, plan.floors.length - 1); sel = null; commit(bf); } break;
+  }
+});
+function panelEdit(e, live) {
+  const el = e.target, k = el.dataset.k; if (!k) return;
+  if (k === "roomType") { roomType = el.value; return; }
+  const o = getSel(); if (!o) return; const v = el.value, num = parseFloat(v);
+  switch (k) {
+    case "name": o.name = v; break;
+    case "text": o.text = v; break;
+    case "size": o.size = num; break;
+    case "type": { const old = o.type; o.type = v; if (!live && (o.name.startsWith((ROOM_TYPES[old] || ROOM_TYPES.other).n) || !o.name.trim())) o.name = autoName(v); break; }
+    case "rw": case "rh": { if (live || !(num >= 0.3)) return; const [a, b, c, d] = bbox(o.pts), w = k === "rw" ? num : c - a, h = k === "rh" ? num : d - b; o.pts = rectPts(a, b, r3(w), r3(h)); break; }
+    case "iw": if (!live && num > 0) o.w = r3(num); break;
+    case "ih": if (!live && num > 0) o.h = r3(num); break;
+    case "rot": if (!live && !isNaN(num)) o.rot = ((Math.round(num) % 360) + 360) % 360; break;
+    case "kind": o.kind = v; break;
+    case "ow": if (!live && num >= 0.3) o.w = r3(num); break;
+  }
+  if (live) { draw(); return; }
+  commit(panelSnap); panelSnap = snapshot();
+}
+$panel.addEventListener("input", e => { if (e.target.matches("input[data-k=name], input[data-k=text]")) panelEdit(e, true); });
+$panel.addEventListener("change", e => panelEdit(e, false));
+
+/* ============================================================ header buttons / overlays */
+const $ = id => document.getElementById(id);
+$("undoBtn").onclick = doUndo; $("redoBtn").onclick = doRedo;
+$("zIn").onclick = () => zoomAt(1.3, CW / 2, CH / 2); $("zOut").onclick = () => zoomAt(1 / 1.3, CW / 2, CH / 2); $("zFit").onclick = fit;
+$("stepSel").onchange = e => { step = parseFloat(e.target.value); save(); };
+function openOv(id) { document.querySelectorAll(".ov").forEach(o => o.hidden = o.id !== id); }
+function closeOv() { document.querySelectorAll(".ov").forEach(o => o.hidden = true); }
+document.querySelectorAll(".ov").forEach(o => o.addEventListener("click", e => { if (e.target === o || e.target.closest("[data-close]")) closeOv(); }));
+$("menuBtn").onclick = () => openOv("menuOv");
+$("genBtn").onclick = () => { if (plan.land) { $("gLw").value = plan.land.w; $("gLd").value = plan.land.h; } openOv("genOv"); };
+let toastT = 0;
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600); }
+$("menuOv").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]"); if (!b) return; closeOv();
+  ({
+    new() { if (!confirm("เริ่มแบบใหม่? (แบบเดิมย้อนกลับได้ด้วย ↶)")) return; const bf = snapshot(); plan = newPlan(); cur = 0; sel = null; commit(bf); fit(); },
+    open() { $("fileIn").dataset.mode = "open"; $("fileIn").click(); },
+    save() { saveFile(new Blob([JSON.stringify(plan, null, 1)], { type: "application/json" }), safeName(plan.name) + ".json"); },
+    png() { planImage(cur).toBlob(b => saveFile(b, safeName(plan.name) + "-" + safeName(FL().name) + ".png"), "image/png"); },
+    print: doPrint,
+    import() { openOv("impOv"); },
+    prompt: copyPrompt,
+    land() { $("lW").value = plan.land ? plan.land.w : 16; $("lD").value = plan.land ? plan.land.h : 20; landInfo(); openOv("landOv"); },
+    help() { openOv("helpOv"); },
+  })[b.dataset.m]();
+});
+function landInfo() { const w = +$("lW").value, h = +$("lD").value; $("lInfo").textContent = w > 0 && h > 0 ? `${fmt(w * h, 1)} ตร.ม. = ${fmt(w * h / 4, 1)} ตร.ว. (${Math.floor(w * h / 1600)} ไร่ ${Math.floor((w * h % 1600) / 400)} งาน ${fmt((w * h % 400) / 4, 1)} ตร.ว.)` : ""; }
+$("lW").oninput = landInfo; $("lD").oninput = landInfo;
+$("lGo").onclick = () => { const w = +$("lW").value, h = +$("lD").value, b = snapshot(); plan.land = w > 0 && h > 0 ? { w: r3(w), h: r3(h) } : null; commit(b); closeOv(); fit(); };
+$("lNone").onclick = () => { const b = snapshot(); plan.land = null; commit(b); closeOv(); };
+const safeName = s => String(s || "plan").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 40);
+async function saveFile(blob, name) {
+  try { const file = new File([blob], name, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPad|iPhone|Android|Macintosh/.test(navigator.userAgent) && "ontouchend" in document) { await navigator.share({ files: [file], title: name }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  toast("บันทึก " + name);
+}
+$("fileIn").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const txt = await f.text(); if ($("fileIn").dataset.mode === "import") { $("impTxt").value = txt; return; } importText(txt);
+};
+$("impFile").onclick = () => { $("fileIn").dataset.mode = "import"; $("fileIn").click(); };
+$("impGo").onclick = () => { if (importText($("impTxt").value)) closeOv(); };
+$("impPrompt").onclick = copyPrompt;
+document.querySelectorAll("#genOv .chips button").forEach(b => b.onclick = () => b.classList.toggle("on"));
+$("genGo").onclick = () => {
+  const on = k => document.querySelector(`#genOv [data-g="${k}"]`).classList.contains("on");
+  const o = { lw: +$("gLw").value, ld: +$("gLd").value, sf: +$("gSf").value, ss: +$("gSs").value, sb: +$("gSb").value, floors: +$("gF").value, beds: +$("gBed").value, baths: +$("gBath").value, cars: +$("gCar").value, size: $("gSize").value, work: on("work"), pray: on("pray"), bedDown: on("bedDown"), porch: on("porch") };
+  if (!(o.lw >= 5 && o.ld >= 5)) { toast("กรอกขนาดที่ดินอย่างน้อย 5 × 5 ม."); return; }
+  const res = generate(o), b = snapshot(); plan = res.plan; cur = 0; sel = null; commit(b); closeOv(); fit();
+  toast(res.warn || `สร้างแล้ว: ${plan.floors.length} ชั้น รวม ${fmt(plan.floors.reduce((s, f) => s + floorArea(f), 0), 0)} ตร.ม.`);
+};
+
+/* ============================================================ export image / print */
+function planImage(fi, pxm) {
+  const [a, b, c, d] = planBounds(fi), m = 1.4; pxm = pxm || clamp(2600 / Math.max(c - a + 2 * m, d - b + 2 * m), 20, 90);
+  const head = 64, foot = 40, W = Math.round((c - a + 2 * m) * pxm), H = Math.round((d - b + 2 * m) * pxm) + head + foot;
+  const can = document.createElement("canvas"); can.width = W; can.height = H;
+  const sv = { ...view }, sx = X; X = can.getContext("2d"); view.s = pxm; view.x = (m - a) * pxm; view.y = (m - b) * pxm + head;
+  X.fillStyle = "#fff"; X.fillRect(0, 0, W, H);
+  try { drawPlan(fi, { ghost: false, sel: false }); } finally {}
+  const f = plan.floors[fi];
+  X.fillStyle = "#2B2A28"; X.textAlign = "left"; X.textBaseline = "middle"; X.font = "700 26px sans-serif"; X.fillText(`${plan.name} — ${f.name}`, 20, 26);
+  X.font = "17px sans-serif"; X.fillStyle = "#5E5850"; X.fillText(`พื้นที่ชั้นนี้ ${fmt(floorArea(f))} ตร.ม. · รวมทั้งหลัง ${fmt(plan.floors.reduce((s, q) => s + floorArea(q), 0))} ตร.ม.`, 20, 50);
+  /* scale bar */
+  const y = H - 22, x0 = 20; X.strokeStyle = "#2B2A28"; X.lineWidth = 2; X.beginPath(); X.moveTo(x0, y); X.lineTo(x0 + 5 * pxm, y); X.stroke();
+  for (let i = 0; i <= 5; i++) { X.beginPath(); X.moveTo(x0 + i * pxm, y - (i % 5 ? 4 : 7)); X.lineTo(x0 + i * pxm, y + (i % 5 ? 4 : 7)); X.stroke(); }
+  X.fillStyle = "#2B2A28"; X.font = "14px sans-serif"; X.textAlign = "left"; X.fillText("0      5 ม.", x0 + 5 * pxm + 10, y);
+  Object.assign(view, sv); X = sx; draw();
+  return can;
+}
+function doPrint() {
+  const pr = $("print");
+  pr.innerHTML = plan.floors.map((f, i) => `<div class="pg"><img src="${planImage(i).toDataURL("image/png")}"></div>`).join("");
+  setTimeout(() => window.print(), 300);
+}
+
+/* ============================================================ AI import (option B) */
+const PROMPT = `ช่วยออกแบบแปลนบ้านคร่าวๆ ตามความต้องการนี้:
+[เขียนความต้องการตรงนี้ เช่น ที่ดิน 15×20 ม. บ้าน 2 ชั้น 3 ห้องนอน 3 ห้องน้ำ จอดรถ 2 คัน มีห้องพระชั้นบน หน้าบ้านหันทิศเหนือ]
+
+ตอบกลับเป็น JSON อย่างเดียว (ไม่ต้องอธิบาย) ตามรูปแบบนี้ หน่วยเป็นเมตร แกน x ไปทางขวา แกน y ลงล่าง ด้านหน้าบ้าน/ถนนอยู่ด้านล่าง (ค่า y มาก) มุมซ้ายบนของที่ดินคือ (0,0)
+{
+ "name": "ชื่อแบบ",
+ "land": {"w": 15, "h": 20},
+ "floors": [
+  {"name": "ชั้น 1",
+   "rooms": [ {"name": "ห้องนั่งเล่น", "type": "living", "x": 3, "y": 10, "w": 5, "h": 4} ],
+   "openings": [ {"room": "ห้องนั่งเล่น", "wall": "bottom", "at": 2.5, "w": 1.6, "kind": "door2"} ],
+   "items": [ {"type": "sofa", "x": 5.5, "y": 11, "rot": 0} ]
+  }
+ ]
+}
+กติกา:
+- rooms: x,y = มุมซ้ายบนของห้อง, w = กว้าง (แกน x), h = ลึก (แกน y) · ห้องไม่ซ้อนกัน ห้องที่ติดกันใช้แนวผนังเดียวกัน
+- ห้องรูปทรงอื่นใช้ "pts": [[x,y],[x,y],...] แทน x,y,w,h
+- type ห้อง: bed bath living dining kitchen garage porch stair hall work pray laundry store other
+- ห้องสำหรับผู้สูงอายุ/วีลแชร์ ใส่ "elder": true และออกแบบให้ประตูกว้าง ≥ 1.0 ม. มีที่ว่างหมุนวีลแชร์ Ø 1.5 ม. ห้องน้ำใช้ประตูบานเลื่อนหรือเปิดออก และใส่ราวจับ (type "grab") ข้างชักโครก ห้องนอนผู้สูงอายุควรอยู่ชั้น 1 ติดห้องน้ำ
+- openings: kind = door | door2 | slide | window | opening · wall = top | bottom | left | right ของห้องนั้น · at = ระยะจากมุมซ้าย (หรือมุมบนสำหรับผนังซ้าย/ขวา) ถึงกึ่งกลางช่อง (ม.) · w = ความกว้างช่อง
+- items (ไม่ใส่ก็ได้): x,y = จุดกึ่งกลาง, rot = องศา (0/90/180/270) · type: ${Object.keys(FURN).join(" ")}
+- บ้านหลายชั้นให้บันได (type "stair") อยู่ตำแหน่งเดียวกันทุกชั้น และเว้นระยะร่นจากแนวเขตที่ดิน`;
+async function copyPrompt() {
+  try { await navigator.clipboard.writeText(PROMPT); toast("คัดลอกคำสั่งแล้ว — ไปวางในแชท Claude ได้เลย"); }
+  catch (e) { $("impTxt").value = PROMPT; openOv("impOv"); $("impTxt").select(); toast("คัดลอกอัตโนมัติไม่ได้ — กดค้างเพื่อคัดลอกข้อความในกล่อง"); }
+}
+function guessType(t) {
+  t = String(t || "").toLowerCase(); if (ROOM_TYPES[t]) return t;
+  const M = [["bed", /นอน|bed/], ["bath", /น้ำ|ส้วม|bath|toilet|wc/], ["living", /นั่งเล่น|รับแขก|living/], ["dining", /ทาน|อาหาร|dining/], ["kitchen", /ครัว|kitchen/], ["garage", /รถ|garage|carport|parking/], ["porch", /ระเบียง|ชาน|เฉลียง|porch|balcony|terrace/], ["stair", /บันได|stair/], ["hall", /โถง|ทางเดิน|hall|corridor/], ["work", /ทำงาน|office|study|work/], ["pray", /พระ|pray|shrine/], ["laundry", /ซัก|laundry/], ["store", /เก็บ|store|storage/]];
+  for (const [k, re] of M) if (re.test(t)) return k; return "other";
+}
+function normalizePlan(d) {
+  if (Array.isArray(d)) d = { floors: d };
+  if (!d.floors && d.rooms) d = { ...d, floors: [d] };
+  if (!d.floors || !d.floors.length) throw new Error("ไม่พบ floors หรือ rooms");
+  const num = v => { const n = parseFloat(v); return isFinite(n) ? n : NaN; };
+  const p = { app: "houseplan", v: 1, name: String(d.name || "แบบจาก AI").slice(0, 40), land: null, floors: [] };
+  if (d.land && num(d.land.w) > 0) p.land = { w: num(d.land.w), h: num(d.land.h || d.land.d || d.land.depth) || num(d.land.w) };
+  d.floors.forEach((f, fi) => {
+    const F = newFloor(String(f.name || "ชั้น " + (fi + 1)).slice(0, 24)); if (num(f.height) > 0) F.height = num(f.height);
+    for (const r of f.rooms || []) {
+      let pts = r.pts || r.points || r.polygon;
+      if (!pts && [r.x, r.y, r.w, r.h].every(v => isFinite(num(v)))) pts = rectPts(num(r.x), num(r.y), num(r.w), num(r.h ?? r.d));
+      if (!Array.isArray(pts) || pts.length < 3) continue;
+      pts = pts.map(q => Array.isArray(q) ? [r3(num(q[0])), r3(num(q[1]))] : [r3(num(q.x)), r3(num(q.y))]); if (pts.some(q => q.some(isNaN))) continue;
+      const type = guessType(r.type || r.name);
+      const room = { id: uid(), name: String(r.name || ROOM_TYPES[type].n).slice(0, 30), type, pts };
+      if (r.elder || r.accessible || /ผู้สูงอายุ|วีลแชร์|elder|wheelchair/i.test(String(r.name || ""))) room.elder = true;
+      F.rooms.push(room);
+    }
+    const ops = [...(f.openings || f.opens || []), ...(f.doors || []).map(o => ({ kind: "door", ...o })), ...(f.windows || []).map(o => ({ kind: "window", ...o }))];
+    for (const o of ops) {
+      let kind = OPEN_KINDS[o.kind] ? o.kind : /window|หน้าต่าง/i.test(o.kind || "") ? "window" : /slid|เลื่อน/i.test(o.kind || "") ? "slide" : /double|คู่/i.test(o.kind || "") ? "door2" : "door";
+      const op = { id: uid(), kind, x: 0, y: 0, a: 0, w: num(o.w || o.width) > 0 ? num(o.w || o.width) : kind === "window" ? 1.2 : 0.9, flip: !!o.flip, hinge: !!o.hinge };
+      if (o.room && o.wall) {
+        const r = F.rooms.find(q => q.name === o.room) || F.rooms.find(q => q.name.includes(o.room)); if (!r) continue;
+        const [a, b, c, dd] = bbox(r.pts), wall = String(o.wall).toLowerCase(), vert = /left|right|ซ้าย|ขวา/.test(wall), len = vert ? dd - b : c - a;
+        const at = clamp(isFinite(num(o.at)) ? num(o.at) : len / 2, Math.min(op.w / 2, len / 2), Math.max(len / 2, len - op.w / 2)), base = !!o.flip;
+        /* default swing: into the room */
+        if (/top|บน|หลัง/.test(wall)) { op.x = a + at; op.y = b; op.flip = base; }
+        else if (/bottom|ล่าง|หน้า/.test(wall)) { op.x = a + at; op.y = dd; op.flip = !base; }
+        else if (/left|ซ้าย/.test(wall)) { op.x = a; op.y = b + at; op.a = Math.PI / 2; op.flip = !base; }
+        else { op.x = c; op.y = b + at; op.a = Math.PI / 2; op.flip = base; }
+        op.x = r3(op.x); op.y = r3(op.y);
+      } else if (isFinite(num(o.x)) && isFinite(num(o.y))) { op.x = num(o.x); op.y = num(o.y); op.a = isFinite(num(o.a)) ? num(o.a) : rad(num(o.rot) || 0); }
+      else continue;
+      F.opens.push(op);
+    }
+    for (const it of f.items || f.furniture || []) {
+      let type = FURN[it.type] ? it.type : Object.keys(FURN).find(k => FURN[k].n === it.type || (it.type && FURN[k].n.includes(it.type))) || null; if (!type) continue;
+      let x = num(it.x), y = num(it.y);
+      if (!(isFinite(x) && isFinite(y)) && it.room) { const r = F.rooms.find(q => q.name === it.room); if (!r) continue; [x, y] = centroid(r.pts); }
+      if (!(isFinite(x) && isFinite(y))) continue;
+      F.items.push({ id: uid(), type, x: r3(x), y: r3(y), w: num(it.w) > 0 ? num(it.w) : FURN[type].w, h: num(it.h) > 0 ? num(it.h) : FURN[type].h, rot: num(it.rot) || 0 });
+    }
+    for (const l of f.labels || []) if (l.text && isFinite(num(l.x))) F.labels.push({ id: uid(), x: num(l.x), y: num(l.y), text: String(l.text).slice(0, 60), size: num(l.size) || 0.4 });
+    p.floors.push(F);
+  });
+  if (!p.floors.some(f => f.rooms.length)) throw new Error("ไม่พบห้องที่ใช้ได้");
+  return p;
+}
+function importText(txt) {
+  try {
+    let t = String(txt || "").trim(); const m = t.match(/```(?:json)?\s*([\s\S]*?)```/); if (m) t = m[1];
+    const s = t.indexOf("{"), s2 = t.indexOf("["), st = s < 0 ? s2 : s2 < 0 ? s : Math.min(s, s2); if (st > 0) t = t.slice(st);
+    const d = JSON.parse(t), np = d.app === "houseplan" && d.floors && d.floors[0] && d.floors[0].opens ? d : normalizePlan(d);
+    const b = snapshot(); plan = np; cur = 0; sel = null; poly = null; commit(b); fit();
+    toast(`นำเข้าแล้ว: ${plan.floors.length} ชั้น ${plan.floors.reduce((s, f) => s + f.rooms.length, 0)} ห้อง`); return true;
+  } catch (e) { alert("อ่านแปลนไม่ได้: " + e.message + "\n\nตรวจว่าเป็น JSON ที่คัดลอกมาครบทั้งก้อน"); return false; }
+}
+
+/* ============================================================ auto layout (option A) */
+function generate(o) {
+  const nF = clamp(o.floors | 0, 1, 3), BED = { S: 9, M: 12, L: 15 }[o.size] || 12, warn = [];
+  const R = (type, area, extra) => ({ type, area, ...extra });
+  const beds = Array.from({ length: o.beds }, (_, i) => R("bed", i === 0 ? BED + 4 : BED, { master: i === 0 }));
+  const baths = Array.from({ length: o.baths }, (_, i) => R("bath", 0, { fixW: i === 0 ? 2.0 : 1.8 }));
+  const living = R("living", clamp(14 + 2 * o.beds, 16, 30)), dining = R("dining", o.beds > 3 ? 12 : 9), kitchen = R("kitchen", 9), laundry = R("laundry", 0, { fixW: 1.8 });
+  const garage = o.cars ? R("garage", 0, { fixW: 3.1 * o.cars }) : null, stairR = () => R("stair", 0, { fixW: 2.6 });
+  const work = o.work ? R("work", 9) : null, pray = o.pray ? R("pray", 5) : null;
+  const interleave = (bs, ts) => { const out = []; bs.forEach((b, i) => { out.push(b); if (ts[i]) out.push(ts[i]); }); return out.concat(ts.slice(bs.length)); };
+  const F = [];
+  if (nF === 1) {
+    if (o.bedDown && beds.length) { Object.assign(beds[0], { elder: true, master: false, nm: "ห้องนอนผู้สูงอายุ", area: Math.max(beds[0].area, 15) }); if (baths.length) Object.assign(baths[0], { elder: true, fixW: 2.4, nm: "ห้องน้ำผู้สูงอายุ" }); }
+    F.push({ back: interleave(beds, baths), front: [garage, living, dining, kitchen, laundry, work, pray].filter(Boolean) });
+  } else {
+    const down = o.bedDown && beds.length > 1 ? [beds.pop()] : [];
+    if (down.length) { down[0].elder = true; down[0].nm = "ห้องนอนผู้สูงอายุ"; down[0].area = Math.max(down[0].area, 15); }
+    const bath1 = baths.shift() || R("bath", 0, { fixW: 1.8 }); if (down.length) { bath1.elder = true; bath1.fixW = 2.4; bath1.nm = "ห้องน้ำผู้สูงอายุ"; }
+    F.push({ back: [kitchen, dining, laundry, bath1, ...down], front: [stairR(), living, garage, ...(nF === 1 ? [] : [])].filter(Boolean) });
+    const up = nF - 1, bedsPer = [], bathsPer = [];
+    for (let k = 0; k < up; k++) { bedsPer.push([]); bathsPer.push([]); }
+    beds.forEach((b, i) => bedsPer[i % up].push(b)); baths.forEach((b, i) => bathsPer[i % up].push(b));
+    for (let k = 0; k < up; k++) {
+      const bs = bedsPer[k], ts = bathsPer[k].length ? bathsPer[k] : [R("bath", 0, { fixW: 1.8 })], half = Math.ceil(bs.length / 2);
+      const front = [stairR(), ...bs.slice(half)]; if (k === 0 && work) front.push(work); if (k === up - 1 && pray) front.push(pray);
+      if (front.length === 1) front.push(R("living", 12, { nm: "ห้องนั่งเล่นชั้นบน" }));
+      F.push({ back: interleave(bs.slice(0, half), ts), front });
+    }
+  }
+  for (const f of F) { if (!f.back.length) f.back.push(R("store", 6)); if (!f.front.length) f.front.push(R("store", 6)); }
+  const corr = nF === 1 ? 1.2 : 1.5;
+  const availW = Math.max(4, o.lw - 2 * o.ss), porchD = o.porch ? 2 : 0, availD = Math.max(4, o.ld - o.sf - o.sb - porchD);
+  const est = Math.max(...F.map(f => [...f.back, ...f.front].reduce((s, r) => s + r.area + (r.fixW || 0) * 5, 0)));
+  /* width: rooms in a strip should come out roughly square */
+  const stripW = l => l.reduce((s, r) => s + (r.fixW || Math.sqrt(r.area) * 0.95), 0);
+  let W = clamp(Math.ceil(Math.max(Math.sqrt(est * 1.15), ...F.map(f => Math.max(stripW(f.back), stripW(f.front)))) * 2) / 2, 6, availW), Db = 0, Df = 0, D = 0;
+  for (let it = 0; it < 6; it++) {
+    Db = 0; Df = 0;
+    for (const f of F) {
+      const fb = f.back.reduce((s, r) => s + (r.fixW || 0), 0), ff = f.front.reduce((s, r) => s + (r.fixW || 0), 0);
+      Db = Math.max(Db, f.back.reduce((s, r) => s + r.area, 0) / Math.max(1, W - fb));
+      Df = Math.max(Df, f.front.reduce((s, r) => s + r.area, 0) / Math.max(1, W - ff));
+    }
+    Db = Math.max(3, Db); Df = Math.max(F.some(f => f.front.some(r => r.type === "garage")) ? 5.5 : F.some(f => f.front.some(r => r.type === "stair")) ? 4.5 : 3, Df);
+    D = Db + corr + Df;
+    if (D > availD && W < availW) { W = Math.min(availW, Math.ceil(W * D / availD * 2) / 2); continue; }
+    break;
+  }
+  if (D > availD) { const k = (availD - corr) / (Db + Df); Db *= k; Df *= k; D = availD; warn.push("ห้องที่ต้องการใหญ่กว่าที่ดิน — ปรับห้องให้เล็กลงแล้ว"); }
+  const q = v => Math.round(v * 20) / 20;
+  W = q(W); Db = q(Db); Df = q(Df); D = q(Db + corr + Df);
+  /* upper floors: give leftover space its own room instead of one huge bedroom */
+  F.forEach((f, fi) => { if (!fi) return;
+    for (const [key, depth] of [["front", Df], ["back", Db]]) { const l = f[key], cap = (W - l.reduce((s, r) => s + (r.fixW || 0), 0)) * depth, sum = l.reduce((s, r) => s + r.area, 0);
+      if (cap - sum > 9) { const fill = key === "front" && !l.some(r => r.type === "living") ? R("living", (cap - sum) * 0.5, { nm: "ห้องนั่งเล่นชั้น " + (fi + 1) }) : R("other", (cap - sum) * 0.5, { nm: "ห้องอเนกประสงค์" }); l.splice(key === "front" ? 1 : l.length, 0, fill); } } });
+  const x0 = q(o.ss + (availW - W) / 2), yb = q(o.ld - o.sf - porchD), y0 = q(yb - D);
+  const plan = { app: "houseplan", v: 1, name: `บ้าน ${nF} ชั้น ${o.beds} ห้องนอน ${o.baths} ห้องน้ำ`, land: { w: o.lw, h: o.ld }, floors: [] };
+  const counters = {}, nameOf = (r) => { if (r.nm) return r.nm; if (r.master) return "ห้องนอนใหญ่"; const base = ROOM_TYPES[r.type].n; if (["bed", "bath", "store"].includes(r.type)) { counters[r.type] = (counters[r.type] || 0) + 1; return base + " " + counters[r.type]; } return base; };
+  const strip = (list, y, h) => {
+    const fixT = list.reduce((s, r) => s + (r.fixW || 0), 0), flex = list.filter(r => !r.fixW), sumA = flex.reduce((s, r) => s + r.area, 0) || 1;
+    let x = x0; const scale = fixT > W ? W / fixT : 1;
+    return list.map((r, i) => { let w = r.fixW ? r.fixW * scale : (W - fixT * scale) * r.area / sumA; let x2 = i === list.length - 1 ? x0 + W : q(x + w); const out = { r, x: q(x), y, w: q(x2 - x), h }; x = x2; return out; });
+  };
+  F.forEach((f, fi) => {
+    const FLR = newFloor("ชั้น " + (fi + 1)), add = (r, x, y, w, h) => { const room = { id: uid(), name: nameOf(r), type: r.type, pts: rectPts(x, y, w, h) }; if (r.elder) room.elder = true; FLR.rooms.push(room); return room; };
+    const door = (x, y, a, w, kind, flip) => FLR.opens.push({ id: uid(), kind: kind || "door", x: r3(x), y: r3(y), a, w, flip: !!flip, hinge: false });
+    const item = (type, x, y, rot) => FLR.items.push({ id: uid(), type, x: r3(x), y: r3(y), w: FURN[type].w, h: FURN[type].h, rot: rot || 0 });
+    const backs = strip(f.back, y0, Db), fronts = strip(f.front, q(y0 + Db + corr), Df);
+    add(R("hall", 0, { nm: nF === 1 ? "ทางเดิน" : fi === 0 ? "โถง" : "โถงชั้น " + (fi + 1) }), x0, q(y0 + Db), W, corr);
+    for (const s of backs) {
+      const rm = add(s.r, s.x, s.y, s.w, s.h), by = s.y + s.h, t = s.r.type, el = !!s.r.elder, dw = el ? ELDER_DOOR : t === "bath" ? 0.7 : 0.9;
+      if (t === "dining" || t === "kitchen") door(s.x + s.w / 2, by, 0, q(Math.min(1.6, s.w - 0.5)), "opening");
+      else if (s.w >= dw + 0.3) door(s.x + 0.2 + dw / 2, by, 0, dw, el && t === "bath" ? "slide" : "door", true);
+      if (s.w > 1.2 && t !== "store") door(s.x + s.w / 2, s.y, 0, q(Math.min(t === "bath" ? 0.6 : Math.max(1.2, s.w * s.h * 0.12 / 1.2), s.w - 0.8)), "window");
+      if (t === "bed") { if (s.w >= 2.2 && s.h >= 2.6) item(s.r.master && s.w >= 3 ? "bed6" : "bed5", s.x + s.w / 2 + (s.w > 3.2 ? 0.3 : 0), s.y + WALL / 2 + 1.0); }
+      if (t === "bath") { item("toilet", s.x + s.w - 0.45, s.y + WALL / 2 + 0.35); item("basin", s.x + 0.45, s.y + WALL / 2 + 0.23);
+        if (el) item("grab", s.x + s.w - 0.45 - 0.39, s.y + WALL / 2 + 0.45, 90); }
+      if (t === "kitchen") item("counter", s.x + s.w / 2, s.y + WALL / 2 + 0.3);
+      if (t === "kitchen" && s.w >= 1.2) FLR.items[FLR.items.length - 1].w = q(Math.min(2.4, s.w - 0.5));
+      if (t === "dining" && s.w >= 1.8 && s.h >= 2.2) item(o.beds > 3 ? "dtable6" : "dtable4", s.x + s.w / 2, s.y + s.h / 2);
+      if (t === "laundry") item("washer", s.x + 0.45, s.y + WALL / 2 + 0.3);
+    }
+    for (const s of fronts) {
+      const rm = add(s.r, s.x, s.y, s.w, s.h), by = s.y + s.h, t = s.r.type;
+      if (t === "stair") { door(s.x + s.w / 2, s.y, 0, q(Math.min(1.2, s.w - 0.4)), "opening"); continue; }
+      if (t === "living" && fi === 0) { door(s.x + s.w / 2, s.y, 0, q(Math.min(2, s.w - 0.6)), "opening"); door(s.x + s.w / 2, by, 0, 1.6, "door2", true); if (s.w >= 4) door(s.x + s.w * 0.18 + 0.3, by, 0, 1.0, "window");
+        item("sofa", s.x + s.w / 2, s.y + s.h * 0.42); item("ctable", s.x + s.w / 2, s.y + s.h * 0.42 + 0.95); continue; }
+      if (t === "garage") { door(s.x + s.w / 2, by, 0, q(s.w - 0.5), "opening"); door(s.x + 0.2 + 0.45, s.y, 0, 0.9, "door"); for (let i = 0; i < o.cars; i++) item("car", s.x + 1.55 + i * 3.1 * (s.w / (3.1 * o.cars)), s.y + s.h / 2); continue; }
+      door(s.x + 0.2 + 0.45, s.y, 0, 0.9, "door");
+      if (s.w > 1.4) door(s.x + s.w / 2 + (s.w > 2.6 ? 0.4 : 0), by, 0, q(Math.min(Math.max(1.2, s.w * s.h * 0.12 / 1.2), s.w - 1.4)), "window");
+      if (t === "bed" && s.w >= 2.2 && s.h >= 2.6) item("bed5", s.x + s.w / 2 + (s.w > 3.2 ? 0.3 : 0), by - WALL / 2 - 1.0, 180);
+      if (t === "bath") { item("toilet", s.x + s.w - 0.45, by - WALL / 2 - 0.35, 180); item("basin", s.x + 0.45, by - WALL / 2 - 0.23, 180); }
+      if (t === "work") item("desk", s.x + s.w / 2, by - WALL / 2 - 0.5, 180);
+      if (t === "pray") item("altar", s.x + s.w / 2, by - WALL / 2 - 0.25, 180);
+      if (t === "living") item("sofa", s.x + s.w / 2, s.y + s.h / 2);
+    }
+    /* porch / balcony in front of the footprint */
+    if (o.porch) {
+      const host = fi === 0 ? fronts.find(s => s.r.type === "living") : fronts.find(s => s.r.type !== "stair");
+      if (host && (fi === 0 || fi === 1)) { const w = q(Math.min(host.w, fi === 0 ? 4.5 : 3.5)), d = fi === 0 ? 2 : 1.5;
+        add(R("porch", 0, { nm: fi === 0 ? "ชานหน้าบ้าน" : "ระเบียง" }), q(host.x + (host.w - w) / 2), yb, w, d);
+        if (fi > 0) door(host.x + host.w / 2, yb, 0, q(Math.min(1.8, w - 0.6)), "slide"); }
+    }
+    plan.floors.push(FLR);
+  });
+  if (o.cars && Df < 5) warn.push("ช่องจอดรถลึกน้อยกว่า 5 ม. — ลองขยายห้องจอดรถ");
+  return { plan, warn: warn.join(" · ") };
+}
+
+/* ============================================================ colours / style */
+const WALL_COLS = [["#F3EFE6", "ขาวนวล"], ["#EFE3C8", "ครีม"], ["#F6E9B8", "เหลืองอ่อน"], ["#F1D9D4", "ชมพูอ่อน"], ["#D6E6CF", "เขียวอ่อน"], ["#CFE0EA", "ฟ้าอ่อน"], ["#D9D9D6", "เทาอ่อน"], ["#8D8F92", "เทาเข้ม"], ["#B76E4F", "อิฐ"], ["#A67B5B", "ไม้"]];
+const FLOOR_COLS = [["#B8865A", "ไม้สัก"], ["#D9B98C", "ไม้อ่อน"], ["#ECEBE7", "กระเบื้องขาว"], ["#E8E4DC", "หินอ่อน"], ["#BDBDB8", "กระเบื้องเทา"], ["#A9A9A4", "ปูนขัดมัน"], ["#C27A55", "ดินเผา"], ["#BFD7E6", "กระเบื้องฟ้า"], ["#8FB38A", "หญ้า/สนาม"], ["#4A4A4A", "สีเข้ม"]];
+const ROOF_COLS = [["#B5523B", "แดงอิฐ"], ["#C8703F", "ส้มดินเผา"], ["#7A5235", "น้ำตาล"], ["#5A5F66", "เทาเข้ม"], ["#3F5E8C", "น้ำเงิน"], ["#4F7A5A", "เขียว"], ["#C9CCCF", "เทาเงิน"]];
+const ROOF_TYPES = [["none", "ไม่มี"], ["hip", "ปั้นหยา"], ["gable", "จั่ว"], ["shed", "หมาแหงน"], ["flat", "แบน/ดาดฟ้า"]];
+const PITCH = [[0.35, "ลาด"], [0.55, "ปกติ"], [0.9, "ชัน (ทรงไทย)"]];
+function styleOf() { if (!plan.style) plan.style = {}; const s = plan.style; if (!s.roof) s.roof = "none"; if (!s.roofColor) s.roofColor = "#B5523B"; if (!s.ext) s.ext = "#F3EFE6"; if (!s.pitch) s.pitch = 0.55; if (s.dir === undefined) s.dir = 0; if (s.autoLower === undefined) s.autoLower = true; return s; }
+function swatches(kind, cur, list, extra) {
+  return `<div class="sw">${list.map(([c, n]) => `<button data-col="${kind}" data-c="${c}" title="${n}" class="${(cur || "").toUpperCase() === c ? "on" : ""}" style="background:${c}"></button>`).join("")}</div>${extra || ""}`;
+}
+function roomColorHTML(r) {
+  return `<h4>สีพื้น</h4>${swatches("floor", r.floorColor, FLOOR_COLS)}
+    <h4>สีผนังด้านใน</h4>${swatches("wall", r.wallColor, WALL_COLS)}
+    <div class="btns"><button class="b" data-col="allfloor">ใช้สีพื้นนี้ทั้งชั้น</button><button class="b" data-col="allwall">ใช้สีผนังนี้ทั้งชั้น</button><button class="b" data-col="reset">ค่าเริ่มต้น</button></div>`;
+}
+function colorTarget() { if (V3.on && V3.sel) { const f = plan.floors[V3.sel.fi]; return f && { f, r: f.rooms.find(r => r.id === V3.sel.id) }; } const o = getSel(); return o && sel.t === "room" ? { f: FL(), r: o } : null; }
+document.getElementById("panel").addEventListener("click", e => {
+  const b = e.target.closest("[data-col]"); if (!b) return; e.stopPropagation();
+  const k = b.dataset.col, c = b.dataset.c, before = snapshot(), st = styleOf();
+  if (k === "ext") st.ext = c; else if (k === "roofc") st.roofColor = c;
+  else { const t = colorTarget(); if (!t || !t.r) return; const r = t.r;
+    if (k === "floor") r.floorColor = c; else if (k === "wall") r.wallColor = c;
+    else if (k === "allfloor") t.f.rooms.forEach(q => { if (r.floorColor) q.floorColor = r.floorColor; else delete q.floorColor; });
+    else if (k === "allwall") t.f.rooms.forEach(q => { if (r.wallColor) q.wallColor = r.wallColor; else delete q.wallColor; });
+    else if (k === "reset") { delete r.floorColor; delete r.wallColor; } }
+  commit(before);
+}, true);
+
+/* ============================================================ 3D view (own WebGL, works offline) */
+var V3 = { on: false, upto: 99, cut: false, furn: true, sel: null, yaw: -0.55, pitch: 0.62, dist: 30, t: [0, 0, 0], need: true, gl: null, n: 0, ng: 0 };
+const cv3 = document.getElementById("cv3");
+const hex3 = (h, k) => { h = h.replace("#", ""); const n = parseInt(h, 16); k = k || 1; return [((n >> 16) & 255) / 255 * k, ((n >> 8) & 255) / 255 * k, (n & 255) / 255 * k]; };
+let VB = [], GB = [];                 /* opaque / glass: x y z nx ny nz r g b a */
+function tri3(A, a, b, c, n, col) { for (const p of [a, b, c]) A.push(p[0], p[1], p[2], n[0], n[1], n[2], col[0], col[1], col[2], col[3] === undefined ? 1 : col[3]); }
+function quad3(A, a, b, c, d, n, col) { tri3(A, a, b, c, n, col); tri3(A, a, c, d, n, col); }
+/* oriented box: centre (cx, cz) on plan, local x along angle a, size lx × lz, height y0..y1 */
+function obox(A, cx, cz, lx, lz, y0, y1, a, col) {
+  const c = Math.cos(a), s = Math.sin(a), hx = lx / 2, hz = lz / 2;
+  const P = (u, v, y) => [cx + u * c - v * s, y, cz + u * s + v * c], N = (u, v) => [u * c - v * s, 0, u * s + v * c];
+  const k = col.length === 4 ? col : [...col, 1];
+  quad3(A, P(-hx, -hz, y1), P(hx, -hz, y1), P(hx, hz, y1), P(-hx, hz, y1), [0, 1, 0], k);
+  quad3(A, P(-hx, -hz, y0), P(hx, -hz, y0), P(hx, hz, y0), P(-hx, hz, y0), [0, -1, 0], k);
+  quad3(A, P(-hx, -hz, y0), P(hx, -hz, y0), P(hx, -hz, y1), P(-hx, -hz, y1), N(0, -1), k);
+  quad3(A, P(-hx, hz, y0), P(hx, hz, y0), P(hx, hz, y1), P(-hx, hz, y1), N(0, 1), k);
+  quad3(A, P(-hx, -hz, y0), P(-hx, hz, y0), P(-hx, hz, y1), P(-hx, -hz, y1), N(-1, 0), k);
+  quad3(A, P(hx, -hz, y0), P(hx, hz, y0), P(hx, hz, y1), P(hx, -hz, y1), N(1, 0), k);
+}
+function triangulate(pts) {
+  const sa = pts.reduce((s, p, i) => { const q = pts[(i + 1) % pts.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0);
+  let P = pts.map((_, i) => i); if (sa < 0) P.reverse();
+  const cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const inT = (p, a, b, c) => cr(a, b, p) > 1e-9 && cr(b, c, p) > 1e-9 && cr(c, a, p) > 1e-9;
+  const out = [];
+  for (let guard = 0; P.length > 3 && guard < 500; guard++) {
+    let cut = false;
+    for (let i = 0; i < P.length; i++) {
+      const ia = P[(i + P.length - 1) % P.length], ib = P[i], ic = P[(i + 1) % P.length], a = pts[ia], b = pts[ib], c = pts[ic];
+      if (cr(a, b, c) <= 1e-9) continue;
+      if (P.some(j => j !== ia && j !== ib && j !== ic && inT(pts[j], a, b, c))) continue;
+      out.push([a, b, c]); P.splice(i, 1); cut = true; break;
+    }
+    if (!cut) { P.splice(0, 1); }
+  }
+  if (P.length === 3) out.push(P.map(i => pts[i]));
+  return out;
+}
+/* merge rectangles that share a full edge at the same height into bigger rectangles */
+function mergeRects(rects) {
+  rects = rects.map(q => ({ b: q.b.slice(), y: q.y }));
+  const eq = (p, q) => Math.abs(p - q) < 0.02;
+  for (let changed = true; changed;) { changed = false;
+    for (let i = 0; i < rects.length && !changed; i++) for (let j = i + 1; j < rects.length && !changed; j++) {
+      const A = rects[i].b, B = rects[j].b; if (!eq(rects[i].y, rects[j].y)) continue;
+      if ((eq(A[1], B[1]) && eq(A[3], B[3]) && (eq(A[2], B[0]) || eq(B[2], A[0]))) || (eq(A[0], B[0]) && eq(A[2], B[2]) && (eq(A[3], B[1]) || eq(B[3], A[1])))) {
+        rects[i].b = [Math.min(A[0], B[0]), Math.min(A[1], B[1]), Math.max(A[2], B[2]), Math.max(A[3], B[3])]; rects.splice(j, 1); changed = true; } } }
+  return rects;
+}
+function poly3(A, pts, col, hint) {
+  const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(...n) || 1; n = n.map(x => x / l);
+  if (n[0] * hint[0] + n[1] * hint[1] + n[2] * hint[2] < 0) n = n.map(x => -x);
+  for (let i = 1; i < pts.length - 1; i++) tri3(A, pts[0], pts[i], pts[i + 1], n, col);
+}
+/* roof over footprint [x0,z0,x1,z1] whose walls stop at height y */
+function roofRect(bb, y, type, dir, pitch, col, ext, o) {
+  const [x0, z0, x1, z1] = bb, X0 = x0 - o, X1 = x1 + o, Z0 = z0 - o, Z1 = z1 + o, w = X1 - X0, d = Z1 - Z0, xm = (X0 + X1) / 2, zm = (Z0 + Z1) / 2, cap = 0.15, yt = y + cap;
+  if (type === "flat") {
+    obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, y + 0.2, 0, hex3("#CFCBC3"));
+    const ph = 0.8, t = 0.15; obox(VB, (x0 + x1) / 2, z0, x1 - x0 + WALL, t, y, y + ph, 0, ext); obox(VB, (x0 + x1) / 2, z1, x1 - x0 + WALL, t, y, y + ph, 0, ext);
+    obox(VB, x0, (z0 + z1) / 2, t, z1 - z0, y, y + ph, 0, ext); obox(VB, x1, (z0 + z1) / 2, t, z1 - z0, y, y + ph, 0, ext); return;
+  }
+  obox(VB, (x0 + x1) / 2, (z0 + z1) / 2, x1 - x0 + WALL, z1 - z0 + WALL, y, yt, 0, ext);
+  let alongX = w >= d; if (dir % 2) alongX = !alongX;
+  if (type === "hip") {
+    const half = (alongX ? d : w) / 2, rh = half * pitch;
+    if (alongX) { let s0 = X0 + half, s1 = X1 - half; if (s0 > s1) s0 = s1 = xm; const r0 = [s0, yt + rh, zm], r1 = [s1, yt + rh, zm];
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], r1, r0], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], r1, r0], col, [0, 1, 0]);
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], r0], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], r1], col, [0, 1, 0]); }
+    else { let s0 = Z0 + half, s1 = Z1 - half; if (s0 > s1) s0 = s1 = zm; const r0 = [xm, yt + rh, s0], r1 = [xm, yt + rh, s1];
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], r1, r0], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], r1, r0], col, [0, 1, 0]);
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], r0], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], r1], col, [0, 1, 0]); }
+    return;
+  }
+  if (type === "gable") {
+    if (alongX) { const half = d / 2, rh = half * pitch, ew = yt + o * pitch, top = yt + rh;
+      poly3(VB, [[X0, yt, Z0], [X1, yt, Z0], [X1, top, zm], [X0, top, zm]], col, [0, 1, 0]); poly3(VB, [[X0, yt, Z1], [X1, yt, Z1], [X1, top, zm], [X0, top, zm]], col, [0, 1, 0]);
+      for (const [x, s] of [[x0 - WALL / 2, -1], [x1 + WALL / 2, 1]]) poly3(VB, [[x, yt, z0], [x, ew, z0], [x, top - 0.02, zm], [x, ew, z1], [x, yt, z1]], ext, [s, 0, 0]); }
+    else { const half = w / 2, rh = half * pitch, ew = yt + o * pitch, top = yt + rh;
+      poly3(VB, [[X0, yt, Z0], [X0, yt, Z1], [xm, top, Z1], [xm, top, Z0]], col, [0, 1, 0]); poly3(VB, [[X1, yt, Z0], [X1, yt, Z1], [xm, top, Z1], [xm, top, Z0]], col, [0, 1, 0]);
+      for (const [z, s] of [[z0 - WALL / 2, -1], [z1 + WALL / 2, 1]]) poly3(VB, [[x0, yt, z], [x0, ew, z], [xm, top - 0.02, z], [x1, ew, z], [x1, yt, z]], ext, [0, 0, s]); }
+    return;
+  }
+  /* shed (หมาแหงน): dir 0 low at front (+z), 1 low at right (+x), 2 low at back, 3 low at left */
+  const k = ((dir % 4) + 4) % 4, p = pitch * 0.5, span = k % 2 ? w : d, rise = span * p;
+  const hAt = s => yt + rise - s * p;            /* s = distance from the high eave */
+  if (k === 0 || k === 2) { const hi = k === 0 ? Z0 : Z1, lo = k === 0 ? Z1 : Z0, zw = k === 0 ? z0 : z1, zl = k === 0 ? z1 : z0;
+    poly3(VB, [[X0, hAt(0), hi], [X1, hAt(0), hi], [X1, hAt(span), lo], [X0, hAt(span), lo]], col, [0, 1, 0]);
+    const hw = hAt(o), hl = hAt(span - o); poly3(VB, [[x0, yt, zw], [x1, yt, zw], [x1, hw, zw], [x0, hw, zw]], ext, [0, 0, k === 0 ? -1 : 1]);
+    for (const [x, s] of [[x0 - WALL / 2, -1], [x1 + WALL / 2, 1]]) poly3(VB, [[x, yt, zw], [x, hw, zw], [x, hl, zl], [x, yt, zl]], ext, [s, 0, 0]); }
+  else { const hi = k === 1 ? X0 : X1, lo = k === 1 ? X1 : X0, xw = k === 1 ? x0 : x1, xl = k === 1 ? x1 : x0;
+    poly3(VB, [[hi, hAt(0), Z0], [hi, hAt(0), Z1], [lo, hAt(span), Z1], [lo, hAt(span), Z0]], col, [0, 1, 0]);
+    const hw = hAt(o), hl = hAt(span - o); poly3(VB, [[xw, yt, z0], [xw, yt, z1], [xw, hw, z1], [xw, hw, z0]], ext, [k === 1 ? -1 : 1, 0, 0]);
+    for (const [z, s] of [[z0 - WALL / 2, -1], [z1 + WALL / 2, 1]]) poly3(VB, [[xw, yt, z], [xw, hw, z], [xl, hl, z], [xl, yt, z]], ext, [0, 0, s]); }
+}
+const H3 = { bed1: .5, bed5: .5, bed6: .5, hbed: .6, wardrobe: 2.0, sofa: .45, armchair: .45, tv: .5, ctable: .42, dtable4: .75, dtable6: .75, desk: .75, counter: .9, fridge: 1.75, toilet: .42, basin: .85, shower: .04, tub: .55, washer: .85, car: .75, moto: 1.0, stairs: .2, altar: 1.0, plant: .45, wchair: .5, grab: .9 };
+const C3 = { bed1: "#F2EEE6", bed5: "#F2EEE6", bed6: "#F2EEE6", hbed: "#E6EEF4", wardrobe: "#B08458", sofa: "#7C8FA6", armchair: "#7C8FA6", tv: "#5A5048", ctable: "#A57C55", dtable4: "#A57C55", dtable6: "#A57C55", desk: "#A57C55", counter: "#D9D4CB", fridge: "#E8ECEF", toilet: "#FFFFFF", basin: "#FFFFFF", shower: "#BFD9E6", tub: "#FFFFFF", washer: "#F3F5F6", car: "#C8463C", moto: "#3B3F46", stairs: "#BFA383", altar: "#C99A3A", plant: "#7A5232", wchair: "#3E6FB5", grab: "#9AA4AE" };
+function addItem3(it, y) {
+  const a = rad(it.rot || 0), c = Math.cos(a), s = Math.sin(a), col = hex3(C3[it.type] || "#C8C2B8"), h = H3[it.type] || .6;
+  const B = (u0, v0, u1, v1, y0, y1, k) => { const u = (u0 + u1) / 2, v = (v0 + v1) / 2; obox(VB, it.x + u * c - v * s, it.y + u * s + v * c, u1 - u0, v1 - v0, y + y0, y + y1, a, k || col); };
+  const w = it.w / 2, d = it.h / 2;
+  switch (it.type) {
+    case "bed1": case "bed5": case "bed6": case "hbed":
+      B(-w, -d, w, d, 0, .3, hex3("#8A6A4C")); B(-w + .03, -d + .03, w - .03, d - .03, .3, .5, col); B(-w, -d, w, -d + .06, 0, .95, hex3("#8A6A4C"));
+      B(-w + .1, -d + .1, w - .1, -d + .42, .5, .6, hex3("#FFFFFF")); B(-w + .03, -d + .6, w - .03, d - .03, .5, .53, hex3(it.type === "hbed" ? "#9EC0DB" : "#9FB8D8")); break;
+    case "sofa": case "armchair":
+      B(-w, -d, w, d, 0, .42, col); B(-w, -d, w, -d + .22, .42, .85, hex3("#6A7C92")); B(-w, -d, -w + .18, d, .42, .62, hex3("#6A7C92")); B(w - .18, -d, w, d, .42, .62, hex3("#6A7C92")); break;
+    case "car":
+      B(-w + .05, -d, w - .05, d, .15, .75, col); B(-w + .2, -d + 1.2, w - .2, d - 1.1, .75, 1.42, hex3("#2D3B4A"));
+      for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(u * w - (u > 0 ? .25 : 0), v * (d - .95) - .32, u * w + (u < 0 ? .25 : 0), v * (d - .95) + .32, 0, .62, hex3("#222222")); break;
+    case "toilet": B(-w, -d, w, -d + .2, 0, .78, col); B(-w + .02, -d + .2, w - .02, d, 0, .42, col); break;
+    case "basin": B(-w, -d, w, d, .7, .85, col); B(-.08, -d, .08, -d + .15, 0, .7, hex3("#DDDDDD")); break;
+    case "dtable4": case "dtable6": case "desk":
+      B(-w, -d + (it.type === "desk" ? 0 : .22), w, (it.type === "desk" ? d * .2 : d - .22), .7, .75, col);
+      for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(u * (w - .06) - .03, v * (d - (it.type === "desk" ? .4 : .3)) - .03, u * (w - .06) + .03, v * (d - (it.type === "desk" ? .4 : .3)) + .03, 0, .7, col);
+      if (it.type !== "desk") { const n = Math.max(1, Math.round((it.w - .2) / .6)); for (let i = 0; i < n; i++) { const u = -w + (i + .5) * it.w / n; B(u - .2, -d, u + .2, -d + .36, 0, .45, hex3("#8A6A4C")); B(u - .2, d - .36, u + .2, d, 0, .45, hex3("#8A6A4C")); B(u - .2, -d, u + .2, -d + .05, .45, .9, hex3("#8A6A4C")); B(u - .2, d - .05, u + .2, d, .45, .9, hex3("#8A6A4C")); } }
+      else B(-.22, d * .3, .22, d * .3 + .44, 0, .46, hex3("#3B3F46"));
+      break;
+    case "plant": B(-.18, -.18, .18, .18, 0, .4, col); B(-w * .8, -d * .8, w * .8, d * .8, .4, 1.3, hex3("#5E9E4E")); break;
+    case "counter": B(-w, -d, w, d, 0, .86, hex3("#C9B79C")); B(-w, -d, w, d, .86, .9, col); if (!V3.cut) B(-w, -d, w, -d + .35, 1.5, 2.2, hex3("#C9B79C")); break;
+    case "grab": B(-w, -d, w, d, .8, .85, col); break;
+    case "wchair": B(-w + .1, -d + .1, w - .1, d - .1, .45, .52, col); B(-w + .1, -d + .1, w - .1, -d + .16, .52, .95, col); B(-w, -d + .3, -w + .05, -d + .9, 0, .62, hex3("#222222")); B(w - .05, -d + .3, w, -d + .9, 0, .62, hex3("#222222")); break;
+    case "altar": B(-w, -d, w, d, 0, .55, col); B(-w * .7, -d * .8, w * .7, d * .6, .55, .8, col); B(-w * .35, -d * .6, w * .35, d * .2, .8, 1.05, col); break;
+    default: B(-w, -d, w, d, 0, h, col);
+  }
+}
+function build3D() {
+  VB = []; GB = []; const st = styleOf(), FE = [];
+  const SLAB = 0.15, WALLC = hex3("#F3EFE6"), SIDE = hex3("#BDB6A8"), GLASS = [0.55, 0.75, 0.9, 0.42];
+  /* ground and land */
+  const [a, b, c, d] = planBounds(), cx = (a + c) / 2, cz = (b + d) / 2, R = Math.max(60, (c - a) * 3, (d - b) * 3);
+  quad3(VB, [cx - R, -0.03, cz - R], [cx + R, -0.03, cz - R], [cx + R, -0.03, cz + R], [cx - R, -0.03, cz + R], [0, 1, 0], [...hex3("#A9C99A"), 1]);
+  if (plan.land) quad3(VB, [0, -0.02, 0], [plan.land.w, -0.02, 0], [plan.land.w, -0.02, plan.land.h], [0, -0.02, plan.land.h], [0, 1, 0], [...hex3("#C2DDB2"), 1]);
+  const last = Math.min(V3.upto, plan.floors.length - 1);
+  let elev = SLAB, topElev = SLAB, topRooms = [];
+  plan.floors.forEach((f, i) => {
+    if (i > last) return;
+    const H = f.height || 3, wallTop = H - SLAB;
+    /* floor slabs (stair rooms above ground are holes) */
+    for (const r of f.rooms) {
+      if (r.type === "stair" && i > 0) continue;
+      const col = r.floorColor ? hex3(r.floorColor) : hex3((ROOM_TYPES[r.type] || ROOM_TYPES.other).c, 0.93);
+      for (const [p, q, s] of triangulate(r.pts)) tri3(VB, [p[0], elev, p[1]], [q[0], elev, q[1]], [s[0], elev, s[1]], [0, 1, 0], [...col, 1]);
+      r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], ex = q[0] - p[0], ez = q[1] - p[1], L = Math.hypot(ex, ez) || 1;
+        quad3(VB, [p[0], elev - SLAB, p[1]], [q[0], elev - SLAB, q[1]], [q[0], elev, q[1]], [p[0], elev, p[1]], [ez / L, 0, -ex / L], [...SIDE, 1]); });
+    }
+    /* walls with door / window cut-outs: inner skin in the room's colour, outer skin only where no room is next door */
+    const EXT = hex3(st.ext);
+    for (const r of f.rooms) {
+      let h = r.type === "porch" ? (i > 0 ? 1.0 : 0) : wallTop; if (V3.cut) h = Math.min(h, 1.2); if (h <= 0) continue;
+      const IN = r.wallColor ? hex3(r.wallColor) : WALLC;
+      r.pts.forEach((A, k) => {
+        const B = r.pts[(k + 1) % r.pts.length], ex = B[0] - A[0], ez = B[1] - A[1], L = Math.hypot(ex, ez); if (L < 0.01) return;
+        const ang = Math.atan2(ez, ex), ux = ex / L, uz = ez / L, iv = [];
+        let nx = -uz, nz = ux; if (!inPoly((A[0] + B[0]) / 2 + nx * 0.05, (A[1] + B[1]) / 2 + nz * 0.05, r.pts)) { nx = -nx; nz = -nz; }
+        for (const op of f.opens) {
+          const t = ((op.x - A[0]) * ux + (op.y - A[1]) * uz), dist = Math.abs((op.x - A[0]) * -uz + (op.y - A[1]) * ux);
+          if (dist > 0.06 || t < -0.05 || t > L + 0.05) continue;
+          const sill = op.kind === "window" ? 0.9 : 0, head = op.kind === "opening" ? Math.min(2.4, wallTop) : 2.1;
+          iv.push({ u0: clamp(t - op.w / 2, 0, L), u1: clamp(t + op.w / 2, 0, L), sill, head });
+        }
+        iv.sort((p, q) => p.u0 - q.u0);
+        const pieces = (r0, r1) => { const out = []; let u = r0;
+          for (const v of iv) { const a = Math.max(v.u0, r0), b = Math.min(v.u1, r1); if (b <= a) continue; if (a > u) out.push([u, a, 0, h]); out.push([a, b, 0, Math.min(v.sill, h)]); out.push([a, b, v.head, h]); u = Math.max(u, b); }
+          if (u < r1) out.push([u, r1, 0, h]); return out; };
+        const emit = ([u0, u1, y0, y1], side, col) => { if (u1 - u0 < 0.005 || y1 - y0 < 0.005) return;
+          const e0 = side < 0 && u0 <= 0 ? -WALL / 2 : 0, e1 = side < 0 && u1 >= L ? WALL / 2 : 0, m = (u0 + e0 + u1 + e1) / 2, off = side * WALL / 4;
+          obox(VB, A[0] + ux * m + nx * off, A[1] + uz * m + nz * off, u1 + e1 - u0 - e0, WALL / 2, elev + y0, elev + y1, ang, col); };
+        for (const pc of pieces(0, L)) emit(pc, 1, IN);
+        /* exterior runs: sample just outside the wall */
+        const n = Math.max(1, Math.round(L / 0.25)), runs = []; let start = null;
+        for (let j = 0; j < n; j++) { const u = (j + 0.5) * L / n, px = A[0] + ux * u - nx * 0.12, pz = A[1] + uz * u - nz * 0.12;
+          const shared = f.rooms.some(o => o !== r && (o.type !== "porch" || r.type === "porch") && inPoly(px, pz, o.pts));
+          if (!shared && start === null) start = j * L / n; if (shared && start !== null) { runs.push([start, j * L / n]); start = null; } }
+        if (start !== null) runs.push([start, L]);
+        for (const [r0, r1] of runs) for (const pc of pieces(r0, r1)) emit(pc, -1, EXT);
+      });
+    }
+    /* door leaves and glass (once per opening) */
+    for (const op of f.opens) {
+      const c = Math.cos(op.a), s = Math.sin(op.a), at = (u, v) => [op.x + u * c - v * s, op.y + u * s + v * c], sd = op.flip ? -1 : 1, mh = op.hinge ? -1 : 1, hw = op.w / 2;
+      const wallH = V3.cut ? 1.2 : 99;
+      if (op.kind === "window") { if (wallH > 0.9) { const p = at(0, 0); obox(GB, p[0], p[1], op.w, 0.03, elev + 0.9, elev + Math.min(2.1, wallH), op.a, GLASS); } }
+      else if (op.kind === "door" || op.kind === "door2") {
+        const leaves = op.kind === "door2" ? [[-hw, 1, hw], [hw, -1, hw]] : [[-hw * mh, mh, op.w]];
+        for (const [hx, , len] of leaves) { const p = at(hx, sd * len / 2); obox(VB, p[0], p[1], 0.04, len, elev, elev + Math.min(2.05, wallH), op.a, hex3("#9C6E45")); }
+      } else if (op.kind === "slide") { const p = at(-hw / 2, 0); obox(GB, p[0], p[1], hw, 0.04, elev, elev + Math.min(2.1, wallH), op.a, GLASS); }
+    }
+    /* stairs up to the next floor */
+    if (i < plan.floors.length - 1 && i < last + 1) for (const r of f.rooms.filter(r => r.type === "stair")) {
+      const [x0, z0, x1, z1] = bbox(r.pts), vert = z1 - z0 >= x1 - x0, run = vert ? z1 - z0 : x1 - x0, n = Math.max(8, Math.round(H / 0.18)), rise = H / n, st = run / n;
+      for (let k = 0; k < n; k++) {
+        if (vert) obox(VB, (x0 + x1) / 2, z1 - (k + 0.5) * st, x1 - x0 - 0.1, st, elev, elev + (k + 1) * rise - SLAB * (k === n - 1 ? 1 : 0), 0, hex3(k % 2 ? "#C9AD8C" : "#BFA383"));
+        else obox(VB, x0 + (k + 0.5) * st, (z0 + z1) / 2, st, z1 - z0 - 0.1, elev, elev + (k + 1) * rise - SLAB * (k === n - 1 ? 1 : 0), 0, hex3(k % 2 ? "#C9AD8C" : "#BFA383"));
+      }
+    }
+    if (V3.furn) for (const it of f.items) addItem3(it, elev);
+    FE[i] = { elev, top: elev + wallTop };
+    topElev = elev + wallTop; topRooms = f.rooms.filter(r => !SEMI_OUT.has(r.type));
+    elev += H;
+  });
+  /* roofs: main roof over the top floor, automatic gables over lower parts left uncovered */
+  if (st.roof !== "none" && !V3.cut && last === plan.floors.length - 1) {
+    const rc = [...hex3(st.roofColor), 1], ext = [...hex3(st.ext), 1];
+    for (const q of roofPlan()) roofRect(q.b, q.y, q.type, st.dir, st.pitch, rc, ext, q.o);
+  }
+  upload3();
+}
+function init3() {
+  if (V3.gl) return true;
+  const gl = cv3.getContext("webgl", { antialias: true, preserveDrawingBuffer: true }); if (!gl) return false;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, `attribute vec3 p; attribute vec3 n; attribute vec4 c; uniform mat4 M; uniform vec3 L; varying vec4 vc;
+    void main(){ gl_Position = M * vec4(p, 1.0); vec3 nn = normalize(n); float d = abs(dot(nn, L)) * (dot(nn, L) > 0.0 ? 1.0 : 0.35); float h = 0.5 + 0.5 * nn.y; vc = vec4(c.rgb * (0.52 + 0.16 * h + 0.42 * d), c.a); }`));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, `precision mediump float; varying vec4 vc; void main(){ gl_FragColor = vec4(min(vc.rgb, vec3(1.0)), vc.a); }`));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  V3.gl = gl; V3.pr = pr; V3.b = gl.createBuffer(); V3.bg = gl.createBuffer();
+  V3.loc = { p: gl.getAttribLocation(pr, "p"), n: gl.getAttribLocation(pr, "n"), c: gl.getAttribLocation(pr, "c"), M: gl.getUniformLocation(pr, "M"), L: gl.getUniformLocation(pr, "L") };
+  return true;
+}
+function upload3() { const gl = V3.gl; if (!gl) return; gl.bindBuffer(gl.ARRAY_BUFFER, V3.b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(VB), gl.STATIC_DRAW); V3.n = VB.length / 10;
+  gl.bindBuffer(gl.ARRAY_BUFFER, V3.bg); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(GB), gl.STATIC_DRAW); V3.ng = GB.length / 10; V3.need = true; }
+function mmul(a, b) { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; }
+function persp(fov, asp, n, f) { const t = 1 / Math.tan(fov / 2); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]); }
+function lookAt(e, t) { let z = [e[0] - t[0], e[1] - t[1], e[2] - t[2]]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+  let x = [z[2], 0, -z[0]]; const xl = Math.hypot(...x) || 1; x = x.map(v => v / xl); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); }
+function eye3() { const cp = Math.cos(V3.pitch); return [V3.t[0] + V3.dist * cp * Math.sin(V3.yaw), V3.t[1] + V3.dist * Math.sin(V3.pitch), V3.t[2] + V3.dist * cp * Math.cos(V3.yaw)]; }
+function render3() {
+  const gl = V3.gl; if (!gl) return;
+  const r = cv3.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+  if (cv3.width !== W || cv3.height !== H) { cv3.width = W; cv3.height = H; }
+  gl.viewport(0, 0, W, H); gl.clearColor(0.84, 0.91, 0.96, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+  const M = mmul(persp(0.8, W / H, Math.max(0.05, V3.dist * 0.01), V3.dist * 20 + 200), lookAt(eye3(), V3.t));
+  gl.uniformMatrix4fv(V3.loc.M, false, M); const L = [0.45, 0.8, 0.4], ll = Math.hypot(...L); gl.uniform3f(V3.loc.L, L[0] / ll, L[1] / ll, L[2] / ll);
+  const draw = (buf, n) => { if (!n) return; gl.bindBuffer(gl.ARRAY_BUFFER, buf); const st = 40;
+    gl.enableVertexAttribArray(V3.loc.p); gl.vertexAttribPointer(V3.loc.p, 3, gl.FLOAT, false, st, 0);
+    gl.enableVertexAttribArray(V3.loc.n); gl.vertexAttribPointer(V3.loc.n, 3, gl.FLOAT, false, st, 12);
+    gl.enableVertexAttribArray(V3.loc.c); gl.vertexAttribPointer(V3.loc.c, 4, gl.FLOAT, false, st, 24); gl.drawArrays(gl.TRIANGLES, 0, n); };
+  gl.disable(gl.BLEND); gl.depthMask(true); draw(V3.b, V3.n);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); draw(V3.bg, V3.ng); gl.depthMask(true);
+}
+function frame3() { if (V3.on && V3.need) { V3.need = false; try { render3(); } catch (e) { console.error(e); } } requestAnimationFrame(frame3); }
+requestAnimationFrame(frame3);
+function view3Preset(k) {
+  const [a, b, c, d] = planBounds(), ext = Math.max(c - a, d - b, 6), hgt = plan.floors.slice(0, Math.min(V3.upto, plan.floors.length - 1) + 1).reduce((s, f) => s + (f.height || 3), 0);
+  let fa = a, fb = b, fc = c, fd = d; const rs = plan.floors.flatMap(f => f.rooms.flatMap(r => r.pts)); if (rs.length) [fa, fb, fc, fd] = bbox(rs);
+  V3.t = [(fa + fc) / 2, hgt * 0.35, (fb + fd) / 2];
+  const span = Math.max(fc - fa, fd - fb, 6);
+  if (k === "front") { V3.yaw = 0; V3.pitch = 0.22; V3.dist = span * 1.7; }
+  else if (k === "top") { V3.yaw = 0; V3.pitch = 1.5; V3.dist = span * 1.6; }
+  else { V3.yaw = -0.55; V3.pitch = 0.62; V3.dist = span * 1.75; }
+  V3.need = true;
+}
+/* orbit / pinch / pan */
+const p3 = new Map(); let g3 = null;
+cv3.addEventListener("pointerdown", e => { try { cv3.setPointerCapture(e.pointerId); } catch (_) {} p3.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, multi: p3.size > 0 }); if (p3.size > 1) for (const q of p3.values()) q.multi = true; g3 = null; });
+cv3.addEventListener("pointermove", e => {
+  const q = p3.get(e.pointerId); if (!q) return;
+  const dx = e.clientX - q.x, dy = e.clientY - q.y; q.x = e.clientX; q.y = e.clientY;
+  if (p3.size >= 2) {
+    const [a, b] = [...p3.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m = [(a.x + b.x) / 2, (a.y + b.y) / 2];
+    if (g3) { V3.dist = clamp(V3.dist * g3.d / Math.max(1, d), 2, 400); pan3(m[0] - g3.m[0], m[1] - g3.m[1]); }
+    g3 = { d, m }; V3.need = true; return;
+  }
+  if (e.buttons === 2 || e.buttons === 4 || e.shiftKey) pan3(dx, dy);
+  else { V3.yaw -= dx * 0.008; V3.pitch = clamp(V3.pitch + dy * 0.006, 0.03, 1.53); }
+  V3.need = true;
+});
+const end3 = e => { const q = p3.get(e.pointerId); p3.delete(e.pointerId); g3 = null;
+  if (q && !q.multi && e.type === "pointerup" && Math.hypot(e.clientX - q.x0, e.clientY - q.y0) < 8) pick3(e.clientX, e.clientY); };
+function pick3(cx, cy) {
+  const r = cv3.getBoundingClientRect(), nx = (cx - r.left) / r.width * 2 - 1, ny = 1 - (cy - r.top) / r.height * 2, e = eye3();
+  let z = [e[0] - V3.t[0], e[1] - V3.t[1], e[2] - V3.t[2]]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+  let x = [z[2], 0, -z[0]]; const xl = Math.hypot(...x) || 1; x = x.map(v => v / xl); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  const t = Math.tan(0.4), asp = r.width / r.height, d = [0, 1, 2].map(i => -z[i] + x[i] * nx * t * asp + y[i] * ny * t);
+  const last = Math.min(V3.upto, plan.floors.length - 1); let elev = 0.15; const levels = [];
+  plan.floors.forEach((f, i) => { if (i <= last) levels.push([i, elev]); elev += f.height || 3; });
+  V3.sel = null;
+  for (const [i, h] of levels.reverse()) { if (Math.abs(d[1]) < 1e-6) break; const s = (h - e[1]) / d[1]; if (s <= 0) continue;
+    const px = e[0] + d[0] * s, pz = e[2] + d[2] * s, f = plan.floors[i];
+    const hit = f.rooms.filter(q => inPoly(px, pz, q.pts) && !(q.type === "stair" && i > 0)).sort((a, b) => areaOf(a.pts) - areaOf(b.pts))[0];
+    if (hit) { V3.sel = { fi: i, id: hit.id }; break; } }
+  updatePanel();
+}
+cv3.addEventListener("pointerup", end3); cv3.addEventListener("pointercancel", end3);
+cv3.addEventListener("contextmenu", e => e.preventDefault());
+cv3.addEventListener("wheel", e => { e.preventDefault(); V3.dist = clamp(V3.dist * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0012)), 2, 400); V3.need = true; }, { passive: false });
+function pan3(dx, dy) { const k = V3.dist * 0.0016, cy = Math.cos(V3.yaw), sy = Math.sin(V3.yaw);
+  V3.t[0] -= (cy * dx - sy * dy) * k; V3.t[2] -= (-sy * dx - cy * dy) * k; }
+new ResizeObserver(() => { V3.need = true; }).observe(cv3);
+function set3D(on) {
+  if (on && !init3()) { toast("อุปกรณ์นี้ไม่รองรับ WebGL"); return; }
+  V3.on = on; document.getElementById("app").classList.toggle("mode3d", on);
+  document.getElementById("v3Btn").innerHTML = on ? "✏️ <span class='long'>แปลน </span>2D" : "🧊 3D";
+  document.getElementById("hint").textContent = on ? "ลากเพื่อหมุน • สองนิ้วซูม/เลื่อน • คอม: คลิกขวาลากเพื่อเลื่อน" : (penSeen ? "✏️ ปากกาวาด • นิ้วเลื่อนจอ — " : "") + HINTS[tool];
+  if (on) { poly = null; sel = null; V3.upto = Math.min(V3.upto, plan.floors.length - 1); if (V3.upto < 0) V3.upto = plan.floors.length - 1; build3D(); view3Preset(V3.lastPreset || "iso"); }
+  updatePanel(); draw();
+}
+function panel3HTML() {
+  const nf = plan.floors.length, up = Math.min(V3.upto, nf - 1);
+  const chip = (on, attr, txt) => `<button ${attr} class="${on ? "on" : ""}">${txt}</button>`, st = styleOf();
+  const sf = V3.sel && plan.floors[V3.sel.fi], sr = sf && sf.rooms.find(r => r.id === V3.sel.id);
+  return `<h3>🧊 มุมมอง 3 มิติ</h3>
+    ${sr ? `<div style="background:var(--accent2);border-radius:12px;padding:10px 12px;margin-bottom:6px"><b>${esc(sr.name)}</b> <span class="mute">${esc(sf.name)}</span> <button class="b" data-v3="unsel" style="float:right;padding:4px 10px">✕</button>${roomColorHTML(sr)}</div>` : `<p class="mute" style="margin-top:-4px">แตะห้องในภาพเพื่อเปลี่ยนสีพื้น/ผนัง</p>`}
+    <h4>แสดงชั้น</h4><div class="chips">${plan.floors.map((f, i) => chip(i === up, `data-v3="upto" data-v="${i}"`, i === nf - 1 ? (nf > 1 ? "ทั้งหลัง" : esc(f.name)) : i === 0 ? esc(f.name) : "ถึง" + esc(f.name))).join("")}</div>
+    <h4>ผนัง</h4><div class="chips">${chip(!V3.cut, 'data-v3="cut" data-v="0"', "เต็มความสูง")}${chip(V3.cut, 'data-v3="cut" data-v="1"', "ตัดเตี้ย ดูภายใน")}</div>
+    <h4>หลังคา</h4><div class="chips">${ROOF_TYPES.map(([k, n]) => chip(st.roof === k, `data-v3="roof" data-v="${k}"`, n)).join("")}</div>
+    ${st.roof !== "none" ? `${st.roof !== "flat" ? `<div class="chips" style="margin-top:8px">${PITCH.map(([v, n]) => chip(st.pitch === v, `data-v3="pitch" data-v="${v}"`, n)).join("")}${chip(0, 'data-v3="dir"', st.roof === "shed" ? "↻ เปลี่ยนทิศลาด" : "↻ หมุนแนวสัน")}</div>` : ""}
+      <div class="chips" style="margin-top:8px">${chip(st.autoLower, 'data-v3="auto"', "เติมจั่วส่วนชั้นล่างอัตโนมัติ")}</div>
+      <h4>สีหลังคา</h4>${swatches("roofc", st.roofColor, ROOF_COLS)}` : ""}
+    <h4>สีผนังภายนอก</h4>${swatches("ext", st.ext, WALL_COLS)}
+    <h4>ส่วนประกอบ</h4><div class="chips">${chip(V3.furn, 'data-v3="furn"', "เฟอร์นิเจอร์")}</div>
+    <h4>มุมกล้อง</h4><div class="chips">${chip(0, 'data-v3="view" data-v="iso"', "มุมเฉียง")}${chip(0, 'data-v3="view" data-v="front"', "ด้านหน้า")}${chip(0, 'data-v3="view" data-v="top"', "มุมบน")}</div>
+    <h4>ความสูงชั้น</h4>${plan.floors.map((f, i) => `<div class="row"><label>${esc(f.name)}</label><input type="number" step="0.1" min="2.4" max="6" data-v3h="${i}" value="${(f.height || 3).toFixed(1)}"><span class="mute">ม.</span></div>`).join("")}
+    <div class="btns"><button class="b" data-v3="png">🖼 บันทึกภาพ 3 มิติ</button></div>
+    <p class="mute">แก้แปลนได้ที่โหมด 2D แล้วกลับมาดู 3D ภาพจะอัปเดตเอง · ความสูงชั้นนับจากพื้นถึงพื้นชั้นถัดไป</p>`;
+}
+document.getElementById("panel").addEventListener("click", e => {
+  const b = e.target.closest("[data-v3]"); if (!b || !V3.on) return; const k = b.dataset.v3;
+  const st = styleOf();
+  if (k === "upto") V3.upto = +b.dataset.v; if (k === "cut") V3.cut = b.dataset.v === "1"; if (k === "furn") V3.furn = !V3.furn;
+  if (k === "unsel") V3.sel = null;
+  if (k === "roof" || k === "pitch" || k === "dir" || k === "auto") { const bf = snapshot();
+    if (k === "roof") st.roof = b.dataset.v; if (k === "pitch") st.pitch = +b.dataset.v; if (k === "dir") st.dir = (st.dir + 1) % 4; if (k === "auto") st.autoLower = !st.autoLower;
+    if (k === "roof" && st.roof !== "none") { V3.upto = plan.floors.length - 1; V3.cut = false; }
+    commit(bf); return; }
+  if (k === "view") { V3.lastPreset = b.dataset.v; view3Preset(b.dataset.v); return; }
+  if (k === "png") { cv3.toBlob(bl => saveFile(bl, safeName(plan.name) + "-3D.png"), "image/png"); return; }
+  build3D(); updatePanel();
+});
+document.getElementById("panel").addEventListener("change", e => {
+  const i = e.target.dataset.v3h; if (i === undefined || !V3.on) return; const v = parseFloat(e.target.value); if (!(v >= 2.4 && v <= 6)) { updatePanel(); return; }
+  const b = snapshot(); plan.floors[+i].height = Math.round(v * 10) / 10; commit(b); build3D();
+});
+document.getElementById("v3Btn").onclick = () => set3D(!V3.on);
+
+/* ============================================================ engineering checks + BOQ */
+const MAXSPAN = 4.0, COL = 0.2, BEAM_W = 0.2, BEAM_D = 0.4;
+function floorLevels() { let e = 0.15; return plan.floors.map(f => { const H = f.height || 3, o = { elev: e, top: e + H - 0.15, H }; e += H; return o; }); }
+function roofPlan() {
+  const st = styleOf(); if (st.roof === "none") return [];
+  const FE = floorLevels(), n = plan.floors.length, topRooms = plan.floors[n - 1].rooms.filter(r => !SEMI_OUT.has(r.type)), out = [];
+  const blocks = topRooms.length ? mergeRects(topRooms.map(r => ({ b: bbox(r.pts), y: FE[n - 1].top }))) : [];
+  for (const q of blocks) out.push({ ...q, type: st.roof, o: 0.6 });
+  if (st.autoLower) {
+    const rects = [];
+    plan.floors.forEach((f, i) => {
+      const above = plan.floors[i + 1];
+      for (const r of f.rooms) {
+        if (r.type === "porch" && i > 0) continue;
+        if (!above) { if (!SEMI_OUT.has(r.type) || !blocks.length) continue; const [cx, cz] = centroid(r.pts); if (blocks.some(q => cx > q.b[0] && cx < q.b[2] && cz > q.b[1] && cz < q.b[3])) continue; rects.push({ b: bbox(r.pts), y: FE[i].top }); continue; }
+        const [a, b, c, d] = bbox(r.pts); let tot = 0, unc = 0;
+        for (let x = a + 0.125; x < c; x += 0.25) for (let z = b + 0.125; z < d; z += 0.25) { if (!inPoly(x, z, r.pts)) continue; tot++; if (!above.rooms.some(o => inPoly(x, z, o.pts))) unc++; }
+        if (tot && unc / tot >= 0.6) rects.push({ b: bbox(r.pts), y: FE[i].top });
+      }
+    });
+    for (const q of mergeRects(rects)) out.push({ ...q, type: "gable", o: 0.4 });
+  }
+  return out;
+}
+const near2 = (p, q, t) => Math.abs(p[0] - q[0]) < (t || 0.05) && Math.abs(p[1] - q[1]) < (t || 0.05);
+function uniqPts(list) { const out = []; for (const p of list) if (!out.some(q => near2(p, q))) out.push([r3(p[0]), r3(p[1])]); return out; }
+/* unique wall lines of a floor (collinear overlapping edges merged) */
+function wallSegs(f) {
+  const Hm = new Map(), Vm = new Map(), other = [], segs = [], k = v => Math.round(v * 100);
+  for (const r of f.rooms) { if (r.type === "porch") continue;
+    r.pts.forEach((a, i) => { const b = r.pts[(i + 1) % r.pts.length]; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.01) return;
+      if (Math.abs(a[1] - b[1]) < 1e-6) { const key = k(a[1]); if (!Hm.has(key)) Hm.set(key, []); Hm.get(key).push([Math.min(a[0], b[0]), Math.max(a[0], b[0]), a[1]]); }
+      else if (Math.abs(a[0] - b[0]) < 1e-6) { const key = k(a[0]); if (!Vm.has(key)) Vm.set(key, []); Vm.get(key).push([Math.min(a[1], b[1]), Math.max(a[1], b[1]), a[0]]); }
+      else other.push([a, b]); }); }
+  const merge = l => { l.sort((p, q) => p[0] - q[0]); const out = []; for (const it of l) { const last = out[out.length - 1]; if (last && it[0] <= last[1] + 0.01) last[1] = Math.max(last[1], it[1]); else out.push(it.slice()); } return out; };
+  for (const l of Hm.values()) for (const [x0, x1, y] of merge(l)) segs.push({ a: [x0, y], b: [x1, y] });
+  for (const l of Vm.values()) for (const [y0, y1, x] of merge(l)) segs.push({ a: [x, y0], b: [x, y1] });
+  for (const [a, b] of other) if (!segs.some(s => (near2(s.a, a) && near2(s.b, b)) || (near2(s.a, b) && near2(s.b, a)))) segs.push({ a, b });
+  for (const s of segs) s.L = Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]);
+  return segs;
+}
+function tOnSeg(p, s) { const ux = (s.b[0] - s.a[0]) / s.L, uz = (s.b[1] - s.a[1]) / s.L, t = (p[0] - s.a[0]) * ux + (p[1] - s.a[1]) * uz, d = Math.abs((p[0] - s.a[0]) * -uz + (p[1] - s.a[1]) * ux); return d < 0.06 && t > -0.06 && t < s.L + 0.06 ? clamp(t, 0, s.L) : null; }
+/* columns: room corners + columns coming down from the floor above + extra columns so no beam spans more than MAXSPAN */
+function structAll() {
+  const n = plan.floors.length, R = new Array(n), SG = plan.floors.map(wallSegs); let upper = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const f = plan.floors[i], segs = SG[i], low = i > 0 ? SG[i - 1] : null, lowRooms = i > 0 ? plan.floors[i - 1].rooms.filter(r => r.type !== "porch") : [];
+    /* upper-floor walls that do not stand on a wall below are light partitions on the slab: no columns of their own */
+    for (const sg of segs) sg.sup = !low || [0.25, 0.5, 0.75].every(t => { const p = [sg.a[0] + (sg.b[0] - sg.a[0]) * t, sg.a[1] + (sg.b[1] - sg.a[1]) * t]; return low.some(l => tOnSeg(p, l) !== null) || !lowRooms.some(r => inPoly(p[0], p[1], r.pts)); });
+    const touchesSup = p => segs.some(sg => sg.sup && tOnSeg(p, sg) !== null);
+    const nodes = uniqPts(f.rooms.filter(r => r.type !== "porch").flatMap(r => r.pts)).filter(p => !low || touchesSup(p) || low.some(l => tOnSeg(p, l) !== null));
+    const cand = uniqPts([...nodes, ...upper.filter(p => segs.some(s => tOnSeg(p, s) !== null))]), cols = cand.slice();
+    let maxGap = 0;
+    for (const s of segs) {
+      if (!s.sup) continue;
+      const ux = (s.b[0] - s.a[0]) / s.L, uz = (s.b[1] - s.a[1]) / s.L;
+      const ts = [0, s.L, ...cand.map(p => tOnSeg(p, s)).filter(t => t !== null)].sort((a, b) => a - b);
+      const holes = f.opens.map(o => { const t = tOnSeg([o.x, o.y], s); return t === null ? null : [t - o.w / 2 - 0.1, t + o.w / 2 + 0.1]; }).filter(Boolean);
+      for (let k = 0; k < ts.length - 1; k++) {
+        const g = ts[k + 1] - ts[k]; if (g <= MAXSPAN + 0.01) { maxGap = Math.max(maxGap, g); continue; }
+        const m = Math.ceil(g / MAXSPAN) - 1; let prev = ts[k];
+        for (let j = 1; j <= m; j++) { let t = ts[k] + g * j / (m + 1);
+          for (const [h0, h1] of holes) if (t > h0 && t < h1) t = (t - h0 < h1 - t ? h0 : h1);
+          t = clamp(t, ts[k] + 0.3, ts[k + 1] - 0.3); maxGap = Math.max(maxGap, t - prev); prev = t; cols.push([r3(s.a[0] + ux * t), r3(s.a[1] + uz * t)]); }
+        maxGap = Math.max(maxGap, ts[k + 1] - prev);
+      }
+    }
+    R[i] = { segs, cols: uniqPts(cols), maxGap, beamLen: segs.filter(s => s.sup).reduce((a, s) => a + s.L, 0), partLen: segs.filter(s => !s.sup).reduce((a, s) => a + s.L, 0), parts: segs.filter(s => !s.sup) };
+    upper = R[i].cols;
+  }
+  return R;
+}
+function outwardOf(op, f) { /* returns +1/-1 side that is outside, or 0 if both sides are rooms */
+  const c = Math.cos(op.a), s = Math.sin(op.a), inside = v => f.rooms.some(r => r.type !== "porch" && inPoly(op.x - v * s, op.y + v * c, r.pts));
+  const p = inside(0.2), m = inside(-0.2); return p && m ? 0 : !p ? 1 : -1; }
+function rayToLand(x, y, dx, dy) { if (!plan.land) return Infinity; const W = plan.land.w, H = plan.land.h; let t = Infinity;
+  if (dx > 1e-6) t = Math.min(t, (W - x) / dx); if (dx < -1e-6) t = Math.min(t, -x / dx); if (dy > 1e-6) t = Math.min(t, (H - y) / dy); if (dy < -1e-6) t = Math.min(t, -y / dy); return t; }
+const OPEN_H = { door: 2.1, door2: 2.1, slide: 2.1, window: 1.2, opening: 2.4 };
+function engChecks(S) {
+  const I = [], n = plan.floors.length, FE = floorLevels(), add = (sev, fi, cat, msg, at) => I.push({ sev, fi, cat, msg, at });
+  const roofs = roofPlan(), st = styleOf(), rise = roofs.length && st.roof !== "flat" ? Math.max(...roofs.map(q => Math.min(q.b[2] - q.b[0], q.b[3] - q.b[1]) / 2 * (q.type === "shed" ? st.pitch * 0.5 * 2 : st.pitch))) : (st.roof === "flat" ? 0.8 : 0);
+  const bH = FE[n - 1].top + 0.15 + rise, setReq = bH > 9 ? 3 : 2;
+  /* structure */
+  plan.floors.forEach((f, i) => {
+    const s = S[i];
+    if (i > 0) for (const p of s.cols) {
+      if (S[i - 1].cols.some(q => near2(p, q, 0.07))) continue;
+      const lower = plan.floors[i - 1].rooms.filter(r => r.type !== "porch");
+      if (lower.some(r => inPoly(p[0], p[1], r.pts))) add(2, i, "โครงสร้าง", `เสาชั้นนี้ไม่มีเสา/ผนังชั้นล่างรับ (ตั้งกลางพื้นชั้นล่าง) — ต้องจัดผนังให้ตรงกัน หรือให้วิศวกรออกแบบคานรับเสา`, p);
+      else { const d = Math.min(...S[i - 1].segs.map(sg => { const ux = (sg.b[0] - sg.a[0]) / sg.L, uz = (sg.b[1] - sg.a[1]) / sg.L, t = clamp((p[0] - sg.a[0]) * ux + (p[1] - sg.a[1]) * uz, 0, sg.L); return Math.hypot(sg.a[0] + ux * t - p[0], sg.a[1] + uz * t - p[1]); }));
+        if (d > 1.5) add(2, i, "โครงสร้าง", `ส่วนยื่นเกินแนวชั้นล่าง ${fmt(d)} ม. (คานยื่นทั่วไปไม่ควรเกิน ~1.5 ม.) — ต้องเพิ่มเสาลงดิน`, p);
+        else add(1, i, "โครงสร้าง", `ส่วนยื่น ${fmt(d)} ม. ใช้คานยื่นได้ — ให้วิศวกรตรวจขนาดคาน`, p); }
+    }
+    for (const r of f.rooms) {
+      if (r.type === "porch" && i === 0) continue;
+      if (r.type === "stair") continue;
+      const [a, b, c, d] = bbox(r.pts), sp = Math.min(c - a, d - b), at = centroid(r.pts);
+      if (sp > 5.5) add(2, i, "โครงสร้าง", `${r.name}: พื้นช่วงสั้น ${fmt(sp)} ม. กว้างเกินไป — เพิ่มคานซอยกลางห้อง`, at);
+      else if (sp > 4.0) add(1, i, "โครงสร้าง", `${r.name}: พื้นช่วง ${fmt(sp)} ม. ควรใช้พื้นหนา 12–15 ซม. หรือเพิ่มคานซอย`, at);
+    }
+    for (const sg of s.parts) add(1, i, "โครงสร้าง", `ผนังยาว ${fmt(sg.L)} ม. ไม่มีผนัง/คานชั้นล่างรองรับ — ใช้ผนังเบา (ยิปซัม/ไฟเบอร์ซีเมนต์) หรือให้วิศวกรเพิ่มคานรับ`, [(sg.a[0] + sg.b[0]) / 2, (sg.a[1] + sg.b[1]) / 2]);
+    for (const op of f.opens) if (op.w > 3.0) add(1, i, "โครงสร้าง", `ช่องเปิดกว้าง ${fmt(op.w)} ม. ต้องมีคานทับหลังรับ`, [op.x, op.y]);
+  });
+  /* stairs */
+  if (n > 1) plan.floors.forEach((f, i) => {
+    if (i === n - 1) return;
+    const H = f.height || 3, sts = f.rooms.filter(r => r.type === "stair");
+    if (!sts.length) { add(2, i, "บันได", `ไม่มีห้องบันไดขึ้น${plan.floors[i + 1].name}`, null); return; }
+    for (const r of sts) {
+      const [a, b, c, d] = bbox(r.pts), w = Math.min(c - a, d - b), L = Math.max(c - a, d - b), at = centroid(r.pts), n2 = Math.ceil(H / 0.20), run = (n2 - 1) * 0.22;
+      if (!plan.floors[i + 1].rooms.some(q => q.type === "stair" && (() => { const [p, q2, s2, t] = bbox(q.pts); return Math.min(c, s2) - Math.max(a, p) > 0.3 && Math.min(d, t) - Math.max(b, q2) > 0.3; })()))
+        add(2, i + 1, "บันได", `ช่องบันได${plan.floors[i + 1].name}ไม่ตรงกับบันไดชั้นล่าง — วางห้อง "บันได" ทับตำแหน่งเดียวกัน`, at);
+      if (w < 0.8) add(2, i, "บันได", `บันไดกว้าง ${fmt(w)} ม. (ต้อง ≥ 0.80 ม.)`, at);
+      else if (L >= run) add(H > 3 ? 1 : 0, i, "บันได", `บันไดตรง ${n2} ลูกตั้ง (สูง ${fmt(H / n2 * 100, 1)} ซม.) ลูกนอน 22 ซม. ใช้ความยาว ${fmt(run)} ม.` + (H > 3 ? " — ช่วงสูงเกิน 3 ม. ต้องมีชานพัก" : ""), at);
+      else if (w >= 1.8 && L >= Math.ceil((n2 - 1) / 2) * 0.22 + 0.9) add(0, i, "บันได", `ทำเป็นบันไดหักกลับ (ตัว U) มีชานพักได้`, at);
+      else add(2, i, "บันได", `ห้องบันไดสั้นไป: ต้องยาว ≥ ${fmt(run)} ม. (บันไดตรง) หรือกว้าง ≥ 1.80 ม. (ตัว U)`, at);
+    }
+  });
+  /* rooms: ceiling height, ventilation */
+  plan.floors.forEach((f, i) => {
+    const H = f.height || 3; if (H - 0.15 < 2.6) add(2, i, "ห้อง", `ระยะดิ่งพื้นถึงพื้น ${fmt(H - 0.15)} ม. น้อยกว่า 2.60 ม. (ห้องอยู่อาศัย)`, null);
+    for (const r of f.rooms) {
+      if (!["bed", "living", "dining", "kitchen", "work", "pray", "bath"].includes(r.type)) continue;
+      let A = 0; for (const op of roomOpens(r, f)) { if (op.kind === "window") A += op.w * 1.2; else if (outwardOf(op, f) !== 0) A += op.w * (OPEN_H[op.kind] || 2.1); }
+      const need = areaOf(r.pts) * 0.1;
+      if (A < need) add(r.type === "bath" ? 1 : 2, i, "ระบายอากาศ", `${r.name}: ช่องเปิด ${fmt(A)} ตร.ม. น้อยกว่า 10% ของพื้นที่ห้อง (${fmt(need)} ตร.ม.)` + (r.type === "bath" ? " — หรือใช้พัดลมระบายอากาศ" : " — เพิ่มหน้าต่าง"), centroid(r.pts));
+    }
+  });
+  /* land: setbacks and open space */
+  if (plan.land) {
+    plan.floors.forEach((f, i) => {
+      for (const op of f.opens) { const side = outwardOf(op, f); if (!side || op.kind === "opening" && side === 0) continue;
+        const c = Math.cos(op.a), s = Math.sin(op.a), dx = -s * side, dy = c * side, d = rayToLand(op.x, op.y, dx, dy);
+        if (d < setReq) add(2, i, "ระยะร่น", `${OPEN_KINDS[op.kind]}ห่างแนวเขตที่ดิน ${fmt(d)} ม. (ผนังมีช่องเปิดต้อง ≥ ${setReq} ม.)`, [op.x, op.y]); }
+      for (const r of f.rooms) for (const p of r.pts) {
+        const d = Math.min(p[0], p[1], plan.land.w - p[0], plan.land.h - p[1]);
+        if (d < -0.01) { add(2, i, "ระยะร่น", `${r.name} ล้ำออกนอกที่ดิน`, p); break; }
+        if (d < 0.5 && r.type !== "porch") { add(1, i, "ระยะร่น", `${r.name} ห่างแนวเขต ${fmt(d)} ม. — ผนังทึบชิดเขตต้องได้รับความยินยอมจากเพื่อนบ้าน (ปกติ ≥ 0.50 ม.)`, p); break; }
+      }
+    });
+    const cov = floorArea(plan.floors[0]) / (plan.land.w * plan.land.h);
+    add(cov > 0.7 ? 2 : 0, 0, "ที่ดิน", `อาคารคลุมที่ดิน ${fmt(cov * 100, 0)}% — ที่ว่าง ${fmt((1 - cov) * 100, 0)}% (บ้านอยู่อาศัยต้องมีที่ว่าง ≥ 30%)`, null);
+  }
+  add(0, n - 1, "ภาพรวม", `ความสูงอาคารประมาณ ${fmt(bH, 1)} ม. → ระยะร่นผนังมีช่องเปิดใช้ ${setReq} ม.`, null);
+  return I;
+}
+let engCache = { key: null };
+function eng() { const k = snapshot(); if (engCache.key !== k) { const S = structAll(); engCache = { key: k, S, I: engChecks(S) }; } return engCache; }
+function drawEngLayer(fi) {
+  const E = eng(), s = E.S[fi]; if (!s) return;
+  X.save();
+  X.strokeStyle = "rgba(90,70,160,.35)"; X.lineWidth = 2; X.setLineDash([6, 4]);
+  for (const sg of s.segs) { X.strokeStyle = sg.sup ? "rgba(90,70,160,.4)" : "rgba(229,154,28,.8)"; X.beginPath(); X.moveTo(...w2s(...sg.a)); X.lineTo(...w2s(...sg.b)); X.stroke(); }
+  X.setLineDash([]); const c = Math.max(6, COL * view.s);
+  X.fillStyle = "#1F1B2E"; for (const p of s.cols) { const [x, y] = w2s(...p); X.fillRect(x - c / 2, y - c / 2, c, c); }
+  let k = 0;
+  for (const it of E.I) { if (it.fi !== fi || !it.at || it.sev === 0) continue; k++; const [x, y] = w2s(...it.at);
+    X.fillStyle = it.sev === 2 ? "#D33A2C" : "#E59A1C"; X.beginPath(); X.arc(x, y, 11, 0, Math.PI * 2); X.fill();
+    X.fillStyle = "#fff"; X.font = "700 12px sans-serif"; X.textAlign = "center"; X.textBaseline = "middle"; X.fillText(it.sev === 2 ? "!" : "?", x, y + 0.5); }
+  X.restore();
+}
+
+/* ---------------- BOQ */
+const FLOOR_CAT = { "#B8865A": "พื้นไม้จริง", "#D9B98C": "พื้นลามิเนต", "#ECEBE7": "กระเบื้อง", "#BDBDB8": "กระเบื้อง", "#BFD7E6": "กระเบื้อง", "#C27A55": "กระเบื้อง", "#4A4A4A": "กระเบื้อง", "#E8E4DC": "หินอ่อน", "#A9A9A4": "ปูนขัดมัน", "#8FB38A": "หญ้าเทียม" };
+const FIN_KEY = { "พื้นไม้จริง": "f_wood", "พื้นลามิเนต": "f_lam", "กระเบื้อง": "f_tile", "หินอ่อน": "f_marble", "ปูนขัดมัน": "f_polish", "หญ้าเทียม": "f_grass" };
+/* starting unit prices (materials + labour, THB) — rough placeholders, NOT an official price list: edit to local quotes */
+const RATE0 = { pile: 1800, conc: 2700, rebar: 32, form: 380, wall_brick: 480, wall_aac: 560, wall_light: 900, plaster: 230, paint: 130, f_tile: 700, f_wood: 2200, f_lam: 900, f_marble: 2400, f_polish: 280, f_grass: 350,
+  ceil: 480, roof_frame: 700, roof_tile: 480, roof_flat: 550, door: 7500, door2: 16000, slide: 20000, opening: 0, window: 3500, stair: 40000,
+  toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
+function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {};
+  if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area"; return b; }
+const PCT = new Set(["elec", "plumb", "oh"]);
+const rawRate = k => { const b = boqOpts(); return b.rates[k] !== undefined ? b.rates[k] : RATE0[k]; };
+/* target mode: every unit price is multiplied by one factor so that total / area = target (percent lines unchanged) */
+let fCache = { key: null, f: 1 };
+function priceFactor() {
+  const b = boqOpts(); if (!b.targetOn) return 1;
+  const k = snapshot(); if (fCache.key === k) return fCache.f;
+  const secs = boqData(), T = boqTotals(secs, rawRate); let area = 0;
+  for (const f of plan.floors) for (const r of f.rooms) if (b.basis === "area" || !SEMI_OUT.has(r.type)) area += areaOf(r.pts);
+  const f = T.total > 0 && area > 0 ? b.target * area / T.total : 1;
+  fCache = { key: k, f }; return f;
+}
+const rate = k => PCT.has(k) ? rawRate(k) : rawRate(k) * priceFactor();
+function boqData() {
+  const E = eng(), S = E.S, FE = floorLevels(), n = plan.floors.length, B = boqOpts(), st = styleOf(), secs = [];
+  const it = (k, name, qty, unit, note) => ({ k, name, qty: Math.round(qty * 100) / 100, unit, note });
+  /* structure */
+  const nf = S[0].cols.length;
+  let colLen = 0, beamLen = S[n - 1].beamLen, slabV = 0, slabA = 0;
+  plan.floors.forEach((f, i) => {
+    colLen += S[i].cols.length * FE[i].H; beamLen += S[i].beamLen;
+    const a = f.rooms.filter(r => !(r.type === "stair" && i > 0)).reduce((s, r) => s + areaOf(r.pts), 0); slabA += a; slabV += a * (i ? 0.12 : 0.10);
+  });
+  const footV = nf * (1.0 * 1.0 * 0.3 + COL * COL * 1.0), colV = colLen * COL * COL, beamV = beamLen * BEAM_W * BEAM_D;
+  const rebar = colLen * 4.7 + beamLen * 5.2 + slabA * 6.5 + nf * 17, form = colLen * 4 * COL + beamLen * (BEAM_W + 2 * BEAM_D) + slabA + nf * 2.0;
+  secs.push({ name: "1. งานโครงสร้าง", items: [
+    it("pile", `เสาเข็ม (${nf} ฐาน × ${B.piles} ต้น)`, nf * B.piles, "ต้น"),
+    it("conc", "คอนกรีตฐานราก + ตอม่อ (ฐาน 1.0×1.0×0.30 ม.)", footV, "ลบ.ม."),
+    it("conc", `คอนกรีตเสา ${COL * 100}×${COL * 100} ซม. (${S.reduce((s, x) => s + x.cols.length, 0)} ต้น รวม ${fmt(colLen, 1)} ม.)`, colV, "ลบ.ม."),
+    it("conc", `คอนกรีตคาน ${BEAM_W * 100}×${BEAM_D * 100} ซม. (คานคอดิน คานชั้น คานหลังคา รวม ${fmt(beamLen, 1)} ม.)`, beamV, "ลบ.ม."),
+    it("conc", `คอนกรีตพื้น (ชั้นล่าง 10 ซม. ชั้นบน 12 ซม. รวม ${fmt(slabA, 1)} ตร.ม.)`, slabV, "ลบ.ม."),
+    it("rebar", "เหล็กเสริม (ประมาณจากขนาดหน้าตัดมาตรฐาน)", rebar, "กก."),
+    it("form", "ไม้แบบ", form, "ตร.ม."),
+  ] });
+  /* architecture */
+  let wallA = 0, openA = 0, partA = 0;
+  const doors = {}, finish = {};
+  let ceil = 0, rail = 0, stairs = 0;
+  plan.floors.forEach((f, i) => {
+    wallA += S[i].beamLen * Math.max(0, FE[i].H - BEAM_D); partA += S[i].partLen * (FE[i].H - 0.15);
+    for (const op of f.opens) { openA += op.w * (OPEN_H[op.kind] || 2.1); if (op.kind === "window") doors.window = (doors.window || 0) + op.w * 1.2; else doors[op.kind] = (doors[op.kind] || 0) + 1; }
+    for (const r of f.rooms) {
+      const a = areaOf(r.pts);
+      if (r.type === "stair" && i < n - 1) stairs++;
+      if (!(r.type === "stair" && i > 0)) { const cat = r.floorColor && FLOOR_CAT[r.floorColor.toUpperCase()] || (r.type === "garage" ? "ปูนขัดมัน" : "กระเบื้อง"); finish[cat] = (finish[cat] || 0) + a; }
+      if (r.type !== "stair" && !(r.type === "porch" && i > 0)) ceil += a;
+      if (r.type === "porch" && i > 0) r.pts.forEach((p, k) => { const q = r.pts[(k + 1) % r.pts.length], m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], L = Math.hypot(q[0] - p[0], q[1] - p[1]); const [cx, cy] = centroid(r.pts), v = [m[0] - cx, m[1] - cy], l = Math.hypot(...v) || 1;
+        if (!f.rooms.some(o => o !== r && inPoly(m[0] + v[0] / l * 0.15, m[1] + v[1] / l * 0.15, o.pts))) rail += L; });
+    }
+  });
+  const netWall = Math.max(0, wallA - openA) + rail * 1.0;
+  const arch = [
+    it(B.wall === "aac" ? "wall_aac" : "wall_brick", `ผนัง${B.wall === "aac" ? "อิฐมวลเบา" : "อิฐมอญครึ่งแผ่น"} (หักช่องเปิดแล้ว รวมผนังกันตกระเบียง)`, netWall, "ตร.ม."),
+    it("plaster", "ฉาบปูนผนัง 2 ด้าน", netWall * 2, "ตร.ม."),
+    it("paint", "ทาสีผนัง (รองพื้น + สีจริง) 2 ด้าน", netWall * 2, "ตร.ม."),
+    ...Object.entries(finish).map(([c, a]) => it(FIN_KEY[c], `ผิวพื้น: ${c}`, a, "ตร.ม.")),
+    it("ceil", "ฝ้าเพดานยิปซัม + โครงเคร่า", ceil, "ตร.ม."),
+    ...(partA ? [it("wall_light", "ผนังเบา (ผนังชั้นบนที่ไม่มีคานรองรับ) รวมฉาบรอยต่อ ทาสี", partA, "ตร.ม.")] : []),
+    ...["door", "door2", "slide"].filter(k => doors[k]).map(k => it(k, `${OPEN_KINDS[k]} (พร้อมวงกบ อุปกรณ์)`, doors[k], "ชุด")),
+    ...(doors.window ? [it("window", "หน้าต่างอะลูมิเนียม + กระจก (สูง 1.20 ม.)", doors.window, "ตร.ม.")] : []),
+    ...(stairs ? [it("stair", "บันได คสล. พร้อมผิวและราวจับ", stairs, "ช่วง")] : []),
+  ];
+  secs.push({ name: "2. งานสถาปัตยกรรม", items: arch });
+  /* roof */
+  const roofs = roofPlan(); let ra = 0, fa = 0;
+  for (const q of roofs) { const w = q.b[2] - q.b[0] + 2 * q.o, d = q.b[3] - q.b[1] + 2 * q.o;
+    if (q.type === "flat") fa += (q.b[2] - q.b[0]) * (q.b[3] - q.b[1]); else ra += w * d * Math.sqrt(1 + Math.pow(q.type === "shed" ? st.pitch * 0.5 : st.pitch, 2)); }
+  const roofItems = [];
+  if (ra) roofItems.push(it("roof_frame", "โครงหลังคาเหล็ก (ตามพื้นที่ลาดเอียง รวมชายคา)", ra, "ตร.ม."), it("roof_tile", "วัสดุมุงหลังคา + ครอบ + แผ่นสะท้อนความร้อน", ra, "ตร.ม."));
+  if (fa) roofItems.push(it("roof_flat", "ดาดฟ้า: กันซึม + ผนังกันตก", fa, "ตร.ม."));
+  if (!roofs.length) roofItems.push(it("roof_tile", "ยังไม่ได้เลือกหลังคา (เลือกในโหมด 3D)", 0, "ตร.ม."));
+  secs.push({ name: "3. งานหลังคา", items: roofItems });
+  /* sanitary */
+  const cnt = {}; for (const f of plan.floors) for (const x of f.items) cnt[x.type] = (cnt[x.type] || 0) + 1;
+  secs.push({ name: "4. สุขภัณฑ์และครัว", items: [["toilet", "ชักโครก"], ["basin", "อ่างล้างหน้า"], ["shower", "ชุดฝักบัว"], ["tub", "อ่างอาบน้ำ"], ["counter", "เคาน์เตอร์ครัว"]].filter(([k]) => cnt[k]).map(([k, nm]) => it(k, nm, cnt[k], "ชุด")) });
+  return secs;
+}
+function boqTotals(secs, R) {
+  R = R || rate; const B = boqOpts(); let base = 0; for (const s of secs) for (const x of s.items) base += x.qty * R(x.k);
+  const elec = base * R("elec") / 100, plumb = base * R("plumb") / 100, sub = base + elec + plumb, oh = sub * R("oh") / 100, pre = sub + oh, vat = B.vat ? pre * 0.07 : 0;
+  return { base, elec, plumb, oh, vat, total: pre + vat };
+}
+const baht = v => Math.round(v).toLocaleString("th-TH");
+/* cost per square metre: over all floor area, and over interior area (without garage / porch / balcony) */
+function costSummary() {
+  const secs = boqData(), T = boqTotals(secs); let area = 0, inner = 0;
+  for (const f of plan.floors) for (const r of f.rooms) { const a = areaOf(r.pts); area += a; if (!SEMI_OUT.has(r.type)) inner += a; }
+  const k = T.base ? T.total / T.base : 1;   /* spread systems, overhead and VAT over the sections */
+  const parts = secs.map(s => ({ name: s.name.replace(/^\d+\.\s*/, ""), sum: s.items.reduce((a, x) => a + x.qty * rate(x.k), 0) }));
+  parts.push({ name: "งานระบบไฟฟ้า–ประปา", sum: T.elec + T.plumb }, { name: "ค่าดำเนินการ กำไร" + (boqOpts().vat ? " และ VAT" : ""), sum: T.oh + T.vat });
+  return { T, area, inner, perArea: area ? T.total / area : 0, perInner: inner ? T.total / inner : 0, parts };
+}
+function costCardsHTML(C) {
+  const card = (t, v, u) => `<div style="flex:1;min-width:150px;background:#F3F0EA;border-radius:12px;padding:10px 12px"><div class="mute">${t}</div><div class="big" style="font-size:22px">${v}</div><div class="mute">${u}</div></div>`;
+  const max = Math.max(1, ...C.parts.map(p => p.sum));
+  const noRoof = styleOf().roof === "none" ? `<p style="color:#B4561C;margin:4px 0">⚠ ยังไม่รวมค่าหลังคา — เลือกแบบหลังคาในโหมด 🧊 3D</p>` : "";
+  return noRoof + `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${card("ค่าก่อสร้างรวม", baht(C.T.total), "บาท")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, baht(C.perArea), "บาท/ตร.ม.")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, baht(C.perInner), "บาท/ตร.ม. · ไม่รวมโรงรถ/ระเบียง")}</div>
+    <table class="sum"><tr><th style="text-align:left">หมวด</th><th>บาท/ตร.ม.</th><th>สัดส่วน</th></tr>${C.parts.map(p => `<tr><td style="text-align:left">${esc(p.name)}</td><td>${baht(C.area ? p.sum / C.area : 0)}</td>
+      <td style="width:38%"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="height:8px;border-radius:4px;background:#8E7CC3;width:${Math.round(p.sum / max * 100)}%;max-width:120px"></div><span>${C.T.total ? fmt(p.sum / C.T.total * 100, 0) : 0}%</span></div></td></tr>`).join("")}
+      <tr class="tot"><td style="text-align:left">รวม</td><td>${baht(C.perArea)}</td><td>100%</td></tr></table>`;
+}
+let engTab = "eng";
+function engHTML() {
+  const E = eng(), I = E.I.slice().sort((a, b) => b.sev - a.sev || a.fi - b.fi), cnt = [0, 0, 0]; for (const x of I) cnt[x.sev]++;
+  const S = E.S;
+  return `<p class="mute" style="margin-top:0">❌ ${cnt[2]} ต้องแก้ · ⚠️ ${cnt[1]} ควรตรวจ · ✅ ${cnt[0]} ผ่าน</p>
+    <table class="sum"><tr><td><b>โครงสร้างที่วางอัตโนมัติ</b></td><td></td></tr>${plan.floors.map((f, i) => `<tr><td>${esc(f.name)}</td><td>เสา ${S[i].cols.length} ต้น · คาน ${fmt(S[i].beamLen, 1)} ม. · ช่วงเสาสูงสุด ${fmt(S[i].maxGap)} ม.</td></tr>`).join("")}
+    <tr><td>ฐานราก</td><td>${S[0].cols.length} ฐาน</td></tr></table>
+    <h4>รายการตรวจ</h4>
+    <table class="sum">${I.map(x => `<tr><td style="width:26px;vertical-align:top">${["✅", "⚠️", "❌"][x.sev]}</td><td style="text-align:left;white-space:normal"><span class="mute">${esc(plan.floors[x.fi] ? plan.floors[x.fi].name : "")} · ${x.cat}</span><br>${esc(x.msg)}</td></tr>`).join("")}</table>
+    <div class="chips" style="margin-top:12px"><button data-e="layer" class="${styleOf().struct ? "on" : ""}">🏗 แสดงเสา/คาน และจุดที่ต้องแก้บนแปลน 2D</button></div>
+    <p class="mute">สมมติฐาน: โครง คสล. เสา ${COL * 100}×${COL * 100} ซม. ช่วงเสาไม่เกิน ${MAXSPAN} ม. คาน ${BEAM_W * 100}×${BEAM_D * 100} ซม. · เกณฑ์อ้างอิงจากกฎกระทรวงฉบับที่ 55 (พ.ศ. 2543) ตามที่จำได้ ได้แก่ ระยะดิ่ง ≥ 2.60 ม. บันไดกว้าง ≥ 0.80 ม. ลูกตั้ง ≤ 20 ซม. ลูกนอน ≥ 22 ซม. ช่องเปิด ≥ 10% ระยะร่น 2/3 ม. และที่ว่าง ≥ 30% — ควรตรวจกับต้นฉบับและข้อบัญญัติท้องถิ่น<br>⚠ เป็นการตรวจเบื้องต้นตามหลักทั่วไป ไม่แทนการคำนวณและลงนามโดยวิศวกรโยธา (ใบอนุญาต กว.) และสถาปนิก</p>`;
+}
+function boqHTML() {
+  const B = boqOpts(), secs = boqData(), T = boqTotals(secs), area = plan.floors.reduce((s, f) => s + floorArea(f), 0);
+  const row = x => `<tr><td style="text-align:left;white-space:normal">${esc(x.name)}</td><td>${fmt(x.qty)}</td><td>${x.unit}</td><td><input type="number" min="0" step="any" data-rk="${x.k}" value="${Math.round(rate(x.k) * 100) / 100}" style="width:90px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"></td><td>${baht(x.qty * rate(x.k))}</td></tr>`;
+  const pct = (k, nm, v) => `<tr><td style="text-align:left">${nm}</td><td colspan="2"></td><td><input type="number" min="0" step="0.5" data-rk="${k}" value="${rate(k)}" style="width:60px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:right"> %</td><td>${baht(v)}</td></tr>`;
+  const C = costSummary(), F = priceFactor();
+  const tgt = `<div style="background:#F1ECFA;border-radius:12px;padding:10px 12px;margin-top:4px">
+      <div class="chips" style="align-items:center"><button data-e="tOn" class="${B.targetOn ? "on" : ""}">🎯 ปรับตามเป้า บาท/ตร.ม.</button>
+      ${B.targetOn ? `<input type="number" min="1000" step="500" data-tg="1" value="${B.target}" style="width:110px;padding:7px 8px;border:1px solid var(--line);border-radius:10px;font-size:16px;text-align:right"> บาท/ตร.ม. ของ
+      <button data-e="basis" data-v="area" class="${B.basis === "area" ? "on" : ""}">พื้นที่รวม</button><button data-e="basis" data-v="inner" class="${B.basis === "inner" ? "on" : ""}">พื้นที่ภายใน</button>` : ""}</div>
+      <p class="mute" style="margin:6px 0 0">${B.targetOn ? `ราคาต่อหน่วยทุกรายการถูกคูณด้วย ×${F.toFixed(2)} ให้ได้ตามเป้า (สัดส่วนระหว่างรายการเท่าเดิม) · แก้ราคารายการใด ยอดรวมยังคงตามเป้า แต่สัดส่วนจะเปลี่ยน` : "ใช้ราคาต่อหน่วยตามที่กรอกตรงๆ"}</p></div>`;
+  return `${tgt}${costCardsHTML(C)}<h4>รายละเอียด</h4><div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
+      <button data-e="piles">เข็มต่อฐาน: ${B.piles} ต้น ↻</button><button data-e="vat" class="${B.vat ? "on" : ""}">รวม VAT 7%</button></div>
+    <div style="overflow-x:auto;margin-top:10px"><table class="sum boq"><tr><th style="text-align:left">รายการ</th><th>ปริมาณ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>รวม (บาท)</th></tr>
+    ${secs.map(s => `<tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>${s.name}</b></td></tr>${s.items.map(row).join("")}<tr><td colspan="4" style="text-align:right" class="mute">รวม${s.name.slice(3)}</td><td>${baht(s.items.reduce((a, x) => a + x.qty * rate(x.k), 0))}</td></tr>`).join("")}
+    <tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>5. งานระบบและค่าดำเนินการ</b></td></tr>
+    ${pct("elec", "งานระบบไฟฟ้า (% ของงาน 1–4)", T.elec)}${pct("plumb", "งานประปา–สุขาภิบาล (% ของงาน 1–4)", T.plumb)}${pct("oh", "ค่าดำเนินการและกำไรผู้รับเหมา", T.oh)}
+    ${B.vat ? `<tr><td style="text-align:left">ภาษีมูลค่าเพิ่ม 7%</td><td colspan="3"></td><td>${baht(T.vat)}</td></tr>` : ""}
+    <tr class="tot"><td style="text-align:left">รวมทั้งสิ้น</td><td colspan="3"></td><td>${baht(T.total)}</td></tr>
+    <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perArea)} /ตร.ม.</td></tr>
+    <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perInner)} /ตร.ม.</td></tr></table></div>
+    <div class="btns"><button class="b" data-e="csv">⬇ ส่งออก CSV (Excel)</button><button class="b" data-e="print">🖨 พิมพ์ BOQ</button><button class="b del" data-e="reset">คืนราคาตั้งต้น</button></div>
+    <p class="mute">⚠ <b>ปริมาณ</b> ถอดจากแบบนี้โดยตรง แต่ใช้ขนาดโครงสร้างสมมติ (ฐาน 1.0×1.0×0.30 ม. เหล็กเสริมประมาณจากหน้าตัดมาตรฐาน) · <b>ราคาต่อหน่วยที่ใส่ไว้เป็นค่าตั้งต้นที่ประมาณขึ้นเอง ไม่มีแหล่งอ้างอิง</b> ต้องแก้เป็นราคาที่ได้จากผู้รับเหมา/ร้านวัสดุในพื้นที่ หรือเทียบราคากลางงานก่อสร้างของทางราชการก่อนใช้ตัดสินใจ</p>`;
+}
+function renderEng() {
+  const body = document.getElementById("engBody"); if (!body) return;
+  document.querySelectorAll("#engOv [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === engTab));
+  body.innerHTML = engTab === "eng" ? engHTML() : boqHTML();
+}
+function boqCSV() {
+  const secs = boqData(), T = boqTotals(secs), q = v => `"${String(v).replace(/"/g, '""')}"`, L = [["หมวด", "รายการ", "ปริมาณ", "หน่วย", "ราคา/หน่วย", "รวม (บาท)"]];
+  for (const s of secs) for (const x of s.items) L.push([s.name, x.name, x.qty, x.unit, Math.round(rate(x.k) * 100) / 100, Math.round(x.qty * rate(x.k))]);
+  L.push(["5", `งานระบบไฟฟ้า ${rate("elec")}%`, "", "", "", Math.round(T.elec)], ["5", `งานประปา ${rate("plumb")}%`, "", "", "", Math.round(T.plumb)], ["5", `ค่าดำเนินการและกำไร ${rate("oh")}%`, "", "", "", Math.round(T.oh)]);
+  if (boqOpts().vat) L.push(["5", "VAT 7%", "", "", "", Math.round(T.vat)]);
+  const C = costSummary();
+  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง" + (boqOpts().targetOn ? ` · ปรับตามเป้า ${boqOpts().target} บาท/ตร.ม. (ตัวคูณ ×${priceFactor().toFixed(2)})` : ""), "", "", "", ""]);
+  return "﻿" + L.map(r => r.map(q).join(",")).join("\r\n");
+}
+document.getElementById("engBtn").onclick = () => { engTab = engTab || "eng"; renderEng(); openOv("engOv"); };
+document.getElementById("engOv").addEventListener("click", e => {
+  const t = e.target.closest("[data-tab]"); if (t) { engTab = t.dataset.tab; renderEng(); return; }
+  const b = e.target.closest("[data-e]"); if (!b) return; const k = b.dataset.e, B = boqOpts(), before = snapshot();
+  if (k === "layer") { styleOf().struct = !styleOf().struct; commit(before); renderEng(); return; }
+  if (k === "tOn") B.targetOn = !B.targetOn; if (k === "basis") B.basis = b.dataset.v;
+  if (k === "wall") B.wall = b.dataset.v; if (k === "piles") B.piles = [0, 1, 2, 4][([0, 1, 2, 4].indexOf(B.piles) + 1) % 4]; if (k === "vat") B.vat = !B.vat;
+  if (k === "reset") { if (!confirm("คืนราคาต่อหน่วยทั้งหมดเป็นค่าตั้งต้น?")) return; B.rates = {}; }
+  if (k === "csv") { saveFile(new Blob([boqCSV()], { type: "text/csv;charset=utf-8" }), safeName(plan.name) + "-BOQ.csv"); return; }
+  if (k === "print") { const pr = document.getElementById("print"); pr.innerHTML = `<div style="font-family:sans-serif;padding:10px"><h2>BOQ — ${esc(plan.name)}</h2>${boqHTML().replace(/<input[^>]*value="([^"]*)"[^>]*>/g, "$1").replace(/<div class="btns">[\s\S]*?<\/div>/, "").replace(/<div class="chips">[\s\S]*?<\/div>/, "")}</div>`; setTimeout(() => window.print(), 200); return; }
+  commit(before); renderEng();
+});
+document.getElementById("engOv").addEventListener("change", e => {
+  if (e.target.dataset.tg) { const v = parseFloat(e.target.value), before = snapshot(); if (v > 0) { boqOpts().target = Math.round(v); commit(before); } renderEng(); return; }
+  const k = e.target.dataset.rk; if (!k) return; const v = parseFloat(e.target.value), before = snapshot(), B = boqOpts();
+  if (!(v >= 0)) { renderEng(); return; } B.rates[k] = PCT.has(k) ? v : Math.round(v / priceFactor() * 100) / 100; commit(before); renderEng();
+});
+
+/* ============================================================ boot */
+if (!load()) { plan = newPlan(); }
+$("stepSel").value = String(step);
+renderFloors(); setTool("select"); updUndo();
+requestAnimationFrame(() => { resize(); fit(); });
+requestAnimationFrame(frame);
+if (!localStorage.getItem(LS + ".seen")) { try { localStorage.setItem(LS + ".seen", "1"); } catch (e) {} setTimeout(() => openOv("helpOv"), 400); }
+window.addEventListener("pointerdown", e => { if (e.pointerType === "pen" && !penSeen) { penSeen = true; setTool(tool); } }, true);
+</script>
+</body>
+</html>
