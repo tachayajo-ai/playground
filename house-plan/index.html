@@ -2002,8 +2002,10 @@ function engChecks(S) {
       if (r.type === "porch" && i === 0) continue;
       if (r.type === "stair") continue;
       const [a, b, c, d] = bbox(r.pts), sp = Math.min(c - a, d - b), at = centroid(r.pts);
-      if (sp > 5.5) add(2, i, "โครงสร้าง", `${r.name}: พื้นช่วงสั้น ${fmt(sp)} ม. กว้างเกินไป — เพิ่มคานซอยกลางห้อง`, at);
-      else if (sp > 4.0) add(1, i, "โครงสร้าง", `${r.name}: พื้นช่วง ${fmt(sp)} ม. ควรใช้พื้นหนา 12–15 ซม. หรือเพิ่มคานซอย`, at);
+      const tk = boqOpts().slab, lim = tk >= 0.15 ? [5.5, 7.0] : [4.0, 5.5];
+      if (sp > lim[1]) add(2, i, "โครงสร้าง", `${r.name}: พื้นช่วงสั้น ${fmt(sp)} ม. กว้างเกินไป — เพิ่มคานซอยกลางห้อง`, at);
+      else if (sp > lim[0]) add(1, i, "โครงสร้าง", `${r.name}: พื้นช่วง ${fmt(sp)} ม. ${tk >= 0.15 ? "ยาวสำหรับพื้นหนา " + Math.round(tk * 100) + " ซม. — เพิ่มคานซอย" : "ควรใช้พื้นหนา 12–15 ซม. หรือเพิ่มคานซอย"}`, at);
+      else if (sp > 4.0 && tk >= 0.15) add(0, i, "โครงสร้าง", `${r.name}: พื้นช่วง ${fmt(sp)} ม. ใช้พื้นหนา ${Math.round(tk * 100)} ซม. รองรับได้ (ให้วิศวกรยืนยัน)`, at);
     }
     for (const sg of s.parts) add(1, i, "โครงสร้าง", `ผนังยาว ${fmt(sg.L)} ม. ไม่มีผนัง/คานชั้นล่างรองรับ — ใช้ผนังเบา (ยิปซัม/ไฟเบอร์ซีเมนต์) หรือให้วิศวกรเพิ่มคานรับ`, [(sg.a[0] + sg.b[0]) / 2, (sg.a[1] + sg.b[1]) / 2]);
     for (const op of f.opens) if (op.w > 3.0) add(1, i, "โครงสร้าง", `ช่องเปิดกว้าง ${fmt(op.w)} ม. ต้องมีคานทับหลังรับ`, [op.x, op.y]);
@@ -2075,9 +2077,18 @@ const FIN_KEY = { "พื้นไม้จริง": "f_wood", "พื้น�
 /* starting unit prices (materials + labour, THB) — rough placeholders, NOT an official price list: edit to local quotes */
 const RATE0 = { pile: 1800, conc: 2700, rebar: 32, form: 380, wall_brick: 480, wall_aac: 560, wall_light: 900, plaster: 230, paint: 130, f_tile: 700, f_wood: 2200, f_lam: 900, f_marble: 2400, f_polish: 280, f_grass: 350,
   ceil: 480, roof_frame: 700, roof_tile: 480, roof_flat: 550, door: 7500, door2: 16000, slide: 20000, opening: 0, window: 3500, stair: 40000,
-  ramp: 2800, rail: 2200, estep: 1800, toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
+  fence: 2000, gate: 80000, ramp: 2800, rail: 2200, estep: 1800, toilet: 7000, basin: 4000, shower: 3000, tub: 18000, washer: 0, counter: 12000, elec: 8, plumb: 6, oh: 10 };
 function boqOpts() { if (!plan.boq) plan.boq = {}; const b = plan.boq; if (!b.wall) b.wall = "brick"; if (b.piles === undefined) b.piles = 1; if (b.vat === undefined) b.vat = false; if (!b.rates) b.rates = {};
-  if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area"; return b; }
+  if (b.targetOn === undefined) b.targetOn = true; if (!b.target) b.target = 15000; if (!b.basis) b.basis = "area";
+  if (!b.fence) b.fence = { on: false, h: 3, gate: 5 }; if (b.slab === undefined) b.slab = null; return b; }
+/* outside works (fence + gate): priced separately, not part of the house cost per m² */
+const NOSCALE = new Set(["fence", "gate"]);
+function boqExtras() {
+  const B = boqOpts(), F = B.fence; if (!F.on || !plan.land) return [];
+  const per = 2 * (plan.land.w + plan.land.h), len = Math.max(0, per - F.gate);
+  return [{ k: "fence", name: `รั้วก่อบล็อก/อิฐ มีเสา-คานทับหลัง ฉาบ ทาสี สูง ${fmt(F.h, 1)} ม. (รอบที่ดิน ${fmt(per, 1)} ม. หักช่องประตู ${fmt(F.gate, 1)} ม. = ${fmt(len, 1)} ม.)`, qty: Math.round(len * F.h * 100) / 100, unit: "ตร.ม." },
+    ...(F.gate > 0 ? [{ k: "gate", name: `ประตูรั้วบานเลื่อนเหล็ก กว้าง ${fmt(F.gate, 1)} ม. สูง ${fmt(F.h, 1)} ม. พร้อมราง/ล้อ`, qty: 1, unit: "ชุด" }] : [])];
+}
 const PCT = new Set(["elec", "plumb", "oh"]);
 const rawRate = k => { const b = boqOpts(); return b.rates[k] !== undefined ? b.rates[k] : RATE0[k]; };
 /* target mode: every unit price is multiplied by one factor so that total / area = target (percent lines unchanged) */
@@ -2090,7 +2101,7 @@ function priceFactor() {
   const f = T.total > 0 && area > 0 ? b.target * area / T.total : 1;
   fCache = { key: k, f }; return f;
 }
-const rate = k => PCT.has(k) ? rawRate(k) : rawRate(k) * priceFactor();
+const rate = k => PCT.has(k) || NOSCALE.has(k) ? rawRate(k) : rawRate(k) * priceFactor();
 function boqData() {
   const E = eng(), S = E.S, FE = floorLevels(), n = plan.floors.length, B = boqOpts(), st = styleOf(), secs = [];
   const it = (k, name, qty, unit, note) => ({ k, name, qty: Math.round(qty * 100) / 100, unit, note });
@@ -2099,16 +2110,16 @@ function boqData() {
   let colLen = 0, beamLen = S[n - 1].beamLen, slabV = 0, slabA = 0;
   plan.floors.forEach((f, i) => {
     colLen += S[i].cols.length * FE[i].H; beamLen += S[i].beamLen;
-    const a = f.rooms.filter(r => !(r.type === "stair" && i > 0)).reduce((s, r) => s + areaOf(r.pts), 0); slabA += a; slabV += a * (i ? 0.12 : 0.10);
+    const a = f.rooms.filter(r => !(r.type === "stair" && i > 0)).reduce((s, r) => s + areaOf(r.pts), 0); slabA += a; slabV += a * (B.slab || (i ? 0.12 : 0.10));
   });
   const footV = nf * (1.0 * 1.0 * 0.3 + COL * COL * 1.0), colV = colLen * COL * COL, beamV = beamLen * BEAM_W * BEAM_D;
-  const rebar = colLen * 4.7 + beamLen * 5.2 + slabA * 6.5 + nf * 17, form = colLen * 4 * COL + beamLen * (BEAM_W + 2 * BEAM_D) + slabA + nf * 2.0;
+  const rebar = colLen * 4.7 + beamLen * 5.2 + slabA * 6.5 * (B.slab ? B.slab / 0.11 : 1) + nf * 17, form = colLen * 4 * COL + beamLen * (BEAM_W + 2 * BEAM_D) + slabA + nf * 2.0;
   secs.push({ name: "1. งานโครงสร้าง", items: [
     it("pile", `เสาเข็ม (${nf} ฐาน × ${B.piles} ต้น)`, nf * B.piles, "ต้น"),
     it("conc", "คอนกรีตฐานราก + ตอม่อ (ฐาน 1.0×1.0×0.30 ม.)", footV, "ลบ.ม."),
     it("conc", `คอนกรีตเสา ${COL * 100}×${COL * 100} ซม. (${S.reduce((s, x) => s + x.cols.length, 0)} ต้น รวม ${fmt(colLen, 1)} ม.)`, colV, "ลบ.ม."),
     it("conc", `คอนกรีตคาน ${BEAM_W * 100}×${BEAM_D * 100} ซม. (คานคอดิน คานชั้น คานหลังคา รวม ${fmt(beamLen, 1)} ม.)`, beamV, "ลบ.ม."),
-    it("conc", `คอนกรีตพื้น (ชั้นล่าง 10 ซม. ชั้นบน 12 ซม. รวม ${fmt(slabA, 1)} ตร.ม.)`, slabV, "ลบ.ม."),
+    it("conc", `คอนกรีตพื้น (${B.slab ? "หนา " + Math.round(B.slab * 100) + " ซม." : "ชั้นล่าง 10 ซม. ชั้นบน 12 ซม."} รวม ${fmt(slabA, 1)} ตร.ม.)`, slabV, "ลบ.ม."),
     it("rebar", "เหล็กเสริม (ประมาณจากขนาดหน้าตัดมาตรฐาน)", rebar, "กก."),
     it("form", "ไม้แบบ", form, "ตร.ม."),
   ] });
@@ -2161,7 +2172,8 @@ function boqData() {
 function boqTotals(secs, R) {
   R = R || rate; const B = boqOpts(); let base = 0; for (const s of secs) for (const x of s.items) base += x.qty * R(x.k);
   const elec = base * R("elec") / 100, plumb = base * R("plumb") / 100, sub = base + elec + plumb, oh = sub * R("oh") / 100, pre = sub + oh, vat = B.vat ? pre * 0.07 : 0;
-  return { base, elec, plumb, oh, vat, total: pre + vat };
+  const ex = boqExtras().reduce((a, x) => a + x.qty * R(x.k), 0) * (B.vat ? 1.07 : 1);
+  return { base, elec, plumb, oh, vat, total: pre + vat, extra: ex, grand: pre + vat + ex };
 }
 const baht = v => Math.round(v).toLocaleString("th-TH");
 /* cost per square metre: over all floor area, and over interior area (without garage / porch / balcony) */
@@ -2177,7 +2189,7 @@ function costCardsHTML(C) {
   const card = (t, v, u) => `<div style="flex:1;min-width:150px;background:#F3F0EA;border-radius:12px;padding:10px 12px"><div class="mute">${t}</div><div class="big" style="font-size:22px">${v}</div><div class="mute">${u}</div></div>`;
   const max = Math.max(1, ...C.parts.map(p => p.sum));
   const noRoof = styleOf().roof === "none" ? `<p style="color:#B4561C;margin:4px 0">⚠ ยังไม่รวมค่าหลังคา — เลือกแบบหลังคาในโหมด 🧊 3D</p>` : "";
-  return noRoof + `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${card("ค่าก่อสร้างรวม", baht(C.T.total), "บาท")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, baht(C.perArea), "บาท/ตร.ม.")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, baht(C.perInner), "บาท/ตร.ม. · ไม่รวมโรงรถ/ระเบียง")}</div>
+  return noRoof + `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${card(C.T.extra ? "ค่าก่อสร้างตัวบ้าน" : "ค่าก่อสร้างรวม", baht(C.T.total), "บาท")}${C.T.extra ? card("รวมบ้าน + รั้ว + ประตูรั้ว", baht(C.T.grand), "บาท") : ""}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, baht(C.perArea), "บาท/ตร.ม.")}${card(`เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, baht(C.perInner), "บาท/ตร.ม. · ไม่รวมโรงรถ/ระเบียง")}</div>
     <table class="sum"><tr><th style="text-align:left">หมวด</th><th>บาท/ตร.ม.</th><th>สัดส่วน</th></tr>${C.parts.map(p => `<tr><td style="text-align:left">${esc(p.name)}</td><td>${baht(C.area ? p.sum / C.area : 0)}</td>
       <td style="width:38%"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="height:8px;border-radius:4px;background:#8E7CC3;width:${Math.round(p.sum / max * 100)}%;max-width:120px"></div><span>${C.T.total ? fmt(p.sum / C.T.total * 100, 0) : 0}%</span></div></td></tr>`).join("")}
       <tr class="tot"><td style="text-align:left">รวม</td><td>${baht(C.perArea)}</td><td>100%</td></tr></table>`;
@@ -2205,13 +2217,18 @@ function boqHTML() {
       <button data-e="basis" data-v="area" class="${B.basis === "area" ? "on" : ""}">พื้นที่รวม</button><button data-e="basis" data-v="inner" class="${B.basis === "inner" ? "on" : ""}">พื้นที่ภายใน</button>` : ""}</div>
       <p class="mute" style="margin:6px 0 0">${B.targetOn ? `ราคาต่อหน่วยทุกรายการถูกคูณด้วย ×${F.toFixed(2)} ให้ได้ตามเป้า (สัดส่วนระหว่างรายการเท่าเดิม) · แก้ราคารายการใด ยอดรวมยังคงตามเป้า แต่สัดส่วนจะเปลี่ยน` : "ใช้ราคาต่อหน่วยตามที่กรอกตรงๆ"}</p></div>`;
   return `${tgt}${costCardsHTML(C)}<h4>รายละเอียด</h4><div class="chips"><button data-e="wall" data-v="brick" class="${B.wall === "brick" ? "on" : ""}">ผนังอิฐมอญ</button><button data-e="wall" data-v="aac" class="${B.wall === "aac" ? "on" : ""}">ผนังอิฐมวลเบา</button>
-      <button data-e="piles">เข็มต่อฐาน: ${B.piles} ต้น ↻</button><button data-e="vat" class="${B.vat ? "on" : ""}">รวม VAT 7%</button></div>
+      <button data-e="piles">เข็มต่อฐาน: ${B.piles} ต้น ↻</button><button data-e="vat" class="${B.vat ? "on" : ""}">รวม VAT 7%</button>
+      <button data-e="fence" class="${B.fence.on ? "on" : ""}">รั้ว + ประตูรั้ว</button></div>
+    <div class="chips" style="margin-top:8px;align-items:center">พื้นหนา <input type="number" min="8" max="30" step="1" data-slab="1" value="${B.slab ? Math.round(B.slab * 100) : ""}" placeholder="10/12" style="width:70px;padding:6px;border:1px solid var(--line);border-radius:8px;font-size:15px"> ซม.
+      ${B.fence.on ? `· รั้วสูง <input type="number" min="0.5" max="5" step="0.1" data-fh="1" value="${B.fence.h}" style="width:64px;padding:6px;border:1px solid var(--line);border-radius:8px;font-size:15px"> ม. · ประตูรั้วกว้าง <input type="number" min="0" max="20" step="0.5" data-fg="1" value="${B.fence.gate}" style="width:64px;padding:6px;border:1px solid var(--line);border-radius:8px;font-size:15px"> ม.${plan.land ? "" : " <span style='color:#B4561C'>(ตั้งค่าที่ดินก่อน)</span>"}` : ""}</div>
     <div style="overflow-x:auto;margin-top:10px"><table class="sum boq"><tr><th style="text-align:left">รายการ</th><th>ปริมาณ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>รวม (บาท)</th></tr>
     ${secs.map(s => `<tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>${s.name}</b></td></tr>${s.items.map(row).join("")}<tr><td colspan="4" style="text-align:right" class="mute">รวม${s.name.slice(3)}</td><td>${baht(s.items.reduce((a, x) => a + x.qty * rate(x.k), 0))}</td></tr>`).join("")}
     <tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>5. งานระบบและค่าดำเนินการ</b></td></tr>
     ${pct("elec", "งานระบบไฟฟ้า (% ของงาน 1–4)", T.elec)}${pct("plumb", "งานประปา–สุขาภิบาล (% ของงาน 1–4)", T.plumb)}${pct("oh", "ค่าดำเนินการและกำไรผู้รับเหมา", T.oh)}
     ${B.vat ? `<tr><td style="text-align:left">ภาษีมูลค่าเพิ่ม 7%</td><td colspan="3"></td><td>${baht(T.vat)}</td></tr>` : ""}
-    <tr class="tot"><td style="text-align:left">รวมทั้งสิ้น</td><td colspan="3"></td><td>${baht(T.total)}</td></tr>
+    <tr class="tot"><td style="text-align:left">${T.extra ? "รวมตัวบ้าน" : "รวมทั้งสิ้น"}</td><td colspan="3"></td><td>${baht(T.total)}</td></tr>
+    ${T.extra ? `<tr><td colspan="5" style="text-align:left;background:#F3F0EA"><b>6. งานภายนอก (ไม่นับในราคาต่อ ตร.ม.)</b></td></tr>${boqExtras().map(row).join("")}${B.vat ? `<tr><td style="text-align:left">VAT 7% งานภายนอก</td><td colspan="3"></td><td>${baht(T.extra - T.extra / 1.07)}</td></tr>` : ""}
+      <tr class="tot"><td style="text-align:left">รวมทั้งสิ้น (บ้าน + รั้ว)</td><td colspan="3"></td><td>${baht(T.grand)}</td></tr>` : ""}
     <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perArea)} /ตร.ม.</td></tr>
     <tr><td style="text-align:left">เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)</td><td colspan="3"></td><td>${baht(C.perInner)} /ตร.ม.</td></tr></table></div>
     <div class="btns"><button class="b" data-e="csv">⬇ ส่งออก CSV (Excel)</button><button class="b" data-e="print">🖨 พิมพ์ BOQ</button><button class="b del" data-e="reset">คืนราคาตั้งต้น</button></div>
@@ -2227,8 +2244,9 @@ function boqCSV() {
   for (const s of secs) for (const x of s.items) L.push([s.name, x.name, x.qty, x.unit, Math.round(rate(x.k) * 100) / 100, Math.round(x.qty * rate(x.k))]);
   L.push(["5", `งานระบบไฟฟ้า ${rate("elec")}%`, "", "", "", Math.round(T.elec)], ["5", `งานประปา ${rate("plumb")}%`, "", "", "", Math.round(T.plumb)], ["5", `ค่าดำเนินการและกำไร ${rate("oh")}%`, "", "", "", Math.round(T.oh)]);
   if (boqOpts().vat) L.push(["5", "VAT 7%", "", "", "", Math.round(T.vat)]);
+  if (T.extra) { L.push(["", "รวมตัวบ้าน", "", "", "", Math.round(T.total)]); for (const x of boqExtras()) L.push(["6. งานภายนอก", x.name, x.qty, x.unit, rate(x.k), Math.round(x.qty * rate(x.k))]); if (boqOpts().vat) L.push(["6", "VAT 7% งานภายนอก", "", "", "", Math.round(T.extra - T.extra / 1.07)]); }
   const C = costSummary();
-  L.push(["", "รวมทั้งสิ้น", "", "", "", Math.round(T.total)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง" + (boqOpts().targetOn ? ` · ปรับตามเป้า ${boqOpts().target} บาท/ตร.ม. (ตัวคูณ ×${priceFactor().toFixed(2)})` : ""), "", "", "", ""]);
+  L.push(["", T.extra ? "รวมทั้งสิ้น (บ้าน + รั้ว)" : "รวมทั้งสิ้น", "", "", "", Math.round(T.grand)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่รวม ${fmt(C.area, 1)} ตร.ม.)`, "", "", "", Math.round(C.perArea)], ["", `เฉลี่ยต่อ ตร.ม. (พื้นที่ภายใน ${fmt(C.inner, 1)} ตร.ม.)`, "", "", "", Math.round(C.perInner)], ["", "หมายเหตุ: ราคาต่อหน่วยเป็นค่าประมาณตั้งต้น ต้องปรับตามราคาจริง" + (boqOpts().targetOn ? ` · ปรับตามเป้า ${boqOpts().target} บาท/ตร.ม. (ตัวคูณ ×${priceFactor().toFixed(2)})` : ""), "", "", "", ""]);
   return "﻿" + L.map(r => r.map(q).join(",")).join("\r\n");
 }
 document.getElementById("engBtn").onclick = () => { engTab = engTab || "eng"; renderEng(); openOv("engOv"); };
@@ -2236,6 +2254,7 @@ document.getElementById("engOv").addEventListener("click", e => {
   const t = e.target.closest("[data-tab]"); if (t) { engTab = t.dataset.tab; renderEng(); return; }
   const b = e.target.closest("[data-e]"); if (!b) return; const k = b.dataset.e, B = boqOpts(), before = snapshot();
   if (k === "layer") { styleOf().struct = !styleOf().struct; commit(before); renderEng(); return; }
+  if (k === "fence") B.fence.on = !B.fence.on;
   if (k === "tOn") B.targetOn = !B.targetOn; if (k === "basis") B.basis = b.dataset.v;
   if (k === "wall") B.wall = b.dataset.v; if (k === "piles") B.piles = [0, 1, 2, 4][([0, 1, 2, 4].indexOf(B.piles) + 1) % 4]; if (k === "vat") B.vat = !B.vat;
   if (k === "reset") { if (!confirm("คืนราคาต่อหน่วยทั้งหมดเป็นค่าตั้งต้น?")) return; B.rates = {}; }
@@ -2244,6 +2263,10 @@ document.getElementById("engOv").addEventListener("click", e => {
   commit(before); renderEng();
 });
 document.getElementById("engOv").addEventListener("change", e => {
+  if (e.target.dataset.slab || e.target.dataset.fh || e.target.dataset.fg) { const v = parseFloat(e.target.value), before = snapshot(), B = boqOpts();
+    if (e.target.dataset.slab) B.slab = v >= 8 && v <= 30 ? v / 100 : null;
+    if (e.target.dataset.fh && v > 0) B.fence.h = v; if (e.target.dataset.fg && v >= 0) B.fence.gate = v;
+    commit(before); renderEng(); return; }
   if (e.target.dataset.tg) { const v = parseFloat(e.target.value), before = snapshot(); if (v > 0) { boqOpts().target = Math.round(v); commit(before); } renderEng(); return; }
   const k = e.target.dataset.rk; if (!k) return; const v = parseFloat(e.target.value), before = snapshot(), B = boqOpts();
   if (!(v >= 0)) { renderEng(); return; } B.rates[k] = PCT.has(k) ? v : Math.round(v / priceFactor() * 100) / 100; commit(before); renderEng();
