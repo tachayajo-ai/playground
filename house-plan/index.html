@@ -290,6 +290,7 @@ const FD = {
   plant(w, h) { const r = Math.min(w, h) / 2; X.save(); X.fillStyle = "#E3F1D9"; circ(0, 0, r, true); X.restore(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; line(0, 0, Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85); } },
   altar(w, h) { box(w, h); rr(-w / 2 + 0.12, -h / 2 + 0.08, w - 0.24, h - 0.16, 0.02); X.stroke(); rr(-w / 4, -h / 2 + 0.14, w / 2, h - 0.28, 0.02); X.stroke(); },
   table(w, h) { rr(-w / 2, -h / 2, w, h, 0.05); X.fill(); X.stroke(); },
+  column(w, h) { X.save(); X.fillStyle = "#6E675E"; X.fillRect(-w / 2, -h / 2, w, h); X.restore(); X.strokeRect(-w / 2, -h / 2, w, h); },
   grab(w, h) { X.save(); X.fillStyle = "#2F6FDB"; X.strokeStyle = "#1E4FA8"; rr(-w / 2, -h / 2, w, h, Math.min(w, h) / 2); X.fill(); X.stroke(); X.restore(); },
   wchair(w, h) { rr(-w / 2 + 0.1, -h / 2 + 0.25, w - 0.2, h - 0.35, 0.06); X.fill(); X.stroke(); rr(-w / 2 + 0.1, -h / 2 + 0.1, w - 0.2, 0.15, 0.04); X.fill(); X.stroke();
     X.save(); X.fillStyle = X.strokeStyle; X.fillRect(-w / 2, -h / 2 + 0.3, 0.07, 0.6); X.fillRect(w / 2 - 0.07, -h / 2 + 0.3, 0.07, 0.6); X.restore(); line(-w / 2 + 0.2, h / 2, -w / 2 + 0.2, h / 2 - 0.12); line(w / 2 - 0.2, h / 2, w / 2 - 0.2, h / 2 - 0.12); },
@@ -321,6 +322,7 @@ const FURN = {
   hbed:     { n: "เตียงผู้ป่วย",    w: 1.0, h: 2.15, d: "bed" },
   wchair:   { n: "วีลแชร์",        w: 0.65, h: 1.05, d: "wchair" },
   grab:     { n: "ราวจับ",        w: 0.7, h: 0.06, d: "grab" },
+  column:   { n: "เสา",           w: 0.25, h: 0.25, d: "column" },
 };
 
 /* ============================================================ state */
@@ -1491,8 +1493,8 @@ function roofRect(bb, y, type, dir, pitch, col, ext, o, axis) {
     const hw = hAt(o), hl = hAt(span - o); poly3(VB, [[xw, yt, z0], [xw, yt, z1], [xw, hw, z1], [xw, hw, z0]], ext, [k === 1 ? -1 : 1, 0, 0]);
     for (const [z, s] of [[z0 - WALL / 2, -1], [z1 + WALL / 2, 1]]) poly3(VB, [[xw, yt, z], [xw, hw, z], [xl, hl, z], [xl, yt, z]], ext, [0, 0, s]); }
 }
-const H3 = { bed1: .5, bed5: .5, bed6: .5, hbed: .6, wardrobe: 2.0, sofa: .45, armchair: .45, tv: .5, ctable: .42, dtable4: .75, dtable6: .75, desk: .75, counter: .9, fridge: 1.75, toilet: .42, basin: .85, shower: .04, tub: .55, washer: .85, car: .75, moto: 1.0, stairs: .2, altar: 1.0, plant: .45, wchair: .5, grab: .9 };
-const C3 = { bed1: "#F2EEE6", bed5: "#F2EEE6", bed6: "#F2EEE6", hbed: "#E6EEF4", wardrobe: "#B08458", sofa: "#7C8FA6", armchair: "#7C8FA6", tv: "#5A5048", ctable: "#A57C55", dtable4: "#A57C55", dtable6: "#A57C55", desk: "#A57C55", counter: "#D9D4CB", fridge: "#E8ECEF", toilet: "#FFFFFF", basin: "#FFFFFF", shower: "#BFD9E6", tub: "#FFFFFF", washer: "#F3F5F6", car: "#C8463C", moto: "#3B3F46", stairs: "#BFA383", altar: "#C99A3A", plant: "#7A5232", wchair: "#3E6FB5", grab: "#9AA4AE" };
+const H3 = { bed1: .5, bed5: .5, bed6: .5, hbed: .6, wardrobe: 2.0, sofa: .45, armchair: .45, tv: .5, ctable: .42, dtable4: .75, dtable6: .75, desk: .75, counter: .9, fridge: 1.75, toilet: .42, basin: .85, shower: .04, tub: .55, washer: .85, car: .75, moto: 1.0, stairs: .2, altar: 1.0, plant: .45, wchair: .5, grab: .9, column: 2.85 };
+const C3 = { bed1: "#F2EEE6", bed5: "#F2EEE6", bed6: "#F2EEE6", hbed: "#E6EEF4", wardrobe: "#B08458", sofa: "#7C8FA6", armchair: "#7C8FA6", tv: "#5A5048", ctable: "#A57C55", dtable4: "#A57C55", dtable6: "#A57C55", desk: "#A57C55", counter: "#D9D4CB", fridge: "#E8ECEF", toilet: "#FFFFFF", basin: "#FFFFFF", shower: "#BFD9E6", tub: "#FFFFFF", washer: "#F3F5F6", car: "#C8463C", moto: "#3B3F46", stairs: "#BFA383", altar: "#C99A3A", plant: "#7A5232", wchair: "#3E6FB5", grab: "#9AA4AE", column: "#E8E2D6" };
 function addItem3(it, y) {
   const a = rad(it.rot || 0), c = Math.cos(a), s = Math.sin(a), col = hex3(C3[it.type] || "#C8C2B8"), h = H3[it.type] || .6;
   const B = (u0, v0, u1, v1, y0, y1, k) => { const u = (u0 + u1) / 2, v = (v0 + v1) / 2; obox(VB, it.x + u * c - v * s, it.y + u * s + v * c, u1 - u0, v1 - v0, y + y0, y + y1, a, k || col); };
@@ -1514,7 +1516,7 @@ function addItem3(it, y) {
       if (it.type !== "desk") { const n = Math.max(1, Math.round((it.w - .2) / .6)); for (let i = 0; i < n; i++) { const u = -w + (i + .5) * it.w / n; B(u - .2, -d, u + .2, -d + .36, 0, .45, hex3("#8A6A4C")); B(u - .2, d - .36, u + .2, d, 0, .45, hex3("#8A6A4C")); B(u - .2, -d, u + .2, -d + .05, .45, .9, hex3("#8A6A4C")); B(u - .2, d - .05, u + .2, d, .45, .9, hex3("#8A6A4C")); } }
       else B(-.22, d * .3, .22, d * .3 + .44, 0, .46, hex3("#3B3F46"));
       break;
-    case "plant": B(-.18, -.18, .18, .18, 0, .4, col); B(-w * .8, -d * .8, w * .8, d * .8, .4, 1.3, hex3("#5E9E4E")); break;
+    case "plant": { const ph = Math.min(.4, w * .6), top = ph + Math.max(.3, it.w); B(-Math.min(.18, w * .4), -Math.min(.18, d * .4), Math.min(.18, w * .4), Math.min(.18, d * .4), 0, ph, col); B(-w * .8, -d * .8, w * .8, d * .8, ph, top, hex3("#5E9E4E")); break; }
     case "counter": B(-w, -d, w, d, 0, .86, hex3("#C9B79C")); B(-w, -d, w, d, .86, .9, col); if (!V3.cut) B(-w, -d, w, -d + .35, 1.5, 2.2, hex3("#C9B79C")); break;
     case "grab": B(-w, -d, w, d, .8, .85, col); break;
     case "wchair": B(-w + .1, -d + .1, w - .1, d - .1, .45, .52, col); B(-w + .1, -d + .1, w - .1, -d + .16, .52, .95, col); B(-w, -d + .3, -w + .05, -d + .9, 0, .62, hex3("#222222")); B(w - .05, -d + .3, w, -d + .9, 0, .62, hex3("#222222")); break;
