@@ -201,6 +201,7 @@ textarea { width: 100%; min-height: 180px; font-family: ui-monospace, Menlo, mon
   <h2>🌳 ที่ดิน</h2>
   <div class="row"><label>หน้ากว้าง</label><input type="number" id="lW" step="0.5" min="0"><span class="mute">ม.</span></div>
   <div class="row"><label>ลึก</label><input type="number" id="lD" step="0.5" min="0"><span class="mute">ม.</span></div>
+  <div class="row"><label>ถนนอยู่ด้าน</label><select id="lR"><option value="bottom">ล่าง (หน้าที่ดิน)</option><option value="right">ขวา</option><option value="left">ซ้าย</option><option value="top">บน</option></select></div>
   <div class="row"><label>พื้นชั้น 1 สูงจากดิน</label><input type="number" id="lB" step="0.05" min="0" max="3"><span class="mute">ม.</span></div>
   <p class="mute" id="lInfo"></p>
   <div class="btns" style="justify-content:flex-end"><button class="b del" id="lNone">ไม่แสดงที่ดิน</button><button class="b" data-close>ยกเลิก</button><button class="b pri" id="lGo">ตกลง</button></div>
@@ -401,7 +402,10 @@ function drawPlan(fi, o) {
     X.fillStyle = "#4E9A5B"; X.font = `600 ${pxFont(0.42, 11, 15)}px sans-serif`; X.textAlign = "left"; X.textBaseline = "bottom";
     const la = plan.land.w * plan.land.h;
     X.fillText(`ที่ดิน ${fmt(plan.land.w, 1)} × ${fmt(plan.land.h, 1)} ม. = ${fmt(la, 1)} ตร.ม. (${fmt(la / 4, 1)} ตร.ว.)`, ax, ay - 4);
-    X.textAlign = "center"; X.textBaseline = "top"; X.fillText("▼ ด้านหน้า / ถนน ▼", ax + lw / 2, ay + lh + 5);
+    const rd = plan.land.road || "bottom", rt = "ถนน";
+    if (rd === "bottom") { X.textAlign = "center"; X.textBaseline = "top"; X.fillText("▼ " + rt + " ▼", ax + lw / 2, ay + lh + 5); }
+    else if (rd === "top") { X.textAlign = "center"; X.textBaseline = "bottom"; X.fillText("▲ " + rt + " ▲", ax + lw / 2, ay - 22); }
+    else { X.save(); X.translate(rd === "right" ? ax + lw + 6 : ax - 6, ay + lh / 2); X.rotate(rd === "right" ? Math.PI / 2 : -Math.PI / 2); X.textAlign = "center"; X.textBaseline = "bottom"; X.fillText((rd === "right" ? "◀ " : "◀ ") + rt + " ▶", 0, 0); X.restore(); }
   }
   /* lower floor ghost */
   if (o.ghost && fi > 0) {
@@ -1101,13 +1105,13 @@ $("menuOv").addEventListener("click", e => {
     print: doPrint,
     import() { openOv("impOv"); },
     prompt: copyPrompt,
-    land() { $("lW").value = plan.land ? plan.land.w : 16; $("lD").value = plan.land ? plan.land.h : 20; $("lB").value = styleOf().base; landInfo(); openOv("landOv"); },
+    land() { $("lW").value = plan.land ? plan.land.w : 16; $("lD").value = plan.land ? plan.land.h : 20; $("lB").value = styleOf().base; $("lR").value = plan.land && plan.land.road || "bottom"; landInfo(); openOv("landOv"); },
     help() { openOv("helpOv"); },
   })[b.dataset.m]();
 });
 function landInfo() { const w = +$("lW").value, h = +$("lD").value; $("lInfo").textContent = w > 0 && h > 0 ? `${fmt(w * h, 1)} ตร.ม. = ${fmt(w * h / 4, 1)} ตร.ว. (${Math.floor(w * h / 1600)} ไร่ ${Math.floor((w * h % 1600) / 400)} งาน ${fmt((w * h % 400) / 4, 1)} ตร.ว.)` : ""; }
 $("lW").oninput = landInfo; $("lD").oninput = landInfo;
-$("lGo").onclick = () => { const w = +$("lW").value, h = +$("lD").value, b = snapshot(), bs = parseFloat($("lB").value); plan.land = w > 0 && h > 0 ? { w: r3(w), h: r3(h) } : null; if (bs >= 0 && bs <= 3) styleOf().base = r3(bs); commit(b); closeOv(); fit(); };
+$("lGo").onclick = () => { const w = +$("lW").value, h = +$("lD").value, b = snapshot(), bs = parseFloat($("lB").value); plan.land = w > 0 && h > 0 ? { w: r3(w), h: r3(h), road: $("lR").value } : null; if (bs >= 0 && bs <= 3) styleOf().base = r3(bs); commit(b); closeOv(); fit(); };
 $("lNone").onclick = () => { const b = snapshot(); plan.land = null; commit(b); closeOv(); };
 const safeName = s => String(s || "plan").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 40);
 async function saveFile(blob, name) {
@@ -1195,7 +1199,7 @@ function normalizePlan(d) {
   if (!d.floors || !d.floors.length) throw new Error("ไม่พบ floors หรือ rooms");
   const num = v => { const n = parseFloat(v); return isFinite(n) ? n : NaN; };
   const p = { app: "houseplan", v: 1, name: String(d.name || "แบบจาก AI").slice(0, 40), land: null, floors: [] };
-  if (d.land && num(d.land.w) > 0) p.land = { w: num(d.land.w), h: num(d.land.h || d.land.d || d.land.depth) || num(d.land.w) };
+  if (d.land && num(d.land.w) > 0) p.land = { w: num(d.land.w), h: num(d.land.h || d.land.d || d.land.depth) || num(d.land.w), road: ["bottom", "top", "left", "right"].includes(d.land.road) ? d.land.road : "bottom" };
   d.floors.forEach((f, fi) => {
     const F = newFloor(String(f.name || "ชั้น " + (fi + 1)).slice(0, 24)); if (num(f.height) > 0) F.height = num(f.height);
     for (const r of f.rooms || []) {
